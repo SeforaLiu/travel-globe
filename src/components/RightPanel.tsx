@@ -21,7 +21,7 @@ export default function RightPanel() {
   const diffDays = Math.ceil((nextGuide.departAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 
   return (
-    <div className="p-3 space-y-4 text-sm">
+    <div className="p-3 space-y-4 text-sm border-2 border-b-diary">
       {/* 最新日记卡 */}
       <div className="rounded p-3 bg-white/10 backdrop-blur border">
         <div className="flex items-center gap-3">

@@ -36,14 +36,17 @@ export default function App() {
   const sidebarWidthClass = isMobile
     ? 'absolute inset-y-0 left-0 z-40 w-64'
     : showSidebar
-      ? 'w-[18%]' // 展开时的宽度
-      : 'w-12'    // 收起时的宽度 (为了显示展开按钮)
+      ? 'w-[18%]'
+      : 'w-[3%]'; // PC 折叠时，占用 4% 宽度
 
   const mainContentWidthClass = isMobile
     ? 'w-full'
     : showSidebar
-      ? 'w-[67%]'
-      : 'w-[85%]' // Sidebar 缩起来后，MainContent 应该占更多空间
+      ? 'w-[67%]' // 100% - 18% (sidebar) - 15% (rightPanel) = 67%
+      : 'w-[82%]'; // 100% - 4% (sidebar) - 15% (rightPanel) = 81%
+
+  const rightPanelWidthClass = isMobile
+    ? 'absolute inset-y-0 right-0 z-40 w-64' : 'w-[15%]';
 
   return (
     <div className="h-screen flex relative">
@@ -67,16 +70,7 @@ export default function App() {
         </button>
       )}
 
-      {!isMobile && !showSidebar && (
-        <button
-          onClick={() => setShowSidebar(true)}
-          className="absolute bottom-4 left-0 z-40 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-900 border-r border-t border-b rounded-r-md shadow-lg"
-        >
-          {`>`}
-        </button>
-      )}
-
-      {(showSidebar) && (
+      {(showSidebar || !isMobile) && (
         <div
           className={`${sidebarWidthClass} border-r bg-white dark:bg-gray-900 transition-all duration-300 overflow-hidden`}>
           <Sidebar
@@ -90,9 +84,8 @@ export default function App() {
       )}
 
       {/* 主内容区域 */}
-      <div className={`${mainContentWidthClass} transition-all duration-200`}>
+      <div className={`${mainContentWidthClass} transition-all duration-200 border-8 border-emerald-500`}>
         <Routes>
-          {/*<Route path="/" element={<Home/>}/>*/}
           <Route path="/" element={<Home dark={dark}/>}/>
           {/* 你后面可以加入 /diary/:id /guide/:id 等路由 */}
         </Routes>
@@ -101,7 +94,7 @@ export default function App() {
       {/* 右侧面板  */}
       {(showRightPanel || !isMobile) && (
         <div
-          className={`${isMobile ? 'absolute inset-y-0 right-0 z-40 w-64' : 'w-[15%]'}  bg-white dark:bg-gray-900 transition-all duration-300`}>
+          className={`${rightPanelWidthClass}  border-8 border-amber-600 bg-white dark:bg-gray-900 transition-all duration-300`}>
           <RightPanel/>
         </div>
       )}

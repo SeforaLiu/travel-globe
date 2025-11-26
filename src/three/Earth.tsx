@@ -3,8 +3,6 @@ import React, { useRef } from 'react'
 import { useFrame, useLoader } from "@react-three/fiber"; // 导入 useLoader
 import * as THREE from 'three'
 import { Html } from '@react-three/drei'
-
-// 导入 TextureLoader
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
 
 function latLonToCartesian(lat: number, lon: number, radius = 2) {
@@ -31,7 +29,7 @@ export default function Earth() {
   ])
 
   useFrame((_, delta) => {
-    if (mesh.current) mesh.current.rotation.y += delta * 0.1
+    if (mesh.current) mesh.current.rotation.y += delta * 0.05
   })
 
   return (
@@ -46,20 +44,20 @@ export default function Earth() {
         />
       </mesh>
 
-      {points.map(p => {
-        const pos = latLonToCartesian(p.lat, p.lon, 2.02)
-        return (
-          <group key={p.id} position={pos.toArray()}>
-            <mesh>
-              <sphereGeometry args={[0.04, 8, 8]} />
-              <meshStandardMaterial emissive={p.color} color={p.color} />
-            </mesh>
-            <Html distanceFactor={10}>
-              <div className="bg-black/60 text-white text-xs px-2 py-1 rounded">{p.label}</div>
-            </Html>
-          </group>
-        )
-      })}
+      {/*{points.map(p => {*/}
+      {/*  const pos = latLonToCartesian(p.lat, p.lon, 2.02)*/}
+      {/*  return (*/}
+      {/*    <group key={p.id} position={pos.toArray()}>*/}
+      {/*      <mesh>*/}
+      {/*        <sphereGeometry args={[0.04, 8, 8]} />*/}
+      {/*        <meshStandardMaterial emissive={p.color} color={p.color} />*/}
+      {/*      </mesh>*/}
+      {/*      <Html distanceFactor={10}>*/}
+      {/*        <div className="bg-black/60 text-white text-xs px-2 py-1 rounded">{p.label}</div>*/}
+      {/*      </Html>*/}
+      {/*    </group>*/}
+      {/*  )*/}
+      {/*})}*/}
     </group>
   )
 }

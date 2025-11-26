@@ -10,7 +10,7 @@ type Props = {
 };
 
 // 定义侧边栏的背景色
-const sidebarDayBg = '#EBF3FF';
+const sidebarDayBg = '#c5d6f0';
 const sidebarNightBg = '#1A1A33';
 
 export default function Sidebar({dark, setDark, isMobile, toggleSidebar, isCollapsed}: Props) {
@@ -22,24 +22,29 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, isColla
   if (!isMobile && isCollapsed) {
     return (
       <div
-        className={`h-full flex flex-col justify-end items-center ${textColor}`}
-        style={{ backgroundColor: sidebarBg }}
+        className={`h-full flex flex-col justify-between items-center ${textColor}`}
+        style={{backgroundColor: sidebarBg}}
       >
+        <img src="https://www.largeherds.co.za/wp-content/uploads/2024/01/logo-placeholder-image.png"
+             alt="logo"
+             className="rounded w-14"
+        />
         <button
           onClick={toggleSidebar}
-          className="px-2 py-1 opacity-70 hover:opacity-100"
+          className="px-6 py-1 opacity-50 hover:opacity-100"
         >
-          {`<`}
+          {`>`}
         </button>
       </div>
     )
   }
 
+
   // 展开时的内容
   return (
     <div
       className={`p-4 space-y-4 h-full flex flex-col ${textColor}`}
-      style={{ backgroundColor: sidebarBg }}
+      style={{backgroundColor: sidebarBg}}
     >
       {/* Controls */}
       <div className="flex gap-4 justify-between">
