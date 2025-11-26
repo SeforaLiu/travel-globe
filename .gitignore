@@ -1,0 +1,53 @@
+# 👉 Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 👉 Build output
+dist/
+build/
+.out/
+.next/
+.cache/
+
+# 👉 Vite / Webpack / CRA Cache
+.vite/
+.vitest/
+.eslintcache
+.cache/
+.parcel-cache/
+
+# 👉 TypeScript
+*.tsbuildinfo
+
+# 👉 Logs
+logs/
+*.log
+*.log.*
+
+# 👉 Environment variables
+.env
+.env.*
+!.env.example
+
+# 👉 Editor directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 👉 Mac / Windows
+.DS_Store
+Thumbs.db
+
+# 👉 Optional: local dev data
+.tmp/
+temp/
