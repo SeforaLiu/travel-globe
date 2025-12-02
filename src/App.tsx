@@ -18,7 +18,6 @@ export default function App() {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      // 在桌面端默认显示侧边栏和右侧面板
       if (!mobile) {
         setShowSidebar(true) // 保持默认显示
         setShowRightPanel(true)
@@ -33,24 +32,14 @@ export default function App() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  const sidebarWidthClass = isMobile
-    ? 'absolute inset-y-0 left-0 z-40 w-64'
-    : showSidebar
-      ? 'w-[18%]'
-      : 'w-[3%]'; // PC 折叠时，占用 4% 宽度
-
-  const mainContentWidthClass = isMobile
-    ? 'w-full'
-    : showSidebar
-      ? 'w-[67%]' // 100% - 18% (sidebar) - 15% (rightPanel) = 67%
-      : 'w-[82%]'; // 100% - 4% (sidebar) - 15% (rightPanel) = 81%
-
-  const rightPanelWidthClass = isMobile
-    ? 'absolute inset-y-0 right-0 z-40 w-64' : 'w-[15%]';
+  // 定义侧边栏的背景色
+  const sidebarDayBg = '#c5d6f0';
+  const sidebarNightBg = '#1A1A33';
+  const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
+  const textColor = dark ? 'text-white' : 'text-gray-800';
 
   return (
     <div className="h-screen flex relative">
-      {/* 移动端侧边栏切换按钮  */}
       {isMobile && !showSidebar && !showRightPanel && (
         <button
           onClick={() => setShowSidebar(true)}
@@ -60,7 +49,6 @@ export default function App() {
         </button>
       )}
 
-      {/* 移动端右侧面板切换按钮 */}
       {isMobile && !showRightPanel && !showSidebar && (
         <button
           onClick={() => setShowRightPanel(true)}
@@ -70,31 +58,34 @@ export default function App() {
         </button>
       )}
 
-      {(showSidebar || !isMobile) && (
+      {showSidebar && (
         <div
-          className={`${sidebarWidthClass} border-r bg-white dark:bg-gray-900 transition-all duration-300 overflow-hidden`}>
+          className={`
+            fixed inset-y-0 left-0 z-40 
+            w-64 
+            bg-white dark:bg-gray-900 
+            transition-transform duration-300
+            ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
+          `}
+        >
           <Sidebar
             dark={dark}
             setDark={setDark}
             isMobile={isMobile}
-            toggleSidebar={() => setShowSidebar(!showSidebar)}
-            isCollapsed={!showSidebar && !isMobile}
+            toggleSidebar={() => setShowSidebar(false)}
           />
         </div>
       )}
 
-      {/* 主内容区域 */}
-      <div className={`${mainContentWidthClass} transition-all duration-200 border-8 border-emerald-500`}>
+      <div className="flex-1 min-w-0">
         <Routes>
           <Route path="/" element={<Home dark={dark}/>}/>
-          {/* 你后面可以加入 /diary/:id /guide/:id 等路由 */}
         </Routes>
       </div>
 
-      {/* 右侧面板  */}
       {(showRightPanel || !isMobile) && (
         <div
-          className={`${rightPanelWidthClass}  border-8 border-amber-600 bg-white dark:bg-gray-900 transition-all duration-300`}>
+          className={`${isMobile} ? 'absolute inset-y-0 right-0 z-40 w-64' : 'w-[10%] flex-shrink-0' bg-amber-50 dark:bg-gray-900 transition-all duration-300`}>
           <RightPanel/>
         </div>
       )}
@@ -109,6 +100,26 @@ export default function App() {
           }}
         />
       )}
-   </div>
+
+      {/*打开 sidebar*/}
+      {(!isMobile && !showSidebar) && (
+        <div
+          className={`absolute left-0 h-full flex flex-col justify-between items-center ${textColor}`}
+          style={{backgroundColor: sidebarBg}}
+        >
+          <img src="https://www.largeherds.co.za/wp-content/uploads/2024/01/logo-placeholder-image.png"
+               alt="logo"
+               className="rounded w-10"
+          />
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="px-4 py-1 opacity-50 hover:opacity-100"
+          >
+            {`>`}
+          </button>
+        </div>
+      )
+      }
+    </div>
   )
 }

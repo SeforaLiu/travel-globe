@@ -15,7 +15,7 @@ export default function Home({dark}: Props) {
   const {t} = useTranslation()
 
   return (
-    <div className="w-full h-full relative">
+    <div className="h-full relative">
       <div className="
         absolute
         z-20
