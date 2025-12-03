@@ -1,6 +1,6 @@
 import React, {useState} from 'react'
 import {Canvas} from '@react-three/fiber'
-import {OrbitControls} from '@react-three/drei'
+import {OrbitControls, PresentationControls} from '@react-three/drei'
 import {useTranslation} from 'react-i18next'
 import {MoodSphere} from '../three/MoodSphere'
 import Earth from '../three/Earth'
@@ -8,9 +8,10 @@ import {SkyGradientBackground} from "../three/SkyGradientBackground";
 
 type Props = {
   dark: boolean;
+  isMobile: boolean;
 };
 
-export default function Home({dark}: Props) {
+export default function Home({dark, isMobile}: Props) {
   const [moodMode, setMoodMode] = useState(false)
   const {t} = useTranslation()
 
@@ -47,8 +48,27 @@ export default function Home({dark}: Props) {
         <SkyGradientBackground dark={dark}/>
         <ambientLight intensity={1.6}/>
         <directionalLight position={[5, 5, 5]} intensity={1.2}/>
-        <OrbitControls enablePan={false}/>
-        {moodMode ? <MoodSphere/> : <Earth/>}
+
+        <OrbitControls
+          enableZoom={true}
+          zoomSpeed={0.5}
+          minDistance={1}
+          maxDistance={10}
+          enablePan={true}
+          target={isMobile ? [0, 0, 0] : [0, 0, 0]}
+          enableRotate={false} // 禁用旋转，让PresentationControls处理
+        />
+
+        <PresentationControls
+          enabled={true}
+          zoom={1}
+          global
+          polar={[-Math.PI / 2, Math.PI / 2]} // Vertical limits
+          azimuth={[-Infinity, Infinity]} // Horizontal limits
+          config={{mass: 1, tension: 170, friction: 26}}
+        >
+          {moodMode ? <MoodSphere/> : <Earth dark={dark} isMobile={isMobile}/>}
+        </PresentationControls>
       </Canvas>
     </div>
   )

@@ -1,5 +1,6 @@
-import React from 'react'
+import React, {Suspense, lazy, useState, startTransition} from 'react'
 import {useTranslation} from 'react-i18next'
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
   dark: boolean;
@@ -8,12 +9,35 @@ type Props = {
   toggleSidebar: () => void;
 };
 
+const DiaryForm = lazy(() => import('./DiaryForm'));
+
 // 定义侧边栏的背景色
 const sidebarDayBg = '#c5d6f0';
 const sidebarNightBg = '#1A1A33';
 
 export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props) {
   const {t, i18n} = useTranslation()
+  const [showForm, setShowForm] = useState(false);
+  const [formType, setFormType] = useState<'diary' | 'guide'>('diary');
+  const handleAddClick = (type: 'diary' | 'guide') => {
+    setFormType(type);
+    setShowForm(true);
+  };
+  const handleFormSubmit = (data: any) => {
+    console.log('Form submitted:', data);
+    // 这里处理表单提交逻辑，比如保存到数据库
+    setShowForm(false);
+  };
+  const navigate = useNavigate();
+  const handleAddDiary = () => {
+    // 跳转到新建日记页面
+    navigate('/new-diary');
+    console.log('点击新增')
+
+    if (isMobile) {
+      // 如果是移动端，点击后可以关闭侧边栏
+    }
+  };
 
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
   const textColor = dark ? 'text-white' : 'text-gray-800';
@@ -38,10 +62,20 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props)
         </select>
       </div>
 
+      {showForm && (
+        <Suspense fallback={<div>Loading diary form...</div>}>
+          <DiaryForm
+            isMobile={isMobile}
+            onClose={() => setShowForm(false)}
+            onSubmit={handleFormSubmit}
+          />
+        </Suspense>
+      )}
+
       {/* Title / Logo */}
       <div className="flex items-center justify-between">
         <div className="text-2xl font-bold">{t('title')}</div>
-        <img src="https://www.largeherds.co.za/wp-content/uploads/2024/01/logo-placeholder-image.png"
+        <img src="/logo/logo-placeholder-image.png"
              alt="logo"
              className="rounded w-14"
         />
@@ -49,7 +83,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props)
 
       {/* User */}
       <div className="flex items-center gap-3">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
+        <img src="/avatar/avatar.png"
              alt="avatar"
              className="rounded-full w-12"
         />
@@ -63,9 +97,13 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props)
       <input className="w-full border rounded p-2 " placeholder="🔍"/>
 
       {/* Add buttons */}
-      <div className="flex gap-2 w-full">
-        <button className=" flex-1 bg-diary text-white rounded px-4 py-1 whitespace-nowrap">{t('addDiary')}</button>
-        <button className=" flex-1 bg-guide text-white rounded px-4 py-1 whitespace-nowrap">{t('addGuide')}</button>
+      <div className="flex w-full">
+        <button
+          className=" flex-1 bg-guide text-white rounded px-4 py-1 whitespace-nowrap"
+          onClick={handleAddDiary}
+        >
+          {t('addGuide')}
+        </button>
       </div>
 
       {/* Tabs */}
@@ -74,7 +112,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props)
         <div>攻略(5)</div>
       </div>
 
-      {/* List area (auto expand) */}
+      {/* List area (auto expand`) */}
       <div className="flex-1 overflow-auto text-sm opacity-80">
         <ul className="space-y-2">
           <li className="p-2 border rounded">上海 — 2025-06-01</li>

@@ -1,6 +1,3 @@
-// src/types/r3f-globals.d.ts
-
-// 导入 @react-three/fiber 的类型，特别是 Object3DNode, MaterialNode, GeometryNode, LightNode
 import type {
   Object3DNode,
   MaterialNode,
@@ -10,7 +7,6 @@ import type {
 
 // 导入 Three.js 的核心类型
 import * as THREE from 'three';
-
 
 // 关键步骤：扩展 React 的 JSX 命名空间，强制注册所有常用标签。
 declare module 'react' {
@@ -31,6 +27,7 @@ declare module 'react' {
       // 3. 材质类 (Material)
       meshStandardMaterial: MaterialNode<THREE.MeshStandardMaterial, typeof THREE.MeshStandardMaterial>;
       pointsMaterial: MaterialNode<THREE.PointsMaterial, typeof THREE.PointsMaterial>;
+      meshBasicMaterial:MaterialNode<THREE.MeshBasicMaterial, typeof THREE.MeshBasicMaterial>;
 
       // 4. 光照类 (Light)
       ambientLight: LightNode<THREE.AmbientLight, typeof THREE.AmbientLight>;

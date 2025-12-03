@@ -36,3 +36,10 @@ input, select, textarea {
         display: none;
     }
 }
+
+/* 修复iOS的flex布局问题 */
+@supports (-webkit-touch-callout: none) {
+    .ios-flex-fix {
+        min-height: -webkit-fill-available;
+    }
+}
