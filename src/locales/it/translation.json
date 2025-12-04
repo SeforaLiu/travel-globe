@@ -4,5 +4,18 @@
   "earth": "Terra",
   "addDiary": "+ Diario",
   "addGuide": "+ Guida",
-  "addNewDiaryOrGuide": "Nuovo/a Diario/Guida"
+  "addNewDiaryOrGuide": "Nuovo Diario / Nuova Guida",
+  "AddTitle": "Titolo",
+  "AddType": "Tipo",
+  "AddTypeVisited": "andata/andato",
+  "AddTypeWishList": "wish list",
+  "AddLocation": "Locazione",
+ "AddDate": "Date",
+  "AddTransportation": "Trasporto",
+  "AddContent": "Contenuto ",
+  "AddPhotos": "Foto",
+  "AddSelectPhotosTip": "Trascina qui o clicca per caricare",
+  "AddSelectPhotosButton": "sceglie foto",
+  "AddSubmitButton": "applica",
+  "AddCancelButton": "cancella"
 }

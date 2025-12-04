@@ -4,5 +4,19 @@
   "earth": "Earth",
   "addDiary": "+ Diary",
   "addGuide": "+ Guide",
-  "addNewDiaryOrGuide": "Add New Diary/Guide"
+  "addNewDiaryOrGuide": "Add New Diary/Guide",
+  "AddTitle": "Title",
+  "AddType": "Type",
+  "AddTypeVisited": "visited",
+  "AddTypeWishList": "wish list",
+  "AddLocation": "Location",
+  "AddDate": "Date",
+  "AddTransportation": "Transportation",
+  "AddContent": "Content",
+  "AddPhotos": "Photos",
+  "AddSelectPhotosTip": "Drag here or click to upload",
+  "AddSelectPhotosButton": "select photos",
+  "AddSubmitButton": "submit",
+  "AddCancelButton": "cancel"
+
 }
