@@ -14,6 +14,7 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true) // PC端默认显示，所以改为 true
   const [showRightPanel, setShowRightPanel] = useState(false)
+  const [showLeftRightButtonsMobile, setShowLeftRightButtonsMobile] = useState(true)
 
   const handleBack = () => {
     navigate(-1); // 返回上一页
@@ -99,7 +100,7 @@ export default function App() {
 
   return (
     <div className="h-screen flex relative">
-      {isMobile && !showSidebar && !showRightPanel && (
+      {isMobile && !showSidebar && !showRightPanel && showLeftRightButtonsMobile && (
         <button
           onClick={() => setShowSidebar(true)}
           className="absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"
@@ -108,7 +109,7 @@ export default function App() {
         </button>
       )}
 
-      {isMobile && !showRightPanel && !showSidebar && (
+      {isMobile && !showRightPanel && !showSidebar && showLeftRightButtonsMobile && (
         <button
           onClick={() => setShowRightPanel(true)}
           className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"
@@ -132,6 +133,7 @@ export default function App() {
             setDark={setDark}
             isMobile={isMobile}
             toggleSidebar={() => setShowSidebar(false)}
+            hideMobileButtons={()=>setShowLeftRightButtonsMobile(false)}
           />
         </div>
       )}
@@ -147,6 +149,7 @@ export default function App() {
               onClose={()=>{
                 console.log('点击关闭')
                 handleBack()
+                setShowLeftRightButtonsMobile(true)
               }}
               onSubmit={()=>{
                 console.log('点击提交')}}

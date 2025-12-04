@@ -7,27 +7,15 @@ type Props = {
   setDark: (v: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  hideMobileButtons: () => void;
 };
-
-const DiaryForm = lazy(() => import('./DiaryForm'));
 
 // 定义侧边栏的背景色
 const sidebarDayBg = '#c5d6f0';
 const sidebarNightBg = '#1A1A33';
 
-export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props) {
+export default function Sidebar({dark, setDark, isMobile, toggleSidebar,hideMobileButtons}: Props) {
   const {t, i18n} = useTranslation()
-  const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState<'diary' | 'guide'>('diary');
-  const handleAddClick = (type: 'diary' | 'guide') => {
-    setFormType(type);
-    setShowForm(true);
-  };
-  const handleFormSubmit = (data: any) => {
-    console.log('Form submitted:', data);
-    // 这里处理表单提交逻辑，比如保存到数据库
-    setShowForm(false);
-  };
   const navigate = useNavigate();
   const handleAddDiary = () => {
     // 跳转到新建日记页面
@@ -36,6 +24,8 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props)
 
     if (isMobile) {
       // 如果是移动端，点击后可以关闭侧边栏
+      toggleSidebar()
+      hideMobileButtons()
     }
   };
 
@@ -61,16 +51,6 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar}: Props)
           <option value="it">Italiano</option>
         </select>
       </div>
-
-      {showForm && (
-        <Suspense fallback={<div>Loading diary form...</div>}>
-          <DiaryForm
-            isMobile={isMobile}
-            onClose={() => setShowForm(false)}
-            onSubmit={handleFormSubmit}
-          />
-        </Suspense>
-      )}
 
       {/* Title / Logo */}
       <div className="flex items-center justify-between">
