@@ -11,13 +11,14 @@
     "@cloudinary/url-gen": "^1.22.0",
     "@react-three/drei": "^9.87.0",
     "@react-three/fiber": "^8.14.0",
-    "@uiw/react-md-editor": "^4.0.9",
+    "@uiw/react-md-editor": "4.0.9",
     "i18next": "^23.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^12.2.0",
     "react-router-dom": "^6.22.0",
-    "three": "^0.159.0"
+    "three": "^0.159.0",
+    "vconsole": "^3.15.1"
   },
   "devDependencies": {
     "@types/three": "^0.181.0",

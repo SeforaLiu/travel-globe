@@ -3,5 +3,6 @@
   "mood": "Mood",
   "earth": "Earth",
   "addDiary": "+ Diary",
-  "addGuide": "+ Guide"
+  "addGuide": "+ Guide",
+  "addNewDiaryOrGuide": "Add New Diary/Guide"
 }

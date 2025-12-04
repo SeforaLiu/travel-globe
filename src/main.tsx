@@ -5,6 +5,15 @@ import App from './App.tsx'
 import './styles/index.css'
 import './i18n'
 
+// 判断是否为开发环境
+// @ts-ignore
+if (import.meta.env.MODE === 'development') {
+  import('vconsole').then((module) => {
+    const VConsole = module.default;
+    new VConsole(); // 初始化
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter
     future={{

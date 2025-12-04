@@ -73,7 +73,6 @@ export default function App() {
     console.log('现在可以安全地初始化地图了。', window.google);
   };
 
-
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768
@@ -100,21 +99,27 @@ export default function App() {
 
   return (
     <div className="h-screen flex relative">
-      {isMobile && !showSidebar && !showRightPanel && showLeftRightButtonsMobile && (
+      {isMobile && showLeftRightButtonsMobile && (
         <button
-          onClick={() => setShowSidebar(true)}
+          onClick={() => {
+            setShowSidebar(true)
+            setShowLeftRightButtonsMobile(false)
+        }}
           className="absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"
         >
           ☰
         </button>
       )}
 
-      {isMobile && !showRightPanel && !showSidebar && showLeftRightButtonsMobile && (
+      {isMobile && showLeftRightButtonsMobile && (
         <button
-          onClick={() => setShowRightPanel(true)}
+          onClick={() =>{
+            setShowRightPanel(true)
+            setShowLeftRightButtonsMobile(false)
+          }}
           className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"
         >
-          ⚙️
+          ✈️
         </button>
       )}
 
@@ -152,7 +157,9 @@ export default function App() {
                 setShowLeftRightButtonsMobile(true)
               }}
               onSubmit={()=>{
-                console.log('点击提交')}}
+                console.log('点击提交')
+                setShowLeftRightButtonsMobile(true)
+              }}
             />
           }/>
         </Routes>
@@ -172,6 +179,7 @@ export default function App() {
           onClick={() => {
             setShowSidebar(false)
             setShowRightPanel(false)
+            setShowLeftRightButtonsMobile(true)
           }}
         />
       )}
