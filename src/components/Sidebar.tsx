@@ -53,7 +53,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar,hideMobi
       </div>
 
       {/* Title / Logo */}
-      <div className="flex items-center justify-between">
+      <div className="cursor-pointer flex items-center justify-between" onClick={()=> navigate('/')}>
         <div className="text-2xl font-bold">{t('title')}</div>
         <img src="/logo/logo-placeholder-image.png"
              alt="logo"
