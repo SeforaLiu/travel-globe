@@ -156,8 +156,8 @@ export default function App() {
                 handleBack()
                 setShowLeftRightButtonsMobile(true)
               }}
-              onSubmit={()=>{
-                console.log('点击提交')
+              onSubmit={(formData)=>{
+                console.log('点击提交, 信息:',formData)
                 setShowLeftRightButtonsMobile(true)
               }}
             />

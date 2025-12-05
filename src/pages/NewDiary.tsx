@@ -1,5 +1,9 @@
+// noinspection LanguageDetectionInspection
+
 import React, {useEffect, lazy, useState, Suspense, startTransition} from 'react';
 import {useTranslation} from 'react-i18next';
+import MapPreview from "../components/MapPreview";
+import LocationSearch from "../components/LocationSearch";
 
 const MarkdownEditor = lazy(() => import('@uiw/react-md-editor'));
 
@@ -39,18 +43,14 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     onSubmit(formData);
   };
 
-  // @ts-ignore
-  const handleLocationSelect = (place: google.maps.places.PlaceResult) => {
-    if (place.geometry?.location) {
-      setFormData({
-        ...formData,
-        location: place.formatted_address || '',
-        coordinates: {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        },
-      });
-    }
+  const handleMapClick = (latLng: { lat: number, lng: number }, address: string) => {
+    // 这个 address 是通过 MapPreview 内部的逆地理编码获取的
+    setFormData(prev => ({
+      ...prev,
+      location: address, // 设置 input 框的地址
+      coordinates: latLng, // 设置坐标
+    }));
+    // 理论上，更新完 state 后，LocationSearch 的 value 会更新，MapPreview 也会重新渲染
   };
 
   const handleChange = (value: string) => {
@@ -59,6 +59,46 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     // startTransition(() => {
     //   setFormData({...formData, content: value || ''});
     // });
+  };
+
+  // @ts-ignore
+  const handleLocationSelect = (place: google.maps.places.PlaceResult) => {
+    console.log('New Diary 选中了地址', place);
+
+    if (place.geometry?.location) {
+      // 获取显示的地址名称
+      const addressText = place.formatted_address || place.name || '';
+
+      // 获取经纬度
+      const lat = typeof place.geometry.location.lat === 'function'
+        ? place.geometry.location.lat()
+        : (place.geometry.location.lat as number);
+      const lng = typeof place.geometry.location.lng === 'function'
+        ? place.geometry.location.lng()
+        : (place.geometry.location.lng as number);
+
+      // === 修改重点 ===
+      // 使用回调函数 setFormData(prev => ...) 以防止状态覆盖
+      // 并且在这里同时更新 location (文字) 和 coordinates (坐标)
+      setFormData(prev => ({
+        ...prev,
+        location: addressText,
+        coordinates: { lat, lng },
+      }));
+    }
+    console.log('handleLocationSelect -- NewDiary 选完地址之后-----',formData.coordinates)
+  };
+
+  // 这里的 handleChange 保持不变，用于处理手动输入的情况
+  // 如果用户手动修改了输入框文字，坐标清空
+  const handleLocationChange = (value: string) => {
+    console.log('handleLocationChange -- 手动改变了location-----',formData.coordinates)
+    setFormData(prev => ({
+      ...prev,
+      location: value,
+      coordinates: null
+    }));
+    console.log('handleLocationChange -- 手动改变了location end-----',formData.coordinates)
   };
 
 // PC端布局
@@ -119,25 +159,25 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
             {/* 第二行：地点和交通方式 */}
             <div className="grid grid-cols-2 gap-6">
               {/* 地点 */}
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('AddLocation')}<span className="text-red-500"> *</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-7 00 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500"
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                {t('AddLocation')}<span className="text-red-500"> *</span>
+              </label>
+              <LocationSearch
+                onSelect={handleLocationSelect}
+                value={formData.location}
+                // 注意这里：传递专门处理 input 变化的函数
+                onChange={handleLocationChange}
+              />
+              {formData.coordinates && (
+                <MapPreview
+                  lat={formData.coordinates.lat}
+                  lng={formData.coordinates.lng}
+                  dark={dark}
+                  onMapClick={handleMapClick}
                 />
-                {formData.coordinates && (
-                  <div className="mt-4 h-40 border border-gray-300 rounded-lg dark:border-gray-600 overflow-hidden">
-                    <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-700 text-gray-400">
-                      地图预览 (纬度: {formData.coordinates.lat}, 经度: {formData.coordinates.lng})
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
+            </div>
 
               {/* 交通方式 */}
               <div>
@@ -189,6 +229,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                 <Suspense fallback={<div className="h-[500px] flex items-center justify-center bg-gray-100 dark:bg-gray-700">加载编辑器中...</div>}>
                   <MarkdownEditor
                     value={formData.content}
+                    // @ts-ignore
                     onChange={handleChange}
                     height={500}
                   />
@@ -330,20 +371,25 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddLocation')}<span className="text-red-500"> *</span>
               </label>
-              <input
-                type="text"
-                required
-                className={`w-full p-3 border rounded-lg ${dark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+              <LocationSearch
+                onSelect={handleLocationSelect}
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                // onChange={(value) => setFormData({...formData, location: value})}
+                // 注意这里：传递专门处理 input 变化的函数
+                onChange={handleLocationChange}
               />
+
+
               {formData.coordinates && (
-                <div className={`mt-2 h-40 border rounded-lg ${dark ? 'border-gray-600' : 'border-gray-300'}`}>
-                  <div className={`flex items-center justify-center h-full ${dark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
-                    地图预览 (纬度: {formData.coordinates.lat}, 经度: {formData.coordinates.lng})
-                  </div>
-                </div>
+                <MapPreview
+                  lat={formData.coordinates.lat}
+                  lng={formData.coordinates.lng}
+                  dark={dark}
+                  // 2. 将新的处理函数作为 prop 传递
+                  onMapClick={handleMapClick}
+                />
               )}
+
             </div>
 
             {/* 日期 */}

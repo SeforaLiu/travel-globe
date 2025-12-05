@@ -38,6 +38,21 @@ declare module 'react' {
       bufferAttribute: Object3DNode<THREE.BufferAttribute, typeof THREE.BufferAttribute> & {
         attach: 'attributes-position' | string; // 明确属性
       };
+
+      // 使用一个更通用的签名来告诉 React，任何以 "google-map-" 开头的元素都是合法的
+      // 或者直接使用 'google-map-place-autocomplete-element'
+      [elem: string]: any;
+
+      // 确保您的 'google-map-place-autocomplete-element' 声明位于最外层：
+      'google-map-place-autocomplete-element': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & {
+        onPlacechange?: (event: CustomEvent<{ place: google.maps.places.Place }>) => void;
+        'fields'?: string;
+        'country'?: string;
+        'placeholder'?: string;
+      },
+        HTMLElement
+      >;
     }
   }
 }

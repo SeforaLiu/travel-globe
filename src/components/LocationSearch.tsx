@@ -12,6 +12,20 @@ export default function LocationSearch({ onSelect, value, onChange }: Props) {
   // @ts-ignore
   const autocompleteRef = useRef<google.maps.places.Autocomplete>();
 
+  // 处理 google warning
+  const originalWarn = console.warn;
+  console.warn = function(...args) {
+    // 检查警告消息是否包含 Google Autocomplete 的弃用信息
+    const isGoogleMapsWarning = args.some(arg =>
+      typeof arg === 'string' &&
+      arg.includes('google.maps.places.Autocomplete is not available to new customers')
+    );
+    // 如果不是目标警告，则调用原始的 warn 函数打印它
+    if (!isGoogleMapsWarning) {
+      originalWarn.apply(console, args);
+    }
+  };
+
   useEffect(() => {
     // @ts-ignore
     if (!window.google || !inputRef.current) return;
@@ -32,6 +46,10 @@ export default function LocationSearch({ onSelect, value, onChange }: Props) {
       }
     });
 
+
+    console.log('autocompleteRef',autocompleteRef.current)
+    console.log('inputRef',inputRef.current)
+
     return () => {
       if (autocompleteRef.current) {
         // @ts-ignore
@@ -39,6 +57,7 @@ export default function LocationSearch({ onSelect, value, onChange }: Props) {
       }
     };
   }, [onSelect]);
+
 
   return (
     <input
