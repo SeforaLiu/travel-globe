@@ -82,17 +82,3 @@ input, select, textarea {
 .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     background-color: rgba(75, 85, 99, 0.7);
 }
-
-/* 在全局CSS中添加 */
-.draggable-photo {
-    transition: transform 0.2s ease;
-}
-
-.draggable-photo.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
-}
-
-.draggable-photo.drop-target {
-    border: 2px dashed #3b82f6;
-}

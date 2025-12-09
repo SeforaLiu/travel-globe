@@ -1,5 +1,4 @@
-// NewDiary.tsx 优化后的完整代码
-import React, {useCallback, useEffect, lazy, useState, Suspense} from 'react';
+import React, {useCallback, lazy, useState, Suspense} from 'react';
 import {useTranslation} from 'react-i18next';
 import MapPreview from "../components/MapPreview";
 import LocationSearch from "../components/LocationSearch";
@@ -36,7 +35,39 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     content: '',
     photos: [],
   });
-  const [showMapPreview, setShowMapPreview] = useState(false)
+  const [showMapPreview, setShowMapPreview] = useState(false);
+
+  // 拖拽排序状态：用于存储正在拖动的图片索引
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  // 移动端模拟拖拽排序的状态（长按/触摸排序）
+  const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0, index: -1, isDragging: false });
+
+
+  /**
+   * 图片拖拽排序逻辑
+   * @param fromIndex 拖动的起始索引
+   * @param toIndex 拖动的目标索引
+   */
+  const handleSort = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= formData.photos.length || toIndex >= formData.photos.length) {
+      return;
+    }
+    const newPhotos = [...formData.photos];
+    const [movedPhoto] = newPhotos.splice(fromIndex, 1);
+    newPhotos.splice(toIndex, 0, movedPhoto);
+
+    setFormData(prev => ({
+      ...prev,
+      photos: newPhotos,
+    }));
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    const newPhotos = [...formData.photos];
+    newPhotos.splice(index, 1);
+    setFormData({...formData, photos: newPhotos});
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +124,59 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     setShowMapPreview(true);
   };
 
+  // 移动端辅助函数：根据坐标找到图片索引
+  const getTouchedPhotoIndex = (clientX: number, clientY: number) => {
+    const photoElements = document.querySelectorAll('.mobile-photo-item');
+    for (let i = 0; i < photoElements.length; i++) {
+      const rect = photoElements[i].getBoundingClientRect();
+      if (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      ) {
+        // 使用 dataset 获取元素的原始索引
+        return parseInt(photoElements[i].getAttribute('data-index') || '-1');
+      }
+    }
+    return -1;
+  };
+
+  // 移动端触摸开始事件
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    e.stopPropagation();
+
+    const touch = e.touches[0];
+    setTouchStartPos({
+      x: touch.clientX,
+      y: touch.clientY,
+      index: index,
+      isDragging: true,
+    });
+    setDraggedIndex(index); // 标记当前拖动的索引
+  };
+
+  // 移动端触摸移动事件（模拟拖拽）
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos.isDragging || touchStartPos.index === -1) return;
+    e.preventDefault(); // 阻止默认的滚动行为
+
+    const touch = e.touches[0];
+    const targetIndex = getTouchedPhotoIndex(touch.clientX, touch.clientY);
+
+    if (targetIndex !== -1 && draggedIndex !== null && targetIndex !== draggedIndex) {
+      handleSort(draggedIndex, targetIndex);
+      setDraggedIndex(targetIndex); // 更新拖动元素的索引到新位置
+    }
+  };
+
+  // 移动端触摸结束事件
+  const handleTouchEnd = () => {
+    setTouchStartPos({ x: 0, y: 0, index: -1, isDragging: false });
+    setDraggedIndex(null); // 重置拖动状态
+  };
+
+
   // PC端布局
   if (!isMobile) {
     return (
@@ -111,7 +195,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
 
           {/* 表单内容 - 苹果风格表单 */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto scrollbar-custom" style={{maxHeight: 'calc(100vh - 120px)'}}>
-           {/*主要内容*/}
+            {/*主要内容*/}
             <div className="">
               {/* 第一行：标题和类型 */}
               <div className="grid grid-cols-2 gap-6">
@@ -263,10 +347,10 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                     );
 
                     if (files.length > 0) {
-                      setFormData({
-                        ...formData,
-                        photos: [...formData.photos, ...files]
-                      });
+                      setFormData(prev => ({
+                        ...prev,
+                        photos: [...prev.photos, ...files]
+                      }));
                     }
                   }}
                   onClick={() => document.getElementById('photo-upload')?.click()}
@@ -280,10 +364,11 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                     id="photo-upload"
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
-                        setFormData({
-                          ...formData,
-                          photos: [...formData.photos, ...Array.from(e.target.files)]
-                        });
+                        setFormData(prev => ({
+                          ...prev,
+                          // @ts-ignore
+                          photos: [...prev.photos, ...Array.from(e.target.files)]
+                        }));
                       }
                     }}
                     onFocus={handleInputFocus}
@@ -296,9 +381,27 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                   </button>
                 </div>
                 {formData.photos.length > 0 && (
-                  <div className="mt-4 flex max-h-60 overflow-y-auto p-2">
+                  <div
+                    className="mt-4 flex max-h-60 overflow-x-auto p-2"
+                    onDragOver={(e) => e.preventDefault()} // 允许拖拽放置
+                  >
                     {formData.photos.map((photo, index) => (
-                      <div key={index} className=" relative mr-3 w-24 h-24 aspect-square border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                      <div
+                        key={index}
+                        className={`relative mr-3 w-24 h-24 aspect-square border rounded-lg overflow-hidden cursor-move ${draggedIndex === index ? 'opacity-50 border-blue-500' : (dark ? 'border-gray-700' : 'border-gray-200')}`}
+                        // **PC端 拖拽事件**
+                        draggable
+                        onDragStart={() => setDraggedIndex(index)}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          if (draggedIndex !== null && draggedIndex !== index) {
+                            handleSort(draggedIndex, index);
+                            // 立即更新 draggedIndex，使其指向新的位置，以实现更自然的排序效果
+                            setDraggedIndex(index);
+                          }
+                        }}
+                        onDragEnd={() => setDraggedIndex(null)}
+                      >
                         <img
                           src={URL.createObjectURL(photo)}
                           alt={`预览 ${index + 1}`}
@@ -307,13 +410,9 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                         <button
                           type="button"
                           className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-600 transition-colors"
-                          onClick={() => {
-                            const newPhotos = [...formData.photos];
-                            newPhotos.splice(index, 1);
-                            setFormData({...formData, photos: newPhotos});
-                          }}
+                          onClick={() => handleRemovePhoto(index)}
                         >
-                          ×
+                          &times;
                         </button>
                       </div>
                     ))}
@@ -480,7 +579,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               <button
                 type="button"
                 className={`w-full py-3 px-4 rounded-lg ${dark ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors flex items-center justify-center`}
-                onClick={() => document.getElementById('photo-upload')?.click()}
+                onClick={() => document.getElementById('photo-upload-mobile')?.click()}
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -494,22 +593,34 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                 multiple
                 accept="image/*"
                 className="hidden"
-                id="photo-upload"
+                id="photo-upload-mobile"
                 onChange={(e) => {
                   if (e.target.files) {
-                    setFormData({
-                      ...formData,
-                      photos: [...formData.photos, ...Array.from(e.target.files)]
-                    });
+                    setFormData(prev => ({
+                      ...prev,
+                      // @ts-ignore
+                      photos: [...prev.photos, ...Array.from(e.target.files)]
+                    }));
                   }
                 }}
               />
 
               {/* 照片预览 移动端布局*/}
               {formData.photos.length > 0 && (
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div
+                  className="mt-3 grid grid-cols-3 gap-2"
+                  // **移动端 触摸事件**
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
+                >
                   {formData.photos.map((photo, index) => (
-                    <div key={index} className={`relative aspect-square rounded-lg overflow-hidden ${dark ? 'border-gray-700' : 'border-gray-300'} border`}>
+                    <div
+                      key={index}
+                      className={`relative aspect-square rounded-lg overflow-hidden border mobile-photo-item ${draggedIndex === index ? 'opacity-50 border-blue-500' : (dark ? 'border-gray-700' : 'border-gray-300')}`}
+                      data-index={index} // 用于在 touchMove 中查找元素索引
+                      onTouchStart={(e) => handleTouchStart(e, index)}
+                    >
                       <img
                         src={URL.createObjectURL(photo)}
                         alt={`预览 ${index + 1}`}
@@ -518,13 +629,12 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                       <button
                         type="button"
                         className={`absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full ${dark ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white transition-colors`}
-                        onClick={() => {
-                          const newPhotos = [...formData.photos];
-                          newPhotos.splice(index, 1);
-                          setFormData({...formData, photos: newPhotos});
+                        onClick={(e) => {
+                          e.stopPropagation(); // 阻止触发 touchStart/Move
+                          handleRemovePhoto(index);
                         }}
                       >
-                        ×
+                        &times;
                       </button>
                     </div>
                   ))}
