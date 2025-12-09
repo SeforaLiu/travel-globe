@@ -1,6 +1,5 @@
 // noinspection LanguageDetectionInspection
-
-import React, {useEffect, lazy, useState, Suspense, startTransition} from 'react';
+import React, {useCallback, useEffect, lazy, useState, Suspense, startTransition} from 'react';
 import {useTranslation} from 'react-i18next';
 import MapPreview from "../components/MapPreview";
 import LocationSearch from "../components/LocationSearch";
@@ -61,13 +60,17 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     // });
   };
 
-  // @ts-ignore
-  const handleLocationSelect = (place: google.maps.places.PlaceResult) => {
-    console.log('New Diary 选中了地址', place);
+
+// 在 NewDiary.tsx 中添加调试和确保函数稳定
+  const handleLocationSelect = useCallback((place: google.maps.places.PlaceResult) => {
+    console.log('handleLocationSelect 被调用, place:', place);
+    console.log('place.formatted_address:', place.formatted_address);
+    console.log('place.geometry:', place.geometry);
 
     if (place.geometry?.location) {
       // 获取显示的地址名称
       const addressText = place.formatted_address || place.name || '';
+      console.log('设置地址为:', addressText);
 
       // 获取经纬度
       const lat = typeof place.geometry.location.lat === 'function'
@@ -76,18 +79,27 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
       const lng = typeof place.geometry.location.lng === 'function'
         ? place.geometry.location.lng()
         : (place.geometry.location.lng as number);
+      console.log('设置坐标:', { lat, lng });
 
-      // === 修改重点 ===
-      // 使用回调函数 setFormData(prev => ...) 以防止状态覆盖
-      // 并且在这里同时更新 location (文字) 和 coordinates (坐标)
+      // 使用函数式更新确保状态正确
       setFormData(prev => ({
         ...prev,
         location: addressText,
         coordinates: { lat, lng },
       }));
+    } else {
+      console.warn('地点没有几何信息:', place);
     }
-    console.log('handleLocationSelect -- NewDiary 选完地址之后-----',formData.coordinates)
-  };
+  }, []); // 使用空依赖数组确保函数稳定
+
+// 添加useEffect监听formData变化进行调试
+  useEffect(() => {
+    console.log('formData 更新:', {
+      location: formData.location,
+      coordinates: formData.coordinates,
+    });
+  }, [formData.location, formData.coordinates]);
+
 
   // 这里的 handleChange 保持不变，用于处理手动输入的情况
   // 如果用户手动修改了输入框文字，坐标清空
@@ -378,7 +390,6 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                 // 注意这里：传递专门处理 input 变化的函数
                 onChange={handleLocationChange}
               />
-
 
               {formData.coordinates && (
                 <MapPreview
