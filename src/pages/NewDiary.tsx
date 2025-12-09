@@ -134,7 +134,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
           "bg-gradient-to-b from-black to-[#282840]" : // 夜晚模式渐变
           "bg-gradient-to-b from-blue-900 to-blue-200" // 白天模式渐变
       }`}>
-        <div className="max-w-7xl mx-auto bg-white/80 dark:bg-gray-800/90 rounded-xl shadow-lg overflow-hidden">
+        <div className="max-w-full mx-auto bg-white/80 dark:bg-gray-800/90 rounded-xl shadow-lg overflow-hidden">
           {/* 表单头部 */}
           <div className="flex justify-between items-center p-4 bg-blue-500 dark:bg-gray-500 text-white">
             <h2 className="text-xl font-bold ">{t('addNewDiaryOrGuide')}</h2>
@@ -275,7 +275,37 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                 {t('AddPhotos')}
               </label>
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors cursor-pointer">
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors cursor-pointer"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.add('border-blue-500', 'bg-blue-50/50');
+                  e.currentTarget.classList.remove('border-gray-300', 'dark:border-gray-600');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50/50');
+                  e.currentTarget.classList.add('border-gray-300', 'dark:border-gray-600');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50/50');
+                  e.currentTarget.classList.add('border-gray-300', 'dark:border-gray-600');
+
+                  const files = Array.from(e.dataTransfer.files).filter(file =>
+                    file.type.startsWith('image/')
+                  );
+
+                  if (files.length > 0) {
+                    setFormData({
+                      ...formData,
+                      photos: [...formData.photos, ...files]
+                    });
+                  }
+                }}
+              >
                 <p className="text-gray-500 dark:text-gray-400">{t('AddSelectPhotosTip')}</p>
                 <input
                   type="file"
@@ -284,7 +314,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                   className="hidden"
                   id="photo-upload"
                   onChange={(e) => {
-                    if (e.target.files) {
+                    if (e.target.files && e.target.files.length > 0) {
                       setFormData({
                         ...formData,
                         photos: [...formData.photos, ...Array.from(e.target.files)]
@@ -326,6 +356,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                 </div>
               )}
             </div>
+
 
             {/* 表单底部按钮 */}
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
