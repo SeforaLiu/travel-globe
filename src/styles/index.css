@@ -43,3 +43,42 @@ input, select, textarea {
         min-height: -webkit-fill-available;
     }
 }
+
+/* 自定义滚动条样式 */
+.scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+/* Webkit浏览器（Chrome, Safari, Edge） */
+.scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+}
+
+/* 暗黑模式下的样式 */
+.dark .scrollbar-custom {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+}
+
+.dark .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 85, 99, 0.7);
+}
