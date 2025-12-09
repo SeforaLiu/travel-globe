@@ -1,20 +1,21 @@
 // LocationSearch.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 type Props = {
   onSelect: (place: google.maps.places.PlaceResult) => void;
   value: string;
   onChange: (value: string) => void;
+  onFocus: (value: string) => void;
 };
 
-export default function LocationSearch({ onSelect, value, onChange }: Props) {
+export default function LocationSearch({onSelect, value, onChange, onFocus}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [inputValue, setInputValue] = useState(value);
 
   // 处理 google warning
   const originalWarn = console.warn;
-  console.warn = function(...args) {
+  console.warn = function (...args) {
     // 检查警告消息是否包含 Google Autocomplete 的弃用信息
     const isGoogleMapsWarning = args.some(arg =>
       typeof arg === 'string' &&
@@ -122,6 +123,7 @@ export default function LocationSearch({ onSelect, value, onChange }: Props) {
       onChange={handleInputChange}
       onBlur={handleBlur}
       placeholder="搜索地点..."
+      onFocus={onFocus}
     />
   );
 }

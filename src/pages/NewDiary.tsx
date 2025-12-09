@@ -36,6 +36,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     content: '',
     photos: [],
   });
+  const [showMapPreview, setShowMapPreview] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +88,8 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
         location: addressText,
         coordinates: { lat, lng },
       }));
+
+      setShowMapPreview(true)
     } else {
       console.warn('地点没有几何信息:', place);
     }
@@ -110,7 +113,17 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
       location: value,
       coordinates: null
     }));
+    setShowMapPreview(false)
     console.log('handleLocationChange -- 手动改变了location end-----',formData.coordinates)
+  };
+
+  // 点击其她输入框（标题、交通、日期等）时隐藏地图预览
+  const handleInputFocus = () => {
+    setShowMapPreview(false);
+  };
+
+  const handleLocationInputFocus = () => {
+    setShowMapPreview(true);
   };
 
 // PC端布局
@@ -148,6 +161,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500"
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onFocus={handleInputFocus}
                 />
               </div>
 
@@ -160,6 +174,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500"
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value as 'visited' | 'wishlist'})}
+                  onFocus={handleInputFocus}
                   required
                 >
                   <option value="visited">{t('AddTypeVisited')}</option>
@@ -180,8 +195,9 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                 value={formData.location}
                 // 注意这里：传递专门处理 input 变化的函数
                 onChange={handleLocationChange}
+                onFocus={handleLocationInputFocus}
               />
-              {formData.coordinates && (
+              {formData.coordinates && showMapPreview &&(
                 <MapPreview
                   lat={formData.coordinates.lat}
                   lng={formData.coordinates.lng}
@@ -201,6 +217,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500"
                   value={formData.transportation}
                   onChange={(e) => setFormData({...formData, transportation: e.target.value})}
+                  onFocus={handleInputFocus}
                 />
               </div>
             </div>
@@ -218,6 +235,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                     ...formData,
                     dateRange: [e.target.valueAsDate, formData.dateRange[1]]
                   })}
+                  onFocus={handleInputFocus}
                 />
                 <span className="text-gray-500 dark:text-gray-400">至</span>
                 <input
@@ -227,6 +245,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                     ...formData,
                     dateRange: [formData.dateRange[0], e.target.valueAsDate]
                   })}
+                  onFocus={handleInputFocus}
                 />
               </div>
             </div>
@@ -244,6 +263,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                     // @ts-ignore
                     onChange={handleChange}
                     height={500}
+                    onFocus={handleInputFocus}
                   />
                 </Suspense>
               </div>
@@ -271,6 +291,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                       });
                     }
                   }}
+                  onFocus={handleInputFocus}
                 />
                 <button
                   type="button"
