@@ -2,6 +2,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 
 type Props = {
+  // @ts-ignore
   onSelect: (place: google.maps.places.PlaceResult) => void;
   value: string;
   onChange: (value: string) => void;
@@ -10,6 +11,7 @@ type Props = {
 
 export default function LocationSearch({onSelect, value, onChange, onFocus}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // @ts-ignore
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [inputValue, setInputValue] = useState(value);
 
@@ -34,6 +36,7 @@ export default function LocationSearch({onSelect, value, onChange, onFocus}: Pro
 
   useEffect(() => {
     // 确保Google Maps API已加载
+    // @ts-ignore
     if (!window.google || !window.google.maps || !window.google.maps.places) {
       console.warn('Google Maps API not loaded yet');
       return;
@@ -49,6 +52,7 @@ export default function LocationSearch({onSelect, value, onChange, onFocus}: Pro
 
     try {
       // 创建新的Autocomplete实例
+      // @ts-ignore
       autocompleteRef.current = new window.google.maps.places.Autocomplete(
         inputRef.current,
         {
@@ -123,6 +127,7 @@ export default function LocationSearch({onSelect, value, onChange, onFocus}: Pro
       onChange={handleInputChange}
       onBlur={handleBlur}
       placeholder="搜索地点..."
+      // @ts-ignore
       onFocus={onFocus}
     />
   );

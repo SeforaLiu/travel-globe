@@ -65,6 +65,7 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
       // @ts-ignore
       const geocoder = new google.maps.Geocoder();
 
+      // @ts-ignore
       mapInstanceRef.current.addListener('click', (event) => {
         const clickLat = event.latLng.lat();
         const clickLng = event.latLng.lng();
@@ -74,6 +75,7 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
         markerRef.current?.setPosition(clickedLatLng);
 
         // 执行逆地理编码
+        // @ts-ignore
         geocoder.geocode({ 'location': clickedLatLng }, (results, status) => {
           if (status === 'OK' && results && results[0]) {
             const address = results[0].formatted_address;

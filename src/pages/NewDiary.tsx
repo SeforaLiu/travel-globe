@@ -55,6 +55,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
     setFormData({...formData, content: value || ''});
   };
 
+  // @ts-ignore
   const handleLocationSelect = useCallback((place: google.maps.places.PlaceResult) => {
     if (place.geometry?.location) {
       const addressText = place.formatted_address || place.name || '';
@@ -268,6 +269,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                       });
                     }
                   }}
+                  onClick={() => document.getElementById('photo-upload')?.click()}
                 >
                   <p className="text-gray-500 dark:text-gray-400">{t('AddSelectPhotosTip')}</p>
                   <input
@@ -289,7 +291,6 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
                   <button
                     type="button"
                     className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                    onClick={() => document.getElementById('photo-upload')?.click()}
                   >
                     {t('AddSelectPhotosButton')}
                   </button>
@@ -349,7 +350,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
   return (
     <div className={`fixed inset-0 z-50 ${dark ? 'bg-gray-900' : 'bg-white'}`}>
       <div className={`flex flex-col h-full w-full ${dark ? 'bg-gray-900' : 'bg-white'}`}>
-        {/* 头部栏 - 类似iOS风格 */}
+        {/* 头部栏 - 类似iOS风格 移动端布局 */}
         <div className={`flex justify-between items-center p-4 ${dark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${dark ? 'border-gray-700' : 'border-gray-200'}`}>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('addNewDiaryOrGuide')}</h2>
           <button
@@ -360,10 +361,10 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
           </button>
         </div>
 
-        {/* 表单内容 */}
+        {/* 表单内容 移动端布局 */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* 标题 */}
+            {/* 标题 移动端布局 */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddTitle')}<span className="text-red-500"> *</span>
@@ -377,7 +378,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               />
             </div>
 
-            {/* 类型 */}
+            {/* 类型 移动端布局 */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddType')}<span className="text-red-500"> *</span>
@@ -393,7 +394,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               </select>
             </div>
 
-            {/* 地点 */}
+            {/* 地点 移动端布局 */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddLocation')}<span className="text-red-500"> *</span>
@@ -414,7 +415,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               )}
             </div>
 
-            {/* 日期 */}
+            {/* 日期 移动端布局 */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddDate')}
@@ -440,7 +441,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               </div>
             </div>
 
-            {/* 交通方式 */}
+            {/* 交通方式 移动端布局 */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddTransportation')}
@@ -453,7 +454,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               />
             </div>
 
-            {/* 文本内容 */}
+            {/* 文本内容 移动端布局 */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddContent')}
@@ -471,38 +472,40 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
               />
             </div>
 
-            {/* 照片上传 */}
+            {/* 照片上传 - 移动端 */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <label className={`block text-sm font-medium mb-2 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('AddPhotos')}
               </label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-4 text-center ${dark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-300 hover:bg-gray-50'} transition-colors`}
+              <button
+                type="button"
+                className={`w-full py-3 px-4 rounded-lg ${dark ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors flex items-center justify-center`}
+                onClick={() => document.getElementById('photo-upload')?.click()}
               >
-                <p className={dark ? 'text-gray-400' : 'text-gray-500'}>{t('AddSelectPhotosTip')}</p>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="hidden"
-                  id="photo-upload"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      setFormData({
-                        ...formData,
-                        photos: [...formData.photos, ...Array.from(e.target.files)]
-                      });
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  className={`mt-3 px-4 py-2 rounded-lg ${dark ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors`}
-                  onClick={() => document.getElementById('photo-upload')?.click()}
-                >
-                  {t('AddSelectPhotosButton')}
-                </button>
-              </div>
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {t('AddSelectPhotosButton')}
+              </button>
+
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                id="photo-upload"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setFormData({
+                      ...formData,
+                      photos: [...formData.photos, ...Array.from(e.target.files)]
+                    });
+                  }
+                }}
+              />
+
+              {/* 照片预览 移动端布局*/}
               {formData.photos.length > 0 && (
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {formData.photos.map((photo, index) => (
@@ -530,7 +533,7 @@ export default function NewDiary({isMobile, onClose, onSubmit, dark}: Props) {
             </div>
           </div>
 
-          {/* 底部按钮栏 - 类似iOS风格 */}
+          {/* 底部按钮栏 - 类似iOS风格 移动端布局*/}
           <div className={`p-4 border-t ${dark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'} flex justify-end gap-3`}>
             <button
               type="button"
