@@ -11,13 +11,10 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
   // 覆盖 google console.warn
   const originalWarn = console.warn;
   console.warn = function(...args) {
-    // 检查警告消息是否包含 Google Autocomplete 的弃用信息
     const isGoogleMapsWarning = args.some(arg =>
       typeof arg === 'string' &&
       arg.includes('google.maps.Marker is deprecated')
     );
-
-    // 如果不是目标警告，则调用原始的 warn 函数打印它
     if (!isGoogleMapsWarning) {
       originalWarn.apply(console, args);
     }

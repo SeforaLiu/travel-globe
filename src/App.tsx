@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import {Routes, Route, useNavigate } from 'react-router-dom'
 import Home from './pages/Home'
-import NewDiary from './pages/NewDiary'
+import NewDiary from "./pages/NewDiary/index";
 
 // @ts-ignore
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
