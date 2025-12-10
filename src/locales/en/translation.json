@@ -17,6 +17,8 @@
   "AddSelectPhotosTip": "Drag here or click to upload",
   "AddSelectPhotosButton": "select photos",
   "AddSubmitButton": "submit",
-  "AddCancelButton": "cancel"
-
+  "AddCancelButton": "cancel",
+  "back": "back",
+  "edit": "edit",
+  "delete": "delete"
 }

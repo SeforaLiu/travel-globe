@@ -17,5 +17,8 @@
   "AddSelectPhotosTip": "Trascina qui o clicca per caricare",
   "AddSelectPhotosButton": "sceglie foto",
   "AddSubmitButton": "applica",
-  "AddCancelButton": "cancella"
+  "AddCancelButton": "cancella",
+  "back": "torna",
+  "edit": "modifica",
+  "delete": "elimina"
 }

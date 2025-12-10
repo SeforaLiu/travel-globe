@@ -17,5 +17,8 @@
   "AddSelectPhotosTip": "拖动到这里或点击上传",
   "AddSelectPhotosButton": "选择照片",
   "AddSubmitButton": "提交",
-  "AddCancelButton": "取消"
+  "AddCancelButton": "取消",
+  "back": "返回",
+  "edit": "编辑",
+  "delete": "删除"
 }

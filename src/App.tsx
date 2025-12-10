@@ -1,15 +1,17 @@
 import React, {useState, useEffect} from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
-import {Routes, Route, useNavigate } from 'react-router-dom'
+import {Routes, Route, useNavigate,useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import NewDiary from "./pages/NewDiary/index";
+import DiaryView from "./pages/DiaryView"
 
 // @ts-ignore
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [dark, setDark] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true) // PC端默认显示，所以改为 true
@@ -74,22 +76,26 @@ export default function App() {
   };
 
   useEffect(() => {
+    console.log('location.pathname',location.pathname)
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
       if (!mobile) {
-        setShowSidebar(true) // 保持默认显示
+        setShowSidebar(true)
         setShowRightPanel(true)
+        setShowLeftRightButtonsMobile(false)
       } else {
         setShowSidebar(false)
         setShowRightPanel(false)
+        // 移动端只有首页显示左右按钮
+        setShowLeftRightButtonsMobile(location.pathname === '/')
       }
     }
 
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
     return () => window.removeEventListener('resize', checkScreenSize)
-  }, [])
+  }, [location.pathname])
 
   // 定义侧边栏的背景色
   const sidebarDayBg = '#c5d6f0';
@@ -162,6 +168,10 @@ export default function App() {
               }}
             />
           }/>
+          <Route path="/diary/:id" element={<DiaryView
+            dark={dark}
+            isMobile={isMobile}
+          />} />
         </Routes>
       </div>
 

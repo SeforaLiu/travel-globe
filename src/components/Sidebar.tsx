@@ -95,13 +95,10 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar,hideMobi
       {/* List area (auto expand`) */}
       <div className="flex-1 overflow-auto text-sm opacity-80">
         <ul className="space-y-2">
-          <li className="p-2 border rounded">上海 — 2025-06-01</li>
-          <li className="p-2 border rounded">罗马 — 2024-09-12</li>
-          <li className="p-2 border rounded">巴黎 — 2023-11-05</li>
-          <li className="p-2 border rounded">巴黎 — 2023-11-05</li>
-          <li className="p-2 border rounded">巴黎 — 2023-11-05</li>
-          <li className="p-2 border rounded">巴黎 — 2023-11-05</li>
-          <li className="p-2 border rounded">巴黎 — 2023-11-05</li>
+          <li className="p-2 border rounded cursor-pointer" onClick={()=> {
+            navigate('/diary/1')
+            if(isMobile) toggleSidebar()
+          }}>广州 - 2025年12月10日</li>
         </ul>
       </div>
 
