@@ -9,9 +9,10 @@ import {SkyGradientBackground} from "../three/SkyGradientBackground";
 type Props = {
   dark: boolean;
   isMobile: boolean;
+  showLabels: boolean;
 };
 
-export default function Home({dark, isMobile}: Props) {
+export default function Home({dark, isMobile, showLabels}: Props) {
   const [moodMode, setMoodMode] = useState(false)
   const {t} = useTranslation()
 
@@ -67,7 +68,7 @@ export default function Home({dark, isMobile}: Props) {
           azimuth={[-Infinity, Infinity]} // Horizontal limits
           config={{mass: 1, tension: 170, friction: 26}}
         >
-          {moodMode ? <MoodSphere/> : <Earth dark={dark} isMobile={isMobile}/>}
+          {moodMode ? <MoodSphere/> : <Earth dark={dark} isMobile={isMobile} showLabels={showLabels}/>}
         </PresentationControls>
       </Canvas>
     </div>

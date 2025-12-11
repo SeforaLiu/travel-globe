@@ -152,7 +152,7 @@ export default function App() {
       <div
         className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showSidebar && !isMobile ? 'ml-64' : 'ml-0'}`}>
         <Routes>
-          <Route path="/" element={<Home dark={dark} isMobile={isMobile}/>}/>
+          <Route path="/" element={<Home dark={dark} isMobile={isMobile} showLabels={!showSidebar}/>}/>
           <Route path="/new-diary" element={
             <NewDiary
               dark={dark}
