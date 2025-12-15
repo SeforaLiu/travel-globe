@@ -1,0 +1,76 @@
+import { useState } from 'react';
+import { FormData } from '../types';
+
+export const useFormData = (initialData?: Partial<FormData>) => {
+  const [formData, setFormData] = useState<FormData>({
+    title: '',
+    type: 'visited',
+    location: '',
+    coordinates: null,
+    dateRange: [null, null],
+    transportation: '',
+    content: '',
+    photos: [],
+    ...initialData,
+  });
+
+  const updateFormData = (updates: Partial<FormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateField = <K extends keyof FormData>(
+    field: K,
+    value: FormData[K]
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addPhotos = (newPhotos: File[]) => {
+    setFormData(prev => ({
+      ...prev,
+      photos: [...prev.photos, ...newPhotos],
+    }));
+  };
+
+  const removePhoto = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }));
+  };
+
+  const sortPhotos = (fromIndex: number, toIndex: number) => {
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= formData.photos.length ||
+      toIndex >= formData.photos.length
+    ) {
+      return;
+    }
+
+    const newPhotos = [...formData.photos];
+    const [movedPhoto] = newPhotos.splice(fromIndex, 1);
+    newPhotos.splice(toIndex, 0, movedPhoto);
+
+    updateField('photos', newPhotos);
+  };
+
+  const handleDateChange = (index: 0 | 1, date: Date | null) => {
+    const newDateRange: [Date | null, Date | null] = [...formData.dateRange];
+    newDateRange[index] = date;
+    updateField('dateRange', newDateRange);
+  };
+
+  return {
+    formData,
+    setFormData,
+    updateFormData,
+    updateField,
+    addPhotos,
+    removePhoto,
+    sortPhotos,
+    handleDateChange,
+  };
+};
