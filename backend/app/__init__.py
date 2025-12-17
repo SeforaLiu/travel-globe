@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.database import create_db_and_tables
-from app.routers import location
+from app.routers import location, user
 
 # 定义生命周期管理器
 @asynccontextmanager
@@ -19,7 +19,13 @@ app = FastAPI(lifespan=lifespan)
 
 # 允许跨域请求 (CORS)
 # origins: 允许访问您 API 的前端地址
-origins = ["http://localhost:5173", "http://192.168.3.12:5173/"]
+# origins = ["http://localhost:5173", "http://192.168.3.12:5173"]
+origins = [
+    "http://localhost:5173",
+    "http://192.168.3.12:5173",
+    "http://127.0.0.1:5173",
+    "http://0.0.0.0:5173"
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +39,7 @@ app.add_middleware(
 from app.routers import location
 
 app.include_router(location.router)
+app.include_router(user.router)
 
 @app.get("/")
 def read_root():

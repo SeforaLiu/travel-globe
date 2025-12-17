@@ -18,8 +18,13 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const {t, i18n} = useTranslation()
   const navigate = useNavigate();
   const handleAddDiary = () => {
-    // 跳转到新建日记页面
-    navigate('/new-diary');
+    // TODO 检测用户登录状态然后再决定跳转去哪里
+
+    // 未登录用户跳转到/login
+    navigate('/login');
+
+    // 登录用户跳转到新建日记页面
+    // navigate('/new-diary');
     console.log('点击新增')
 
     if (isMobile) {
@@ -106,7 +111,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
               }`}
               onClick={handleAddDiary}
           >
-            {t('addGuide')}
+            {userInfo.totalGuideDiary === 0? '登录创建地球日记吧!': t('addGuide')}
           </button>
         </div>
 

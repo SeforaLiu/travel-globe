@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import {Routes, Route, useNavigate,useLocation } from 'react-router-dom'
 import Home from './pages/Home'
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NewDiary from "./pages/NewDiary/index";
 import DiaryView from "./pages/DiaryView"
 
@@ -166,6 +168,12 @@ export default function App() {
         className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showSidebar && !isMobile ? 'ml-64' : 'ml-0'}`}>
         <Routes>
           <Route path="/" element={<Home dark={dark} isMobile={isMobile} showLabels={!showSidebar}/>}/>
+          <Route path="/login" element={
+            <Login dark={dark} isMobile={isMobile} />
+          }/>
+          <Route path="/register" element={
+            <Register dark={dark} isMobile={isMobile} />
+          }/>
           <Route path="/new-diary" element={
             <NewDiary
               dark={dark}
