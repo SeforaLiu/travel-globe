@@ -2,8 +2,10 @@
   "title": "Travel Globe",
   "mood": "Mood",
   "earth": "Earth",
+  "diary": "Diary",
+  "guide": "Guide",
   "addDiary": "+ Diary",
-  "addGuide": "+ Guide",
+  "addGuide": "+ Guide/Diary",
   "addNewDiaryOrGuide": "Add New Diary/Guide",
   "AddTitle": "Title",
   "AddType": "Type",
@@ -20,5 +22,7 @@
   "AddCancelButton": "cancel",
   "back": "back",
   "edit": "edit",
-  "delete": "delete"
+  "delete": "delete",
+  "Your journey starts here": "Your journey starts here!",
+  "Click + to add your first journey": "Click + to add your first journey!"
 }

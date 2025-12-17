@@ -2,8 +2,10 @@
   "title": "旅行地球",
   "mood": "心情球",
   "earth": "地球",
+  "diary": "日记",
+  "guide": "攻略",
   "addDiary": "+ 日记",
-  "addGuide": "+ 攻略",
+  "addGuide": "+ 攻略/日记",
   "addNewDiaryOrGuide": "新增日记/攻略",
   "AddTitle": "标题",
   "AddType": "去过/想去",
@@ -20,5 +22,7 @@
   "AddCancelButton": "取消",
   "back": "返回",
   "edit": "编辑",
-  "delete": "删除"
+  "delete": "删除",
+  "Your journey starts here": "开始你的旅程吧!",
+  "Click + to add your first journey": "点击 + 开始你的第一次旅程!"
 }

@@ -18,6 +18,14 @@ export default function App() {
   const [showRightPanel, setShowRightPanel] = useState(false)
   const [showLeftRightButtonsMobile, setShowLeftRightButtonsMobile] = useState(true)
 
+  // 从后端api获取
+  const userInfo = {
+    userName: "",
+    userAvatarUrl:"",
+    traveledPlaceTotal: 0,
+    totalGuideDiary:0,
+  }
+
   const handleBack = () => {
     navigate(-1); // 返回上一页
     // 或者 navigate('/'); // 返回首页
@@ -105,16 +113,21 @@ export default function App() {
 
   return (
     <div className="h-screen flex relative">
+      {/*
+      如果 userInfo 的 totalGuideDiary 是0 --> ☰ 按钮轻微缩放 & 发光
+      */}
       {isMobile && showLeftRightButtonsMobile && (
-        <button
-          onClick={() => {
-            setShowSidebar(true)
-            setShowLeftRightButtonsMobile(false)
-        }}
-          className="absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"
-        >
-          ☰
-        </button>
+          <button
+              onClick={() => {
+                setShowSidebar(true)
+                setShowLeftRightButtonsMobile(false)
+              }}
+              className={`absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border ${
+                  userInfo.totalGuideDiary === 0 ? 'animate-pulse ring-2 ring-blue-500' : ''
+              }`}
+          >
+            ☰
+          </button>
       )}
 
       {isMobile && showLeftRightButtonsMobile && (

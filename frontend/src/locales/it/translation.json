@@ -2,8 +2,10 @@
   "title": "Mappa Viaggi",
   "mood": "Mood",
   "earth": "Terra",
+  "diary": "Diario",
+  "guide": "Guida",
   "addDiary": "+ Diario",
-  "addGuide": "+ Guida",
+  "addGuide": "+ Guida/Diario",
   "addNewDiaryOrGuide": "Nuovo Diario / Nuova Guida",
   "AddTitle": "Titolo",
   "AddType": "Tipo",
@@ -20,5 +22,7 @@
   "AddCancelButton": "cancella",
   "back": "torna",
   "edit": "modifica",
-  "delete": "elimina"
+  "delete": "elimina",
+  "Your journey starts here": "Il tuo viaggio comincia qui!",
+  "Click + to add your first journey": "Clicca + per il primo viaggio!"
 }

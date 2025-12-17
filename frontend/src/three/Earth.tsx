@@ -16,16 +16,17 @@ function latLonToCartesian(lat: number, lon: number, radius = 2) {
   return new THREE.Vector3(x, y, z)
 }
 
+// 数据从后端接口获取
 const points = [
-  {id: 1, lat: 23.1290799, lng: 113.26436, label: 'Guangzhou', color: '#ff6666', pathId: 1},
-  {id: 2, lat: 40.712776, lng: -74.005974, label: 'New York', color: '#ff6666', pathId: 1},
-  {id: 3, lat: 31.230416, lng: 121.473701, label: 'Shanghai', color: '#ff6666', pathId: 1},
-  {id: 4, lat: 41.008240, lng: 28.978359, label: 'Istanbul', color: '#ff6666', pathId: 1},
-  {id: 5, lat: 45.464203, lng: 9.189982, label: 'Milano', color: '#cc66cc', pathId: 1},
-  {id: 6, lat: 39.904202, lng: 116.407394, label: 'Beijing', color: '#ff6666', pathId: 1},
-  {id: 7, lat: 43.825592, lng: 87.616848, label: 'Wulumuqi', color: '#ff6666', pathId: 1},
-  {id: 8, lat: 41.902782, lng: 12.496366, label: 'Roma', color: '#cc66cc', pathId: 1},
-  {id: 9, lat: 51.507351, lng: -0.127758, label: 'London', color: '#cc66cc', pathId: 1},
+  // {id: 1, lat: 23.1290799, lng: 113.26436, label: 'Guangzhou', color: '#ff6666', pathId: 1},
+  // {id: 2, lat: 40.712776, lng: -74.005974, label: 'New York', color: '#ff6666', pathId: 1},
+  // {id: 3, lat: 31.230416, lng: 121.473701, label: 'Shanghai', color: '#ff6666', pathId: 1},
+  // {id: 4, lat: 41.008240, lng: 28.978359, label: 'Istanbul', color: '#ff6666', pathId: 1},
+  // {id: 5, lat: 45.464203, lng: 9.189982, label: 'Milano', color: '#cc66cc', pathId: 1},
+  // {id: 6, lat: 39.904202, lng: 116.407394, label: 'Beijing', color: '#ff6666', pathId: 1},
+  // {id: 7, lat: 43.825592, lng: 87.616848, label: 'Wulumuqi', color: '#ff6666', pathId: 1},
+  // {id: 8, lat: 41.902782, lng: 12.496366, label: 'Roma', color: '#cc66cc', pathId: 1},
+  // {id: 9, lat: 51.507351, lng: -0.127758, label: 'London', color: '#cc66cc', pathId: 1},
 ]
 
 type Props = {
@@ -92,7 +93,7 @@ export default function Earth({dark, isMobile, showLabels}: Props) {
 
   return (
     <group>
-      {!isMobile && <Perf position="top-left"/>}
+      {/*{!isMobile && <Perf position="top-left"/>}*/}
       <group ref={earthGroupRef} scale={1.5}>
         {/* 地球球体 */}
         <mesh ref={earthMeshRef} geometry={earthGeometry}>
