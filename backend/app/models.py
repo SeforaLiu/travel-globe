@@ -2,7 +2,6 @@
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 
-
 # --- Locations: 地球光点数据 ---
 class LocationBase(SQLModel):
     # Field 中的 index=True, nullable=False 是数据库约束

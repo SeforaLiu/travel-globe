@@ -1,12 +1,25 @@
-# app.py
+# __init__.py
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-app = FastAPI()
+from contextlib import asynccontextmanager
+from app.database import create_db_and_tables
+from app.routers import location
 
+# 定义生命周期管理器
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 启动时执行：创建数据库表
+    create_db_and_tables()
+    yield
+    # 关闭时执行（如果需要清理资源写在这里）
+
+# 在初始化时传入 lifespan
+app = FastAPI(lifespan=lifespan)
 
 # 允许跨域请求 (CORS)
-# origins: 允许访问您 API 的前端地址 (例如：http://localhost:3000)
-origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+# origins: 允许访问您 API 的前端地址
+origins = ["http://localhost:5173", "http://192.168.3.12:5173/"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,9 +36,11 @@ app.include_router(location.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello, Travel Tracker Backend!"}
+    return {"message": "Hello, Travel Tracker Backend! 后端正常启动啦!"}
 
 # 运行命令：
-# uvicorn main:app --reload
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+
 
 
