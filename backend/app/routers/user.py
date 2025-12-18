@@ -1,5 +1,5 @@
-# routers/user.py
-from fastapi import APIRouter, Depends, HTTPException, status
+# backend/app/routers/user.py
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from sqlmodel import Session, select
 from typing import Optional
 from datetime import datetime, timedelta
@@ -12,7 +12,7 @@ from app.database import get_session
 # 配置
 SECRET_KEY = "your-secret-key-change-this-in-production"  # 在生产环境中应该从环境变量读取
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_DAYS = 3  # 修改为3天
 
 # 修改router前缀为/api/auth
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -38,13 +38,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(days=3)  # 默认3天
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 @router.post("/register")
-def register_user(user: UserCreate, session: Session = Depends(get_session)):  # 修改参数类型为UserCreate
+def register_user(user: UserCreate, session: Session = Depends(get_session)):
     print("接收到用户注册请求")
     logger.info(f"注册请求: {user.username}")
     # 检查用户名是否已存在
@@ -57,7 +57,7 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):  #
 
     # 创建新用户
     db_user = User(username=user.username)
-    db_user.set_password(user.password)  # 现在可以正确访问password字段
+    db_user.set_password(user.password)
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
@@ -66,7 +66,7 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):  #
 
 
 @router.post("/login")
-def login_user(user_data: UserCreate, session: Session = Depends(get_session)):  # 也改为使用UserCreate
+def login_user(response: Response, user_data: UserCreate, session: Session = Depends(get_session)):
     user = authenticate_user(session, user_data.username, user_data.password)
     if not user:
         raise HTTPException(
@@ -75,14 +75,63 @@ def login_user(user_data: UserCreate, session: Session = Depends(get_session)): 
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # 设置3天过期时间
+    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
+    )
+
+    # 设置HTTP-only Cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False,  # 开发环境设为False，生产环境应设为True（需要HTTPS）
+        samesite="strict",
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 3天转换为秒
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/logout")
-def logout_user():
-    # JWT是无状态的，不需要服务器端清理
+def logout_user(response: Response):
+    # 清除Cookie
+    response.delete_cookie("access_token")
     return {"message": "Logged out successfully"}
+
+# 新增：检查用户登录状态的接口
+@router.get("/me")
+def get_current_user(request: Request, session: Session = Depends(get_session)):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = session.exec(select(User).where(User.username == username)).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return {"username": user.username, "user_id": user.id}
