@@ -8,11 +8,12 @@ from passlib.context import CryptContext
 import logging
 from app.models import User, UserCreate
 from app.database import get_session
+import os
 
-# 配置
-SECRET_KEY = "your-secret-key-change-this-in-production"  # 在生产环境中应该从环境变量读取
+# 从环境变量读取配置
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production") # 在生产环境中应该从环境变量读取
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 3  # 修改为3天
+ACCESS_TOKEN_EXPIRE_DAYS = 1
 
 # 修改router前缀为/api/auth
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -38,7 +39,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=3)  # 默认3天
+        expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -75,28 +76,32 @@ def login_user(response: Response, user_data: UserCreate, session: Session = Dep
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 设置3天过期时间
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
 
-    # 设置HTTP-only Cookie
+    # 设置HTTP-only Cookie - 改进版本
+    is_development = os.getenv("ENVIRONMENT", "development") == "development"
+
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # 开发环境设为False，生产环境应设为True（需要HTTPS）
-        samesite="strict",
-        max_age=ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 3天转换为秒
+        secure=not is_development,  # 生产环境需要 HTTPS
+        samesite="lax",  # 改为 lax 以支持某些跨站请求
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path="/"  # 明确指定路径
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    # 注意：这里不应该返回 access_token 到前端！
+    return {"message": "Login successful"}
+
 
 @router.post("/logout")
 def logout_user(response: Response):
     # 清除Cookie
-    response.delete_cookie("access_token")
+    response.delete_cookie("access_token", path="/")
     return {"message": "Logged out successfully"}
 
 # 新增：检查用户登录状态的接口
