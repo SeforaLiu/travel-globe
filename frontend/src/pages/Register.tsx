@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import {toast, Toaster} from 'sonner';
 
 type Props = {
     dark: boolean;
@@ -15,6 +17,7 @@ const Register: React.FC<Props> = ({ dark, isMobile }) => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const validateForm = () => {
         if (username.length < 6) {
@@ -42,43 +45,54 @@ const Register: React.FC<Props> = ({ dark, isMobile }) => {
         if (!validateForm()) {
             return;
         }
+        setLoading(true);
 
         try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
-            console.log('注册',response)
-            if (response.ok) {
-                navigate('/login');
-            } else {
-                const errorData = await response.json();
-                setError(errorData.detail || t('Registration failed'));
+            // 使用 axios 发送请求
+            const response = await api.post('/auth/register', { username, password });
+
+            if (response.status === 200) {
+                toast.success(t('Registration successful! Redirecting to login...'))
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
             }
-        } catch (err) {
-            setError(t('Network error'));
+        } catch (err: any) {
+            const errorMessage = t(err.response?.data?.detail) || t('Registration failed');
+            setError(errorMessage);
+            toast.error(errorMessage);
+        }finally {
+            setLoading(false);
         }
     };
 
     return (
         <div className={`min-h-screen flex items-center justify-center ${dark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Toaster
+                position={"top-center"}
+                theme={dark ? "dark" : "light"}
+                toastOptions={{
+                    duration: 3000,
+                }}
+                richColors={true}
+                closeButton={true}
+                visibleToasts={3}
+            />
+
             <div className={`w-full max-w-md p-8 space-y-8 rounded-xl shadow-lg ${dark ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold">
                         {t('Register')}
                     </h2>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                <form className="mt-1 space-y-6" onSubmit={handleSubmit}>
                     {error && (
                         <div className="rounded-md bg-red-50 p-4">
                             <div className="text-sm text-red-700">{error}</div>
                         </div>
                     )}
 
-                    <div className="rounded-md shadow-sm -space-y-px">
+                    <div className="rounded-md -space-y-px">
                         <div>
                             <label htmlFor="username" className="sr-only">
                                 {t('Username')}
@@ -116,9 +130,6 @@ const Register: React.FC<Props> = ({ dark, isMobile }) => {
                                 } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder={t('Password')}
                             />
-                            <p className={`mt-1 text-xs ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {t('Password must be at least 6 characters with letters and numbers')}
-                            </p>
                         </div>
                         <div>
                             <label htmlFor="confirm-password" className="sr-only">
@@ -138,6 +149,9 @@ const Register: React.FC<Props> = ({ dark, isMobile }) => {
                                 } rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder={t('Confirm Password')}
                             />
+                            <p className={`mt-2 text-xs ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                * {t('Password must be at least 6 characters with letters and numbers')}
+                            </p>
                         </div>
                     </div>
 
@@ -173,6 +187,7 @@ const Register: React.FC<Props> = ({ dark, isMobile }) => {
                     <div>
                         <button
                             type="submit"
+                            disabled={loading}
                             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                             {t('Register')}

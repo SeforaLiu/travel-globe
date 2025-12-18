@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import {Routes, Route, useNavigate,useLocation } from 'react-router-dom'
+import api from './services/api'; // 引入 axios 实例
 import Home from './pages/Home'
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -19,19 +20,53 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true) // PC端默认显示，所以改为 true
   const [showRightPanel, setShowRightPanel] = useState(false)
   const [showLeftRightButtonsMobile, setShowLeftRightButtonsMobile] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+
 
   // 从后端api获取
   const userInfo = {
     userName: "",
-    userAvatarUrl:"",
     traveledPlaceTotal: 0,
     totalGuideDiary:0,
   }
 
   const handleBack = () => {
     navigate(-1); // 返回上一页
-    // 或者 navigate('/'); // 返回首页
   };
+
+  useEffect(() => {
+    let isMounted = true; // 防止组件卸载后的状态更新
+
+    const checkLoginStatus = async () => {
+      // 如果已经在登录或注册页面，不需要检查登录状态
+      if (location.pathname === '/login' || location.pathname === '/register') {
+        if (isMounted) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        await api.get('/auth/me');
+        if (isMounted) {
+          setIsLoggedIn(true);
+          setLoading(false);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setIsLoggedIn(false);
+          setLoading(false);
+        }
+      }
+    };
+    checkLoginStatus();
+
+    // 清理函数
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate, location]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -113,11 +148,12 @@ export default function App() {
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
   const textColor = dark ? 'text-white' : 'text-gray-800';
 
+  if (loading && location.pathname !== '/login' && location.pathname !== '/register') {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <div className="h-screen flex relative">
-      {/*
-      如果 userInfo 的 totalGuideDiary 是0 --> ☰ 按钮轻微缩放 & 发光
-      */}
       {isMobile && showLeftRightButtonsMobile && (
           <button
               onClick={() => {
@@ -125,7 +161,7 @@ export default function App() {
                 setShowLeftRightButtonsMobile(false)
               }}
               className={`absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border ${
-                  userInfo.totalGuideDiary === 0 ? 'animate-pulse ring-2 ring-blue-500' : ''
+                  !isLoggedIn ? 'animate-pulse ring-2 ring-blue-500' : ''
               }`}
           >
             ☰
@@ -160,6 +196,7 @@ export default function App() {
             isMobile={isMobile}
             toggleSidebar={() => setShowSidebar(false)}
             hideMobileButtons={()=>setShowLeftRightButtonsMobile(false)}
+            isLoggedIn={isLoggedIn}
           />
         </div>
       )}

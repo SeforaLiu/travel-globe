@@ -1,164 +1,173 @@
 // frontend/src/pages/Login.tsx
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import React, {useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {useNavigate} from 'react-router-dom';
+import api from '../services/api';
+import {toast, Toaster} from 'sonner';
 
 type Props = {
-    dark: boolean;
-    isMobile: boolean;
+  dark: boolean;
+  isMobile: boolean;
 };
 
-const Login: React.FC<Props> = ({ dark, isMobile }) => {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+const Login: React.FC<Props> = ({dark, isMobile}) => {
+  const {t} = useTranslation();
+  const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    const validateForm = () => {
-        if (username.length < 6) {
-            setError(t('Username must be at least 6 characters'));
-            return false;
-        }
+  const validateForm = () => {
+    if (username.length < 6) {
+      setError(t('Username must be at least 6 characters'));
+      return false;
+    }
+    if (password.length < 6 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      setError(t('Password must be at least 6 characters with letters and numbers'));
+      return false;
+    }
+    return true;
+  };
 
-        if (password.length < 6 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-            setError(t('Password must be at least 6 characters with letters and numbers'));
-            return false;
-        }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-        return true;
-    };
+    if (!validateForm()) {
+      return;
+    }
+    setLoading(true);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+    try {
+      const response = await api.post('/auth/login', {username, password});
 
-        if (!validateForm()) {
-            return;
-        }
+      if (response.status === 200) {
+        toast.success(t('Login successful!'));
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || t('Login failed');
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
-            console.log('登录--response',response)
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${dark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* 添加 Toaster 组件 */}
+      <Toaster
+        position={"top-center"}
+        theme={dark ? "dark" : "light"}
+        toastOptions={{
+          duration: 3000,
+        }}
+        richColors={true}
+        closeButton={true}
+        visibleToasts={3}
+      />
 
-            if (response.ok) {
-                const data = await response.json();
-                // localStorage.setItem('access_token', data.access_token);
-                // 1. 短期 token 存 HttpOnly Cookie（用于敏感操作）
-                document.cookie = `access_token=${data.access_token}; HttpOnly; Secure; SameSite=Strict; path=/; max-age=${3600}`;
-                navigate('/');
-            } else {
-                const errorData = await response.json();
-                setError(errorData.detail || t('Login failed'));
-            }
-        } catch (err) {
-            setError(t('Network error'));
-        }
-    };
+      <div
+        className={`w-full max-w-md p-8 space-y-8 rounded-xl shadow-lg ${dark ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold">
+            {t('Login')}
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
+            </div>
+          )}
 
-    return (
-        <div className={`min-h-screen flex items-center justify-center ${dark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-            <div className={`w-full max-w-md p-8 space-y-8 rounded-xl shadow-lg ${dark ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold">
-                        {t('Login')}
-                    </h2>
-                </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    {error && (
-                        <div className="rounded-md bg-red-50 p-4">
-                            <div className="text-sm text-red-700">{error}</div>
-                        </div>
-                    )}
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="username" className="sr-only">
+                {t('Username')}
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  dark
+                    ? 'bg-gray-700 border-gray-600 placeholder-gray-400 text-white'
+                    : 'placeholder-gray-500 text-gray-900 border-gray-300'
+                } rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder={t('Username')}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                {t('Password')}
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  dark
+                    ? 'bg-gray-700 border-gray-600 placeholder-gray-400 text-white'
+                    : 'placeholder-gray-500 text-gray-900 border-gray-300'
+                } rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder={t('Password')}
+              />
+            </div>
+          </div>
 
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="username" className="sr-only">
-                                {t('Username')}
-                            </label>
-                            <input
-                                id="username"
-                                name="username"
-                                type="text"
-                                required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
-                                    dark
-                                        ? 'bg-gray-700 border-gray-600 placeholder-gray-400 text-white'
-                                        : 'placeholder-gray-500 text-gray-900 border-gray-300'
-                                } rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                                placeholder={t('Username')}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">
-                                {t('Password')}
-                            </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
-                                    dark
-                                        ? 'bg-gray-700 border-gray-600 placeholder-gray-400 text-white'
-                                        : 'placeholder-gray-500 text-gray-900 border-gray-300'
-                                } rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                                placeholder={t('Password')}
-                            />
-                        </div>
-                    </div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className={`font-medium ${
+                  dark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                }`}
+              >
+                {t('Cancel')}
+              </button>
+            </div>
 
-                    <div className="flex items-center justify-between">
-                        <div className="text-sm">
-                            <button
-                                type="button"
-                                onClick={() => navigate('/')}
-                                className={`font-medium ${
-                                    dark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
-                                }`}
-                            >
-                                {t('Cancel')}
-                            </button>
-                        </div>
-
-                        <div className="text-sm">
+            <div className="text-sm">
               <span className={dark ? 'text-gray-400' : 'text-gray-600'}>
                 {t('No account?')}{' '}
               </span>
-                            <button
-                                type="button"
-                                onClick={() => navigate('/register')}
-                                className={`font-medium ${
-                                    dark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
-                                }`}
-                            >
-                                {t('Register')}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            {t('Login')}
-                        </button>
-                    </div>
-                </form>
+              <button
+                type="button"
+                onClick={() => navigate('/register')}
+                className={`font-medium ${
+                  dark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                }`}
+              >
+                {t('Register')}
+              </button>
             </div>
-        </div>
-    );
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {loading ? t('Logging in...') : t('Login')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

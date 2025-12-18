@@ -8,24 +8,18 @@ type Props = {
   isMobile: boolean;
   toggleSidebar: () => void;
   hideMobileButtons: () => void;
+  isLoggedIn:boolean;
 };
 
 // 定义侧边栏的背景色
 const sidebarDayBg = '#c5d6f0';
 const sidebarNightBg = '#1A1A33';
 
-export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMobileButtons}: Props) {
+export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMobileButtons,isLoggedIn}: Props) {
   const {t, i18n} = useTranslation()
   const navigate = useNavigate();
   const handleAddDiary = () => {
-    // TODO 检测用户登录状态然后再决定跳转去哪里
-
-    // 未登录用户跳转到/login
-    navigate('/login');
-
-    // 登录用户跳转到新建日记页面
-    // navigate('/new-diary');
-    console.log('点击新增')
+    navigate(isLoggedIn? '/new-diary' : '/login');
 
     if (isMobile) {
       // 如果是移动端，点击后可以关闭侧边栏
@@ -105,13 +99,13 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
         <div className="flex w-full">
           <button
               className={`flex-1 bg-guide text-white rounded px-4 py-1 whitespace-nowrap ${
-                  userInfo.totalGuideDiary === 0
+                  !isLoggedIn
                       ? 'animate-pulse ring-2 ring-blue-500 hover:animate-none'
                       : ''
               }`}
               onClick={handleAddDiary}
           >
-            {userInfo.totalGuideDiary === 0? '登录创建地球日记吧!': t('addGuide')}
+            {!isLoggedIn? '登录创建地球日记吧!': t('addGuide')}
           </button>
         </div>
 
@@ -130,7 +124,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
 
         {/* List area */}
         <div className="flex-1 overflow-auto text-sm opacity-80">
-          {userInfo.totalGuideDiary === 0 ? (
+          {!isLoggedIn ? (
               <div className="flex flex-col items-center h-full text-center space-y-4">
                 <div className="text-4xl">🌍</div>
                 <div className="text-lg font-semibold">{t('Your journey starts here')}</div>
