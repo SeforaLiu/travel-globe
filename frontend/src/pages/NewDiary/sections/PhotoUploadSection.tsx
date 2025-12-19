@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import PhotoPreviewGrid from '../components/PhotoPreviewGrid';
+import { MAX_PHOTOS } from '../../../services/cloudinary';
+import { toast } from 'sonner';
 
 type Props = {
-  photos: File[];
+  photos: Array<{
+    file: File;
+    url?: string;
+    publicId?: string;
+    status: 'pending' | 'uploading' | 'success' | 'error';
+    error?: string;
+  }>;
   dark: boolean;
   onAddPhotos: (files: File[]) => void;
   onRemovePhoto: (index: number) => void;
   onSortPhotos: (fromIndex: number, toIndex: number) => void;
+  updatePhotoStatus: (index: number, status: 'pending' | 'uploading' | 'success' | 'error', publicId?: string, error?: string) => void;
   draggedIndex: number | null;
   onDragStart: (index: number) => void;
   onDragEnter: (e: React.DragEvent, index: number) => void;
@@ -25,6 +34,7 @@ const PhotoUploadSection: React.FC<Props> = ({
                                                onAddPhotos,
                                                onRemovePhoto,
                                                onSortPhotos,
+                                               updatePhotoStatus,
                                                draggedIndex,
                                                onDragStart,
                                                onDragEnter,
@@ -37,6 +47,7 @@ const PhotoUploadSection: React.FC<Props> = ({
                                              }) => {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -47,6 +58,10 @@ const PhotoUploadSection: React.FC<Props> = ({
     );
 
     if (files.length > 0) {
+      if (photos.length + files.length > MAX_PHOTOS) {
+        toast.error(`最多只能上传 ${MAX_PHOTOS} 张图片`);
+        return;
+      }
       onAddPhotos(files);
     }
   };
@@ -66,8 +81,28 @@ const PhotoUploadSection: React.FC<Props> = ({
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onAddPhotos(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+
+      if (photos.length + files.length > MAX_PHOTOS) {
+        toast.error(`最多只能上传 ${MAX_PHOTOS} 张图片`);
+        return;
+      }
+
+      onAddPhotos(files);
+
+      // 清空input值以便再次选择相同文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
+  };
+
+  const triggerFileInput = () => {
+    if (photos.length >= MAX_PHOTOS) {
+      toast.error(`最多只能上传 ${MAX_PHOTOS} 张图片`);
+      return;
+    }
+    fileInputRef.current?.click();
   };
 
   const dropZoneClass = `border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
@@ -80,12 +115,13 @@ const PhotoUploadSection: React.FC<Props> = ({
     return (
       <div className="mb-4">
         <label className={`block text-sm font-medium mb-2 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
-          {t('AddPhotos')}
+          {t('AddPhotos')} ({photos.length}/{MAX_PHOTOS})
         </label>
         <button
           type="button"
           className={`w-full py-3 px-4 rounded-lg ${dark ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors flex items-center justify-center mb-3`}
-          onClick={() => document.getElementById('photo-upload-mobile')?.click()}
+          onClick={triggerFileInput}
+          disabled={photos.length >= MAX_PHOTOS}
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -102,6 +138,7 @@ const PhotoUploadSection: React.FC<Props> = ({
           id="photo-upload-mobile"
           onChange={handleFileInputChange}
           onFocus={onFocus}
+          ref={fileInputRef}
         />
 
         {photos.length > 0 && (
@@ -130,32 +167,34 @@ const PhotoUploadSection: React.FC<Props> = ({
   return (
     <div className="mb-6">
       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-        {t('AddPhotos')}
+        {t('AddPhotos')} ({photos.length}/{MAX_PHOTOS})
       </label>
       <div
         className={dropZoneClass}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => document.getElementById('photo-upload')?.click()}
+        onClick={triggerFileInput}
       >
         <p className="text-gray-500 dark:text-gray-400">{t('AddSelectPhotosTip')}</p>
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          className="hidden"
-          id="photo-upload"
-          onChange={handleFileInputChange}
-          onFocus={onFocus}
-        />
         <button
           type="button"
-          className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+          disabled={photos.length >= MAX_PHOTOS}
         >
           {t('AddSelectPhotosButton')}
         </button>
       </div>
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        id="photo-upload"
+        onChange={handleFileInputChange}
+        onFocus={onFocus}
+        ref={fileInputRef}
+      />
       {photos.length > 0 && (
         <PhotoPreviewGrid
           photos={photos}

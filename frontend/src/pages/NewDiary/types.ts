@@ -1,16 +1,3 @@
-import { TFunction } from 'i18next';
-
-export type FormData = {
-  title: string;
-  type: 'visited' | 'wishlist';
-  location: string;
-  coordinates: { lat: number; lng: number } | null;
-  dateRange: [Date | null, Date | null];
-  transportation: string;
-  content: string;
-  photos: File[];
-};
-
 export type Props = {
   isMobile: boolean;
   onClose: () => void;
@@ -52,4 +39,23 @@ export type PhotoDragHandlers = {
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
   setDraggedIndex: (index: number | null) => void;
+};
+
+export type UploadStatus = 'pending' | 'uploading' | 'success' | 'error';
+
+export type FormData = {
+  title: string;
+  type: 'visited' | 'wishlist';
+  location: string;
+  coordinates: { lat: number; lng: number } | null;
+  dateRange: [Date | null, Date | null];
+  transportation: string;
+  content: string;
+  photos: Array<{
+    file: File;
+    url?: string; // 本地预览URL
+    publicId?: string; // Cloudinary public ID
+    status: UploadStatus;
+    error?: string;
+  }>;
 };
