@@ -58,8 +58,8 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${dark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      {/* 添加 Toaster 组件 */}
+    // 修改容器类名，适配移动端显示
+    <div className={`${dark ? 'bg-gray-900' : 'bg-gray-50'} ${isMobile? 'pb-16 pt-8 px-6':'flex items-center justify-center px-8'} min-h-screen`}>
       <Toaster
         position={"top-center"}
         theme={dark ? "dark" : "light"}
@@ -71,8 +71,14 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
         visibleToasts={3}
       />
 
+      {/* 移动端全屏展示，桌面端保留居中卡片 */}
       <div
-        className={`w-full max-w-md p-8 space-y-8 rounded-xl shadow-lg ${dark ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+        className={`${
+          isMobile
+            ? 'w-full h-full'
+            : 'w-full max-w-md mx-auto p-8 space-y-8 rounded-xl shadow-lg'
+        } ${dark ? ' text-white' : 'text-gray-800'}`}
+      >
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold">
             {t('Login')}
@@ -132,7 +138,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
                 type="button"
                 onClick={() => navigate('/')}
                 className={`font-medium ${
-                  dark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                  dark ? 'bg-gray-900 text-blue-400 hover:text-blue-300' : 'bg-gray-50 text-blue-600 hover:text-blue-500'
                 }`}
               >
                 {t('Cancel')}
@@ -147,7 +153,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
                 type="button"
                 onClick={() => navigate('/register')}
                 className={`font-medium ${
-                  dark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                  dark ? 'bg-gray-900 text-blue-400 hover:text-blue-300' : 'bg-gray-50 text-blue-600 hover:text-blue-500'
                 }`}
               >
                 {t('Register')}
