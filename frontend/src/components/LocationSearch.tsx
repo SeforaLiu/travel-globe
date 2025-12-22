@@ -110,7 +110,7 @@ export default function LocationSearch({ onSelect, value, onChange, onFocus }: P
     <input
       ref={inputRef}
       type="text"
-      className="w-full p-2 border rounded"
+      className="w-full border border-gray-300 rounded-lg p-3"
       value={inputValue}
       onChange={handleInputChange}
       placeholder={t('search location')}

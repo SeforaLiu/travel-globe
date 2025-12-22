@@ -28,11 +28,6 @@ const LocationSection: React.FC<Props> = ({
                                           }) => {
   const { t } = useTranslation();
 
-  // const handleFocus = () => {
-  //   setShowMapPreview(true);
-  //   onInputFocus?.();
-  // };
-
   const handleChange = (value: string) => {
     onLocationChange(value);
   };

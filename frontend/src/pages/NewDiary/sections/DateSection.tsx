@@ -100,7 +100,7 @@ const DateSection: React.FC<Props> = ({
             value={displayDate}
             readOnly
             placeholder={t('please select date')}
-            className="w-full p-3 rounded-lg border cursor-pointer pr-12"
+            className="w-full p-3 rounded-lg border cursor-pointer pr-12 border-gray-300"
           />
         </div>
 
@@ -145,7 +145,7 @@ const DateSection: React.FC<Props> = ({
           value={displayDate}
           readOnly
           placeholder={t('please select date')}
-          className="w-full p-3 rounded-lg border cursor-pointer pr-12"
+          className="w-full p-3 rounded-lg border cursor-pointer pr-12 border-gray-300"
         />
         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
           {isOpen? '📆x' :'📆'}
