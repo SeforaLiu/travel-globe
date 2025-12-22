@@ -1,7 +1,7 @@
 import React, {useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DayPicker } from 'react-day-picker';
-import { format, isValid, } from 'date-fns';
+import { format, } from 'date-fns';
 import { zhCN, enUS, it } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 
@@ -20,11 +20,9 @@ interface DateRange {
 }
 
 const DateSection: React.FC<Props> = ({
-                                        dateStart,
-                                        dateEnd,
                                         dark,
-                                        onFocus,
                                         onDateChange,
+                                        onFocus,
                                         isMobile = false,
                                       }) => {
   const { t, i18n } = useTranslation();
@@ -87,32 +85,38 @@ const DateSection: React.FC<Props> = ({
           {t('AddDate')}
         </label>
 
-        {/* 输入框 */}
         <div
-          className={`w-full p-3 rounded-lg border cursor-pointer ${
+          className={`w-full cursor-pointer ${
             dark
               ? 'bg-gray-800 border-gray-700 text-white'
               : 'bg-white border-gray-300 text-gray-900'
           }`}
-          onClick={() => setIsOpen(true)}
+          onClick={() => setIsOpen(!isOpen)}
+          onFocus={onFocus}
         >
-          {displayDate}
+          <input
+            id={inputId}
+            type="text"
+            value={displayDate}
+            readOnly
+            placeholder={t('please select date')}
+            className="w-full p-3 rounded-lg border cursor-pointer pr-12"
+          />
         </div>
 
-        {/* 日期选择器弹窗 mobile */}
         {isOpen && (
           <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end">
-            <div className={`w-full rounded-t-xl p-4 ${dark ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className={`text-lg font-medium ${dark ? 'text-white' : 'text-gray-900'}`}>
-                  {t('SelectDate')}
-                </h3>
+            <div className={`w-full pl-7 rounded-t-xl p-4 ${dark ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className="mb-4">
+                <button className={`ml-80 rounded-xl px-4 text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> x </button>
                 <DayPicker
                   mode="range"
                   selected={selectedDate}
                   locale={handleLocale()}
                   onSelect={handleDayPickerSelect}
+                  className={`${dark ? 'rdp-dark' : 'rdp-light'} w-full pl-6`}
                 />
+
               </div>
             </div>
           </div>
@@ -126,8 +130,6 @@ const DateSection: React.FC<Props> = ({
       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
         {t('AddDate')}
       </label>
-
-      {/* 输入框 */}
       <div
         className={`w-full cursor-pointer relative ${
           dark
@@ -135,13 +137,14 @@ const DateSection: React.FC<Props> = ({
             : 'bg-white border-gray-300 text-gray-900'
         }`}
         onClick={() => setIsOpen(!isOpen)}
+        onFocus={onFocus}
       >
         <input
           id={inputId}
           type="text"
           value={displayDate}
           readOnly
-          placeholder="请选择日期"
+          placeholder={t('please select date')}
           className="w-full p-3 rounded-lg border cursor-pointer pr-12"
         />
         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -149,7 +152,6 @@ const DateSection: React.FC<Props> = ({
         </span>
       </div>
 
-      {/* 日期选择器下拉 PC 端 */}
       {isOpen && (
         <div className={`mt-2 p-3 w-1/3 rounded-lg shadow-lg ${dark ? 'bg-gray-800' : 'bg-white'}`}>
           <DayPicker

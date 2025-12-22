@@ -30,6 +30,7 @@ const TransportationSection: React.FC<Props> = ({
           value={transportation}
           onChange={(e) => onChange(e.target.value)}
           onFocus={onFocus}
+          placeholder={t('plane / train / self-driving')}
         />
       </div>
     );
@@ -46,6 +47,7 @@ const TransportationSection: React.FC<Props> = ({
         value={transportation}
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
+        placeholder={t('plane / train / self-driving')}
       />
     </div>
   );

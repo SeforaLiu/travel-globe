@@ -29,7 +29,7 @@ const ContentSection: React.FC<Props> = ({
         <textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="请输入内容"
+          placeholder={t('write something here')}
           className={`w-full h-[300px] p-3 border rounded-lg resize-none focus:outline-none focus:ring-1 ${
             dark
               ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-500 focus:border-blue-500'
@@ -56,6 +56,7 @@ const ContentSection: React.FC<Props> = ({
             onChange={onChange}
             height={500}
             onFocus={onFocus}
+            placeholder={t('write something here')}
           />
         </Suspense>
       </div>

@@ -1,5 +1,6 @@
 // LocationSearch.tsx
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   // @ts-ignore
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function LocationSearch({ onSelect, value, onChange, onFocus }: Props) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   // @ts-ignore
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -111,7 +113,7 @@ export default function LocationSearch({ onSelect, value, onChange, onFocus }: P
       className="w-full p-2 border rounded"
       value={inputValue}
       onChange={handleInputChange}
-      placeholder="搜索地点..."
+      placeholder={t('search location')}
       onFocus={handleFocus}
     />
   );
