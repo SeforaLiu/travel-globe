@@ -1,7 +1,7 @@
 # models.py
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime
+from datetime import date, datetime
 from passlib.context import CryptContext
 from pydantic import constr
 
@@ -48,20 +48,23 @@ class LocationBase(SQLModel):
     longitude: float
     color: str  # 'orange' 或 'purple'
 
-
 class Location(LocationBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     # 建立与 Entry 的反向关系
     entries: List["Entry"] = Relationship(back_populates="location")
 
-
 # --- Entries: 旅游日记/攻略 ---
 class EntryBase(SQLModel):
     title: str
     content: str
-    date_visited: str  # 简单起见，先用字符串表示日期
+    date_start: date
+    date_end: date
     location_id: int = Field(foreign_key="location.id")  # 外键关联到 Location 表
     entry_type: str  # "visited" 或 "wishlist"
+
+# 添加 EntryCreate 类
+class EntryCreate(EntryBase):
+    pass
 
 class Entry(EntryBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -71,5 +74,3 @@ class Entry(EntryBase, table=True):
     location: Location = Relationship(back_populates="entries")
     # 建立与 User 的正向关系
     user: User = Relationship(back_populates="entries")
-
-# ... 类似地定义 Photos 和 MoodEntry 模型 ...

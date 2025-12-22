@@ -95,16 +95,18 @@ const DesktopLayout: React.FC<Props> = ({
               />
             </div>
 
-            <DateSection
-              dateRange={formData.dateRange}
-              dark={dark}
-              onFocus={handleInputFocus}
-              onDateChange={(index, date) => {
-                const newDateRange: [Date | null, Date | null] = [...formData.dateRange];
-                newDateRange[index] = date;
-                updateField('dateRange', newDateRange);
-              }}
-            />
+            <div className="w-1/2">
+              <DateSection
+                dateStart={formData.dateStart}
+                dateEnd={formData.dateEnd}
+                dark={dark}
+                onFocus={handleInputFocus}
+                onDateChange={(dateStart, dateEnd) => {
+                  updateField('dateStart', dateStart);
+                  updateField('dateEnd', dateEnd);
+                }}
+              />
+            </div>
 
             <ContentSection
               content={formData.content}

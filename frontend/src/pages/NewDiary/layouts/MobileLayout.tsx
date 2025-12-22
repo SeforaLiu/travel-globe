@@ -97,13 +97,13 @@ const MobileLayout: React.FC<Props> = ({
             />
 
             <DateSection
-              dateRange={formData.dateRange}
+              dateStart={formData.dateStart}
+              dateEnd={formData.dateEnd}
               dark={dark}
               onFocus={handleInputFocus}
-              onDateChange={(index, date) => {
-                const newDateRange: [Date | null, Date | null] = [...formData.dateRange];
-                newDateRange[index] = date;
-                updateField('dateRange', newDateRange);
+              onDateChange={(dateStart, dateEnd) => {
+                updateField('dateStart', dateStart);
+                updateField('dateEnd', dateEnd);
               }}
               isMobile={true}
             />

@@ -7,7 +7,8 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     type: 'visited',
     location: '',
     coordinates: null,
-    dateRange: [null, null],
+    dateStart: '',
+    dateEnd:'',
     transportation: '',
     content: '',
     photos: [],
@@ -86,11 +87,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     updateField('photos', newPhotos);
   };
 
-  const handleDateChange = (index: 0 | 1, date: Date | null) => {
-    const newDateRange: [Date | null, Date | null] = [...formData.dateRange];
-    newDateRange[index] = date;
-    updateField('dateRange', newDateRange);
-  };
 
   return {
     formData,
@@ -100,7 +96,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     addPhotos,
     removePhoto,
     updatePhotoStatus,
-    sortPhotos,
-    handleDateChange,
+    sortPhotos
   };
 };

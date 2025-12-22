@@ -48,7 +48,8 @@ export type FormData = {
   type: 'visited' | 'wishlist';
   location: string;
   coordinates: { lat: number; lng: number } | null;
-  dateRange: [Date | null, Date | null];
+  dateStart: string; // 格式: 'yyyy-MM-dd'
+  dateEnd: string;   // 格式: 'yyyy-MM-dd'
   transportation: string;
   content: string;
   photos: Array<{
@@ -59,3 +60,4 @@ export type FormData = {
     error?: string;
   }>;
 };
+

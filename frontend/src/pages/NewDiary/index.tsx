@@ -9,7 +9,7 @@ import { Props, LocationResult } from './types';
 
 export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
   const { t } = useTranslation();
-  const { formData, updateField, addPhotos, removePhoto, sortPhotos, updatePhotoStatus, handleDateChange } = useFormData();
+  const { formData, updateField, addPhotos, removePhoto, sortPhotos, updatePhotoStatus } = useFormData();
   const { uploadPhotos, resetCache } = useCloudinaryUpload();
 
   const [showMapPreview, setShowMapPreview] = useState(false);

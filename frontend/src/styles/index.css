@@ -82,3 +82,14 @@ input, select, textarea {
 .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     background-color: rgba(75, 85, 99, 0.7);
 }
+
+
+/* daypicker */
+.rdp-root {
+    --rdp-accent-color: #007bff;
+}
+.dark .rdp-root {
+    --rdp-accent-color: #6ec1e4;
+    --rdp-range_middle-background-color: rgba(110, 193, 228, 0.2)
+}
+
