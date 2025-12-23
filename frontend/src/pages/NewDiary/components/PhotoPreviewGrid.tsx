@@ -15,7 +15,6 @@ type Props = {
   onRemove: (index: number) => void;
   onDragStart: (index: number) => void;
   onDragEnter: (e: React.DragEvent, index: number) => void;
-  onDragEnd: () => void;
   onTouchStart?: (e: React.TouchEvent, index: number) => void;
   isMobile?: boolean;
   className?: string;
@@ -28,7 +27,6 @@ const PhotoPreviewGrid: React.FC<Props> = ({
                                              onRemove,
                                              onDragStart,
                                              onDragEnter,
-                                             onDragEnd,
                                              onTouchStart,
                                              isMobile = false,
                                              className = '',
@@ -52,7 +50,6 @@ const PhotoPreviewGrid: React.FC<Props> = ({
           draggable={!isMobile}
           onDragStart={() => onDragStart(index)}
           onDragEnter={(e) => onDragEnter(e, index)}
-          onDragEnd={onDragEnd}
           onTouchStart={isMobile ? (e) => onTouchStart?.(e, index) : undefined}
         >
           {/* 显示上传状态指示器 */}

@@ -1,13 +1,15 @@
 import React, {useState, useEffect} from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
-import {Routes, Route, useNavigate,useLocation } from 'react-router-dom'
+import {Routes, Route, useNavigate, useLocation} from 'react-router-dom'
 import api from './services/api'; // 引入 axios 实例
 import Home from './pages/Home'
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NewDiary from "./pages/NewDiary/index";
 import DiaryView from "./pages/DiaryView"
+import {FormData} from "./pages/NewDiary/types";
+
 
 // @ts-ignore
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -28,7 +30,7 @@ export default function App() {
   const userInfo = {
     userName: "",
     traveledPlaceTotal: 0,
-    totalGuideDiary:0,
+    totalGuideDiary: 0,
   }
 
   const handleBack = () => {
@@ -121,7 +123,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log('location.pathname',location.pathname)
+    console.log('location.pathname', location.pathname)
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
@@ -152,25 +154,67 @@ export default function App() {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
+  const handleSubmitDiary = async (formData: FormData) => {
+    try {
+
+      const data = {
+        title: formData.title,
+        content: formData.content,
+        location_name: formData.location,
+        entry_type: formData.type,
+        coordinates: formData.coordinates,
+        date_start: formData.dateStart ? formData.dateStart : '',
+        date_end: formData.dateEnd ? formData.dateEnd : '',
+        transportation: formData.transportation ? formData.transportation : '',
+        photos: formData.photos
+      };
+
+      console.log('创建日记data---', data);
+
+      const response = await api.post('/entries', data, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      console.log('成功发请求!!!!', response);
+
+      // 提交成功后可以导航到其他页面或显示成功消息
+      navigate('/'); // 或者其他成功后的操作
+
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        // 明确提示认证失败
+        alert('Session expired, please login again');
+        navigate('/login');
+      } else {
+        console.error('Error:', error);
+        // 显示错误提示给用户
+        alert('提交失败，请重试');
+      }
+    }
+  };
+
+
   return (
     <div className="h-screen flex relative">
       {isMobile && showLeftRightButtonsMobile && (
-          <button
-              onClick={() => {
-                setShowSidebar(true)
-                setShowLeftRightButtonsMobile(false)
-              }}
-              className={`absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border ${
-                  !isLoggedIn ? 'animate-pulse ring-2 ring-blue-500' : ''
-              }`}
-          >
-            ☰
-          </button>
+        <button
+          onClick={() => {
+            setShowSidebar(true)
+            setShowLeftRightButtonsMobile(false)
+          }}
+          className={`absolute top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border ${
+            !isLoggedIn ? 'animate-pulse ring-2 ring-blue-500' : ''
+          }`}
+        >
+          ☰
+        </button>
       )}
 
       {isMobile && showLeftRightButtonsMobile && (
         <button
-          onClick={() =>{
+          onClick={() => {
             setShowRightPanel(true)
             setShowLeftRightButtonsMobile(false)
           }}
@@ -195,7 +239,7 @@ export default function App() {
             setDark={setDark}
             isMobile={isMobile}
             toggleSidebar={() => setShowSidebar(false)}
-            hideMobileButtons={()=>setShowLeftRightButtonsMobile(false)}
+            hideMobileButtons={() => setShowLeftRightButtonsMobile(false)}
             isLoggedIn={isLoggedIn}
           />
         </div>
@@ -206,30 +250,27 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home dark={dark} isMobile={isMobile} showLabels={!showSidebar}/>}/>
           <Route path="/login" element={
-            <Login dark={dark} isMobile={isMobile} />
+            <Login dark={dark} isMobile={isMobile}/>
           }/>
           <Route path="/register" element={
-            <Register dark={dark} isMobile={isMobile} />
+            <Register dark={dark} isMobile={isMobile}/>
           }/>
           <Route path="/new-diary" element={
             <NewDiary
               dark={dark}
               isMobile={isMobile}
-              onClose={()=>{
+              onClose={() => {
                 console.log('点击关闭')
                 handleBack()
                 setShowLeftRightButtonsMobile(true)
               }}
-              onSubmit={(formData)=>{
-                console.log('点击提交, 信息:',formData)
-                setShowLeftRightButtonsMobile(true)
-              }}
+              onSubmit={(formData) => handleSubmitDiary(formData)}
             />
           }/>
           <Route path="/diary/:id" element={<DiaryView
             dark={dark}
             isMobile={isMobile}
-          />} />
+          />}/>
         </Routes>
       </div>
 

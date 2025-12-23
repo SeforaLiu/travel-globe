@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { FormData, UploadStatus } from '../types';
+// frontend/src/pages/NewDiary/hooks/useFormData.ts
+import { useState, useRef , useEffect} from 'react';
+import { FormData, UploadStatus, CloudinaryPhotoInfo } from '../types';
 
 export const useFormData = (initialData?: Partial<FormData>) => {
   const [formData, setFormData] = useState<FormData>({
@@ -8,12 +9,19 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     location: '',
     coordinates: null,
     dateStart: '',
-    dateEnd:'',
+    dateEnd: '',
     transportation: '',
     content: '',
     photos: [],
     ...initialData,
   });
+
+  // 使用 useRef 来获取最新的 formData
+  const formDataRef = useRef(formData);
+  // 同步最新的 formData 到 ref
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
 
   const updateFormData = (updates: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -27,6 +35,7 @@ export const useFormData = (initialData?: Partial<FormData>) => {
   };
 
   const addPhotos = (newPhotos: File[]) => {
+    console.log('添加照片', newPhotos.length);
     setFormData(prev => ({
       ...prev,
       photos: [
@@ -54,16 +63,82 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     });
   };
 
-  const updatePhotoStatus = (index: number, status: UploadStatus, publicId?: string, error?: string) => {
+  // 添加一个基于文件标识符的更新方法，避免索引问题
+  const updatePhotoStatusByFile = (
+    file: File,
+    status: UploadStatus,
+    cloudinary?: CloudinaryPhotoInfo,
+    error?: string
+  ) => {
+    console.log('======通过文件更新照片状态=====', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      status,
+      hasCloudinary: !!cloudinary,
+      hasError: !!error
+    });
+
+    setFormData(prev => {
+      const newPhotos = [...prev.photos];
+      const index = newPhotos.findIndex(photo =>
+        photo.file.name === file.name &&
+        photo.file.size === file.size &&
+        photo.file.type === file.type
+      );
+
+      if (index !== -1) {
+        const updatedPhoto = {
+          ...newPhotos[index],
+          status,
+          cloudinary,
+          error
+        };
+
+        console.log('找到并更新照片索引:', index, {
+          status: updatedPhoto.status,
+          hasCloudinary: !!updatedPhoto.cloudinary
+        });
+
+        newPhotos[index] = updatedPhoto;
+      } else {
+        console.warn('未找到匹配的照片进行更新:', file.name);
+      }
+
+      return { ...prev, photos: newPhotos };
+    });
+  };
+
+  const updatePhotoStatus = (
+    index: number,
+    status: UploadStatus,
+    cloudinary?: CloudinaryPhotoInfo,
+    error?: string
+  ) => {
+    console.log('======通过索引更新照片状态=====', {
+      index,
+      status,
+      hasCloudinary: !!cloudinary,
+      hasError: !!error,
+      cloudinaryData: cloudinary
+    });
+
     setFormData(prev => {
       const newPhotos = [...prev.photos];
       if (newPhotos[index]) {
-        newPhotos[index] = {
+        const updatedPhoto = {
           ...newPhotos[index],
           status,
-          publicId,
+          cloudinary,
           error
         };
+
+        console.log('更新后照片状态:', {
+          status: updatedPhoto.status,
+          hasCloudinary: !!updatedPhoto.cloudinary
+        });
+
+        newPhotos[index] = updatedPhoto;
       }
       return { ...prev, photos: newPhotos };
     });
@@ -87,7 +162,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     updateField('photos', newPhotos);
   };
 
-
   return {
     formData,
     setFormData,
@@ -96,6 +170,7 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     addPhotos,
     removePhoto,
     updatePhotoStatus,
+    updatePhotoStatusByFile, // 新增
     sortPhotos
   };
 };

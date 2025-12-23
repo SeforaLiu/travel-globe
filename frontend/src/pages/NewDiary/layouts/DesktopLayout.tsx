@@ -29,7 +29,6 @@ type Props = {
   draggedIndex: number | null;
   handleDragStart: (index: number) => void;
   handleDragEnter: (e: React.DragEvent, index: number) => void;
-  handleDragEnd: () => void;
   handleTouchStart: (e: React.TouchEvent, index: number) => void;
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
@@ -53,7 +52,6 @@ const DesktopLayout: React.FC<Props> = ({
                                           draggedIndex,
                                           handleDragStart,
                                           handleDragEnter,
-                                          handleDragEnd,
                                           handleTouchStart,
                                           handleTouchMove,
                                           handleTouchEnd,
@@ -125,7 +123,6 @@ const DesktopLayout: React.FC<Props> = ({
               draggedIndex={draggedIndex}
               onDragStart={handleDragStart}
               onDragEnter={handleDragEnter}
-              onDragEnd={handleDragEnd}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}

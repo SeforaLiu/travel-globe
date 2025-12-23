@@ -41,6 +41,18 @@ export type PhotoDragHandlers = {
   setDraggedIndex: (index: number | null) => void;
 };
 
+export type CloudinaryPhotoInfo = {
+  publicId: string;
+  url: string;
+  width: number;
+  height: number;
+  size: number;
+  format: string;
+  folder: string;
+  originalFilename: string;
+  created_at: string;
+};
+
 export type UploadStatus = 'pending' | 'uploading' | 'success' | 'error';
 
 export type FormData = {
@@ -58,6 +70,7 @@ export type FormData = {
     publicId?: string; // Cloudinary public ID
     status: UploadStatus;
     error?: string;
+    cloudinary?: CloudinaryPhotoInfo;
   }>;
 };
 

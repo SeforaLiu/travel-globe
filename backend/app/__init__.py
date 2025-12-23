@@ -33,6 +33,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]  # 新增：暴露所有头信息
 )
 
 # 注册路由

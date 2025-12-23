@@ -5,7 +5,12 @@ import axios from 'axios';
 const api = axios.create({
     baseURL: '/api', // 与后端API前缀匹配
     timeout: 10000, // 10秒超时
-    withCredentials: true // 允许携带cookie
+    withCredentials: true, // 允许携带cookie
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'  // 明确标识AJAX请求
+    }
 });
 
 // 添加一个标志来防止无限重定向
@@ -41,6 +46,10 @@ api.interceptors.response.use(
     },
     (error) => {
         const originalRequest = error.config;
+
+        if (originalRequest.url.includes('/auth/login')) {
+            return Promise.reject(error);
+        }
 
         // 如果是 401 错误且不是来自 /auth/me 的请求
         if (error.response?.status === 401 && !originalRequest._retry) {

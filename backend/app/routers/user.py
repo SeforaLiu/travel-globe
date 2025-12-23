@@ -91,7 +91,8 @@ def login_user(response: Response, user_data: UserCreate, session: Session = Dep
         secure=not is_development,  # 生产环境需要 HTTPS
         samesite="lax",  # 改为 lax 以支持某些跨站请求
         max_age=ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        path="/"  # 明确指定路径
+        path="/api",  # 明确指定路径
+        domain=None
     )
 
     # 注意：这里不应该返回 access_token 到前端！

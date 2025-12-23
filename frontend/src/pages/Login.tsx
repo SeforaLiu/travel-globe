@@ -30,6 +30,34 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
     return true;
   };
 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError('');
+  //
+  //   if (!validateForm()) {
+  //     return;
+  //   }
+  //   setLoading(true);
+  //
+  //   try {
+  //     const response = await api.post('/auth/login', {username, password});
+  //
+  //     if (response.status === 200) {
+  //       toast.success(t('Login successful!'));
+  //       setTimeout(() => {
+  //         navigate('/');
+  //       }, 1500);
+  //     }
+  //   } catch (err: any) {
+  //     const errorMessage = err.response?.data?.detail || t('Login failed');
+  //     setError(errorMessage);
+  //     toast.error(errorMessage);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // frontend/src/pages/Login.tsx
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -41,7 +69,6 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
 
     try {
       const response = await api.post('/auth/login', {username, password});
-
       if (response.status === 200) {
         toast.success(t('Login successful!'));
         setTimeout(() => {
@@ -49,13 +76,25 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
         }, 1500);
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || t('Login failed');
+      // 更健壮的错误处理
+      let errorMessage = t('Login failed');
+      if (err.response) {
+        // 尝试从不同位置获取错误信息
+        errorMessage = err.response.data?.detail ||
+          err.response.data?.message ||
+          err.response.statusText ||
+          errorMessage;
+      } else if (err.request) {
+        errorMessage = t('No response from server');
+      }
+
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     // 修改容器类名，适配移动端显示

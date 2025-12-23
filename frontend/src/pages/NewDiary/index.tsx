@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// frontend/src/pages/NewDiary/index.tsx
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import DesktopLayout from './layouts/DesktopLayout';
 import MobileLayout from './layouts/MobileLayout';
@@ -9,10 +10,25 @@ import { Props, LocationResult } from './types';
 
 export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
   const { t } = useTranslation();
-  const { formData, updateField, addPhotos, removePhoto, sortPhotos, updatePhotoStatus } = useFormData();
+  const {
+    formData,
+    updateField,
+    addPhotos,
+    removePhoto,
+    sortPhotos,
+    updatePhotoStatusByFile
+  } = useFormData();
   const { uploadPhotos, resetCache } = useCloudinaryUpload();
 
   const [showMapPreview, setShowMapPreview] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // 使用 useRef 来获取最新的 formData
+  const formDataRef = useRef(formData);
+  // 同步最新的 formData 到 ref
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
 
   // 组件卸载时重置上传缓存
   useEffect(() => {
@@ -24,37 +40,124 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 上传所有待上传的图片
+    // 防止重复提交
+    if (isUploading) {
+      console.log('正在上传中，请稍候...');
+      return;
+    }
+
+    // 首先检查是否有待上传的图片
     const pendingPhotos = formData.photos.filter(photo => photo.status === 'pending');
 
     if (pendingPhotos.length > 0) {
       try {
-        await uploadPhotos(
+        setIsUploading(true);
+        console.log('开始上传图片，待上传数量:', pendingPhotos.length);
+
+        // **改进：使用 Promise.all 等待所有上传完成**
+        const uploadResults = await uploadPhotos(
           pendingPhotos.map(p => ({
             file: p.file,
             url: p.url,
             status: p.status
           })),
           (index, status, result, error) => {
-            // 找到对应的全局索引
-            const globalIndex = formData.photos.findIndex(
-              (p, idx) => p.status === 'pending' &&
-                p.file.name === pendingPhotos[index].file.name &&
-                p.file.size === pendingPhotos[index].file.size
-            );
+            // 使用文件来更新状态，避免索引问题
+            const targetFile = pendingPhotos[index].file;
 
-            if (globalIndex !== -1) {
-              updatePhotoStatus(globalIndex, status, result?.publicId, error);
+            console.log('上传最终状态回调:', {
+              index,
+              targetFileName: targetFile.name,
+              status,
+              hasResult: !!result
+            });
+
+            // 只在最终状态（success/error）时更新
+            if (status === 'success' || status === 'error') {
+              updatePhotoStatusByFile(
+                targetFile,
+                status,
+                status === 'success' ? result : undefined,
+                error
+              );
             }
           }
         );
+
+        console.log('上传完成，返回结果数量:', uploadResults.length);
+        console.log('上传完成后的formData.photos:', formDataRef.current.photos);
+
       } catch (error) {
         console.error('上传过程中出现错误:', error);
+        setIsUploading(false);
         return;
+      } finally {
+        setIsUploading(false);
       }
     }
 
-    onSubmit(formData);
+    // 等待状态完全更新（确保React状态更新完成）
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 再次检查所有图片是否都已上传成功
+    const currentFormData = formDataRef.current;
+    const allPhotosUploaded = currentFormData.photos.every(photo =>
+      photo.status === 'success' || photo.status === 'error' // 允许成功或有明确错误的图片
+    );
+
+    // 检查是否有上传失败的图片
+    const failedPhotos = currentFormData.photos.filter(p => p.status === 'error');
+    if (failedPhotos.length > 0) {
+      console.error('有图片上传失败:', failedPhotos.map(p => ({
+        fileName: p.file.name,
+        error: p.error
+      })));
+      // 这里可以决定是否阻止提交，或者允许提交但忽略失败的图片
+      // 暂时为了用户体验，允许提交
+    }
+
+    // 检查是否所有图片都有最终状态（没有pending或uploading状态）
+    const hasUnfinishedPhotos = currentFormData.photos.some(photo =>
+      photo.status === 'pending' || photo.status === 'uploading'
+    );
+
+    if (hasUnfinishedPhotos) {
+      console.error('仍有图片未完成上传，无法提交');
+      console.log('当前照片状态:', currentFormData.photos.map(p => ({
+        fileName: p.file.name,
+        status: p.status,
+        hasCloudinary: !!p.cloudinary,
+        error: p.error
+      })));
+
+      return;
+    }
+
+    console.log('index.tsx------formData.photos', currentFormData.photos);
+
+    // 准备提交的数据，过滤掉失败的图片
+    const photosToSubmit = currentFormData.photos
+      .filter(photo => photo.status === 'success' && photo.cloudinary)
+      .map(photo => ({
+        url: photo.cloudinary!.url,
+        public_id: photo.cloudinary!.publicId,
+        width: photo.cloudinary!.width,
+        height: photo.cloudinary!.height,
+        size: photo.cloudinary!.size,
+        format: photo.cloudinary!.format,
+        folder: photo.cloudinary!.folder,
+        originalFilename: photo.cloudinary!.originalFilename,
+        created_at: photo.cloudinary!.created_at
+      }));
+
+    const submitData = {
+      ...currentFormData,
+      photos: photosToSubmit
+    };
+
+    console.log('index.tsx-----submitData',submitData)
+
+    onSubmit(submitData);
   };
 
   const handleLocationSelect = (place: LocationResult) => {
@@ -118,7 +221,7 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
     updateField,
     addPhotos,
     removePhoto,
-    updatePhotoStatus,
+    updatePhotoStatus: updatePhotoStatusByFile,
     sortPhotos,
     handleLocationSelect,
     handleLocationChange,
@@ -129,7 +232,6 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
     draggedIndex,
     handleDragStart: setDraggedIndex,
     handleDragEnter,
-    handleDragEnd: () => setDraggedIndex(null),
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,

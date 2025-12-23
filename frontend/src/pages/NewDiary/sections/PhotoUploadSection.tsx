@@ -1,3 +1,4 @@
+// frontend/src/pages/NewDiary/sections/PhotoUploadSection.tsx
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import PhotoPreviewGrid from '../components/PhotoPreviewGrid';
@@ -11,22 +12,24 @@ type Props = {
     publicId?: string;
     status: 'pending' | 'uploading' | 'success' | 'error';
     error?: string;
+    cloudinary?: import('../types').CloudinaryPhotoInfo;
   }>;
   dark: boolean;
   onAddPhotos: (files: File[]) => void;
   onRemovePhoto: (index: number) => void;
   onSortPhotos: (fromIndex: number, toIndex: number) => void;
-  updatePhotoStatus: (index: number, status: 'pending' | 'uploading' | 'success' | 'error', publicId?: string, error?: string) => void;
+  updatePhotoStatus: (index: number, status: 'pending' | 'uploading' | 'success' | 'error', cloudinary?: import('../types').CloudinaryPhotoInfo, error?: string) => void;
   draggedIndex: number | null;
   onDragStart: (index: number) => void;
   onDragEnter: (e: React.DragEvent, index: number) => void;
-  onDragEnd: () => void;
   onTouchStart: (e: React.TouchEvent, index: number) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
   onFocus?: () => void;
   isMobile?: boolean;
 };
+
+
 
 const PhotoUploadSection: React.FC<Props> = ({
                                                photos,
@@ -38,7 +41,6 @@ const PhotoUploadSection: React.FC<Props> = ({
                                                draggedIndex,
                                                onDragStart,
                                                onDragEnter,
-                                               onDragEnd,
                                                onTouchStart,
                                                onTouchMove,
                                                onTouchEnd,
@@ -154,7 +156,6 @@ const PhotoUploadSection: React.FC<Props> = ({
               onRemove={onRemovePhoto}
               onDragStart={onDragStart}
               onDragEnter={onDragEnter}
-              onDragEnd={onDragEnd}
               onTouchStart={onTouchStart}
               isMobile={true}
             />
@@ -203,7 +204,6 @@ const PhotoUploadSection: React.FC<Props> = ({
           onRemove={onRemovePhoto}
           onDragStart={onDragStart}
           onDragEnter={onDragEnter}
-          onDragEnd={onDragEnd}
           className="mt-4"
         />
       )}

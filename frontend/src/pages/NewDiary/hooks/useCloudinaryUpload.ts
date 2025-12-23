@@ -1,44 +1,100 @@
+// frontend/src/pages/NewDiary/hooks/useCloudinaryUpload.ts
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { cl } from '../../../services/cloudinary';
 import { generateFileSignature, validateFile, processImage, convertHeicToJpeg } from '../../../utils/imageProcessor';
 import { UploadStatus } from '../types';
 
+// 配置常量
+const MAX_CONCURRENT_UPLOADS = 3;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+// @ts-ignore
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${cl.config().cloud_name}/image/upload`;
+
 type UploadResult = {
   publicId: string;
   url: string;
+  width: number;
+  height: number;
+  size: number;
+  format: string;
+  folder: string;
+  originalFilename: string;
+  created_at: string
 };
+
+type QueuedPhoto = {
+  file: File;
+  url?: string;
+  status: UploadStatus;
+  originalIndex: number;
+};
+
+// 改进：定义回调类型，只应该通知最终状态
+type UploadProgressCallback = (
+  index: number,
+  status: 'uploading' | 'success' | 'error', // 去掉 pending，只在最终状态时通知
+  result?: UploadResult,
+  error?: string
+) => void;
 
 export const useCloudinaryUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, UploadResult>>({});
+  const [abortControllers, setAbortControllers] = useState<Record<string, AbortController>>({});
 
-  const uploadToCloudinary = useCallback(async (file: File): Promise<UploadResult> => {
+  const enhancedValidateFile = useCallback((file: File) => {
+    // 先执行原始验证
+    const originalValidation = validateFile(file);
+    if (!originalValidation.valid) {
+      return {
+        valid: false,
+        error: `文件大小超过限制 (最大 ${MAX_FILE_SIZE / 1024 / 1024}MB)`
+      };
+    }
+
+    return { valid: true };
+  }, []);
+
+  const uploadToCloudinary = useCallback(async (file: File, signal?: AbortSignal): Promise<UploadResult> => {
     return new Promise((resolve, reject) => {
-      // 验证文件
-      const validation = validateFile(file);
+      // 验证文件（包含大小检查）
+      const validation = enhancedValidateFile(file);
       if (!validation.valid) {
         reject(new Error(validation.error));
         return;
       }
 
-      // 创建FormData用于上传
       const formData = new FormData();
       formData.append('file', file);
       // @ts-ignore
       formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'default_preset');
-      formData.append('quality', 'auto'); // 智能质量压缩
+      formData.append('quality', 'auto');
 
       const xhr = new XMLHttpRequest();
-      // @ts-ignore
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cl.config().cloud_name}/image/upload`);
+      xhr.open('POST', CLOUDINARY_UPLOAD_URL);
+
+      // 取消支持
+      if (signal) {
+        signal.addEventListener('abort', () => {
+          xhr.abort();
+          reject(new Error('上传已取消'));
+        });
+      }
 
       xhr.onload = function () {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
           resolve({
             publicId: response.public_id,
-            url: response.secure_url
+            url: response.secure_url,
+            width: response.width,
+            height: response.height,
+            size: response.bytes,
+            format: response.format,
+            folder: response.folder,
+            originalFilename: response.original_filename,
+            created_at: response.created_at
           });
         } else {
           reject(new Error(`上传失败: ${xhr.statusText}`));
@@ -51,88 +107,151 @@ export const useCloudinaryUpload = () => {
 
       xhr.send(formData);
     });
-  }, []);
+  }, [enhancedValidateFile]);
+
+  const processFile = async (file: File): Promise<File> => {
+    let processedFile = file;
+
+    if (file.type.toLowerCase().includes('heic')) {
+      processedFile = await convertHeicToJpeg(file);
+    }
+
+    return await processImage(processedFile);
+  };
 
   const uploadPhotos = useCallback(async (
     photos: Array<{ file: File; url?: string; status: UploadStatus }>,
-    onProgress: (index: number, status: UploadStatus, result?: UploadResult, error?: string) => void
-  ) => {
+    onProgress: UploadProgressCallback,
+    signal?: AbortSignal
+  ): Promise<UploadResult[]> => {
+    // 检查全局取消信号
+    if (signal?.aborted) {
+      throw new Error('上传已取消');
+    }
+
     setUploading(true);
+    const uploadStartTime = performance.now();
+    const results: UploadResult[] = [];
 
     try {
-      // 批量处理文件，减少重复上传
-      const uniquePhotos: Array<{ file: File; url?: string; status: UploadStatus; originalIndex: number }> = [];
-      const processedSignatures: string[] = [];
+      // Step 1: 去重处理
+      const uniquePhotos: QueuedPhoto[] = [];
+      const processedSignatures = new Set<string>();
 
-      // 去重逻辑
-      for (let i = 0; i < photos.length; i++) {
-        const photo = photos[i];
-        const fileSignature = generateFileSignature(photo.file);
+      photos.forEach((photo, index) => {
+        const signature = generateFileSignature(photo.file);
 
-        // 检查是否已经处理过该文件
-        if (processedSignatures.includes(fileSignature)) {
-          // 如果已经上传过，找到之前的结果并复用
-          const existingResult = uploadedFiles[fileSignature];
-          if (existingResult) {
-            onProgress(i, 'success', existingResult);
-            toast.info(`文件 "${photo.file.name}" 已存在，使用缓存结果`);
-          } else {
-            // 如果有签名但没有结果，仍然添加到处理队列
-            uniquePhotos.push({ ...photo, originalIndex: i });
-            processedSignatures.push(fileSignature);
+        if (processedSignatures.has(signature)) {
+          if (uploadedFiles[signature]) {
+            onProgress(index, 'success', uploadedFiles[signature]);
+            results.push(uploadedFiles[signature]);
+            toast.info(`"${photo.file.name}" 已存在，使用缓存结果`);
           }
-        } else {
-          uniquePhotos.push({ ...photo, originalIndex: i });
-          processedSignatures.push(fileSignature);
+          return;
         }
-      }
 
-      // 处理唯一的文件
-      for (let i = 0; i < uniquePhotos.length; i++) {
-        const photo = uniquePhotos[i];
-        const fileSignature = generateFileSignature(photo.file);
+        processedSignatures.add(signature);
+        uniquePhotos.push({
+          ...photo,
+          originalIndex: index
+        });
+      });
 
-        // 检查是否已经上传过（双重检查）
-        if (uploadedFiles[fileSignature]) {
-          onProgress(photo.originalIndex, 'success', uploadedFiles[fileSignature]);
-          toast.info(`文件 "${photo.file.name}" 已存在，使用缓存结果`);
-          continue;
+      // Step 2: 准备上传任务队列
+      const uploadPromises = uniquePhotos.map(photo => async () => {
+        const { file, originalIndex } = photo;
+        const signature = generateFileSignature(file);
+
+        // 检查全局取消信号
+        if (signal?.aborted) {
+          throw new Error('上传已取消');
         }
+
+        // 为每个文件创建独立的AbortController
+        const controller = new AbortController();
+        setAbortControllers(prev => ({ ...prev, [signature]: controller }));
 
         try {
-          onProgress(photo.originalIndex, 'uploading');
-
-          let processedFile = photo.file;
-
-          // 处理HEIC格式
-          if (photo.file.type.toLowerCase().includes('heic')) {
-            processedFile = await convertHeicToJpeg(photo.file);
+          // 再次检查缓存
+          if (uploadedFiles[signature]) {
+            const cachedResult = uploadedFiles[signature];
+            onProgress(originalIndex, 'success', cachedResult);
+            return cachedResult;
           }
 
-          // 处理图片（仅压缩，不改变尺寸和比例）
-          processedFile = await processImage(processedFile);
+          // **重要：不在上传开始时通知 uploading 状态**
+          // onProgress(originalIndex, 'uploading');
 
-          // 上传到Cloudinary
-          const result = await uploadToCloudinary(processedFile);
+          // 文件预处理
+          const processedFile = await processFile(file);
 
-          // 缓存上传结果用于去重
+          // 执行上传（传入取消信号）
+          const result = await uploadToCloudinary(processedFile, controller.signal);
+
+          // 更新缓存
           setUploadedFiles(prev => ({
             ...prev,
-            [fileSignature]: result
+            [signature]: result
           }));
 
-          onProgress(photo.originalIndex, 'success', result);
-          toast.success(`"${photo.file.name}" 上传成功`);
+          // **只在成功完成时通知**
+          onProgress(originalIndex, 'success', result);
+          console.log('上传照片---result', result);
+          toast.success(`"${file.name}" 上传成功`);
+          return result;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知错误';
-          onProgress(photo.originalIndex, 'error', undefined, errorMessage);
-          toast.error(`"${photo.file.name}" 上传失败: ${errorMessage}`);
+
+          // 如果不是用户取消的错误，显示提示
+          if (errorMessage !== '上传已取消') {
+            // **只在失败时通知 error 状态**
+            onProgress(originalIndex, 'error', undefined, errorMessage);
+            toast.error(`"${file.name}" 上传失败: ${errorMessage}`);
+          }
+          throw error;
+        } finally {
+          // 清理AbortController
+          setAbortControllers(prev => {
+            const newControllers = { ...prev };
+            delete newControllers[signature];
+            return newControllers;
+          });
         }
-      }
+      });
+
+      // Step 3: 并发执行上传
+      const workers = Array.from({ length: MAX_CONCURRENT_UPLOADS }).map(async () => {
+        while (uploadPromises.length > 0) {
+          // 检查全局取消信号
+          if (signal?.aborted) {
+            throw new Error('上传已取消');
+          }
+          const task = uploadPromises.shift();
+          if (task) {
+            const result = await task();
+            if (result) results.push(result);
+          }
+        }
+      });
+
+      await Promise.all(workers);
+
+      console.log(`上传完成，耗时 ${((performance.now() - uploadStartTime) / 1000).toFixed(2)}秒`);
+
+      return results;
     } finally {
       setUploading(false);
     }
-  }, [uploadToCloudinary, uploadedFiles]);
+  }, [uploadToCloudinary, uploadedFiles, enhancedValidateFile]);
+
+  // 取消所有上传
+  const cancelUploads = useCallback(() => {
+    Object.values(abortControllers).forEach(controller => {
+      controller.abort();
+    });
+    setAbortControllers({});
+    toast.warning('已取消所有上传');
+  }, [abortControllers]);
 
   // 重置上传缓存
   const resetCache = useCallback(() => {
@@ -142,6 +261,7 @@ export const useCloudinaryUpload = () => {
   return {
     uploading,
     uploadPhotos,
+    cancelUploads,
     uploadedFiles,
     setUploadedFiles,
     resetCache
