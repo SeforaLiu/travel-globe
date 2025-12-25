@@ -18,7 +18,6 @@ type Props = {
   onAddPhotos: (files: File[]) => void;
   onRemovePhoto: (index: number) => void;
   onSortPhotos: (fromIndex: number, toIndex: number) => void;
-  updatePhotoStatus: (index: number, status: 'pending' | 'uploading' | 'success' | 'error', cloudinary?: import('../types').CloudinaryPhotoInfo, error?: string) => void;
   draggedIndex: number | null;
   onDragStart: (index: number) => void;
   onDragEnter: (e: React.DragEvent, index: number) => void;
@@ -37,7 +36,6 @@ const PhotoUploadSection: React.FC<Props> = ({
                                                onAddPhotos,
                                                onRemovePhoto,
                                                onSortPhotos,
-                                               updatePhotoStatus,
                                                draggedIndex,
                                                onDragStart,
                                                onDragEnter,

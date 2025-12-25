@@ -1,7 +1,7 @@
 export type Props = {
   isMobile: boolean;
   onClose: () => void;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: SubmitData) => void; // 直接使用 FormData 类型
   dark: boolean;
 };
 
@@ -74,3 +74,24 @@ export type FormData = {
   }>;
 };
 
+export type SubmitData = {
+  title: string;
+  type: 'visited' | 'wishlist';
+  location: string;
+  coordinates: { lat: number; lng: number } | null;
+  dateStart: string;
+  dateEnd: string;
+  transportation: string;
+  content: string;
+  photos: Array<{
+    url: string;
+    public_id: string;
+    width: number;
+    height: number;
+    size: number;
+    format: string;
+    folder: string;
+    original_filename: string;
+    created_at: string;
+  }>;
+};

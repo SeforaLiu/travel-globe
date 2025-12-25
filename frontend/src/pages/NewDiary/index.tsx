@@ -146,7 +146,7 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
         size: photo.cloudinary!.size,
         format: photo.cloudinary!.format,
         folder: photo.cloudinary!.folder,
-        originalFilename: photo.cloudinary!.originalFilename,
+        original_filename: photo.cloudinary!.originalFilename,
         created_at: photo.cloudinary!.created_at
       }));
 
@@ -221,7 +221,7 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
     updateField,
     addPhotos,
     removePhoto,
-    updatePhotoStatus: updatePhotoStatusByFile,
+    updatePhotoStatusByFile,
     sortPhotos,
     handleLocationSelect,
     handleLocationChange,

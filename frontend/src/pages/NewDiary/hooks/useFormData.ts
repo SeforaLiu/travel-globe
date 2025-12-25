@@ -109,41 +109,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     });
   };
 
-  const updatePhotoStatus = (
-    index: number,
-    status: UploadStatus,
-    cloudinary?: CloudinaryPhotoInfo,
-    error?: string
-  ) => {
-    console.log('======通过索引更新照片状态=====', {
-      index,
-      status,
-      hasCloudinary: !!cloudinary,
-      hasError: !!error,
-      cloudinaryData: cloudinary
-    });
-
-    setFormData(prev => {
-      const newPhotos = [...prev.photos];
-      if (newPhotos[index]) {
-        const updatedPhoto = {
-          ...newPhotos[index],
-          status,
-          cloudinary,
-          error
-        };
-
-        console.log('更新后照片状态:', {
-          status: updatedPhoto.status,
-          hasCloudinary: !!updatedPhoto.cloudinary
-        });
-
-        newPhotos[index] = updatedPhoto;
-      }
-      return { ...prev, photos: newPhotos };
-    });
-  };
-
   const sortPhotos = (fromIndex: number, toIndex: number) => {
     if (
       fromIndex === toIndex ||
@@ -169,7 +134,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     updateField,
     addPhotos,
     removePhoto,
-    updatePhotoStatus,
     updatePhotoStatusByFile, // 新增
     sortPhotos
   };

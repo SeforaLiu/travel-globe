@@ -156,7 +156,6 @@ export default function App() {
 
   const handleSubmitDiary = async (formData: FormData) => {
     try {
-
       const data = {
         title: formData.title,
         content: formData.content,

@@ -18,7 +18,6 @@ type Props = {
   updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
   addPhotos: (files: File[]) => void;
   removePhoto: (index: number) => void;
-  updatePhotoStatus: (index: number, status: 'pending' | 'uploading' | 'success' | 'error', publicId?: string, error?: string) => void;
   sortPhotos: (fromIndex: number, toIndex: number) => void;
   handleLocationSelect: (place: any) => void;
   handleLocationChange: (value: string) => void;
@@ -42,7 +41,6 @@ const DesktopLayout: React.FC<Props> = ({
                                           updateField,
                                           addPhotos,
                                           removePhoto,
-                                          updatePhotoStatus,
                                           sortPhotos,
                                           handleLocationSelect,
                                           handleLocationChange,
@@ -118,7 +116,6 @@ const DesktopLayout: React.FC<Props> = ({
               dark={dark}
               onAddPhotos={addPhotos}
               onRemovePhoto={removePhoto}
-              updatePhotoStatus={updatePhotoStatus}
               onSortPhotos={sortPhotos}
               draggedIndex={draggedIndex}
               onDragStart={handleDragStart}
