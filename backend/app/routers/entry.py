@@ -87,6 +87,7 @@ async def create_entry(
     current_user: dict = Depends(get_current_user)
 ):
   logger.info(f"Creating entry for user {current_user['username']} - Photos count: {len(entry_data.photos)}")
+  logger.debug(f"Received entry data: date_start={entry_data.date_start}, date_end={entry_data.date_end}")  # 添加调试日志
 
   try:
     # 1. 验证和处理坐标
@@ -103,9 +104,12 @@ async def create_entry(
     if location_obj:
       logger.debug(f"Using location: {location_obj.name}, ID: {location_id}")
 
-    # 3. 处理日期 (如果为 None 则使用默认值)
-    date_start = entry_data.date_start if entry_data.date_start else date.today()
-    date_end = entry_data.date_end if entry_data.date_end else date.today()
+    # 3. 处理日期 - 保持原有的 None 值，不强制设置默认值
+    # 只有当日期字段确实为 None 时才设置默认值，但根据需求，如果前端传空值应该保持为空
+    date_start = entry_data.date_start
+    date_end = entry_data.date_end
+
+    logger.debug(f"Final dates - start: {date_start}, end: {date_end}")
 
     # 4. 创建 Entry 对象
     entry_dict = entry_data.dict(exclude={"photos"})
@@ -116,6 +120,8 @@ async def create_entry(
       "user_id": current_user["user_id"],
       "location_id": location_id  # 设置位置ID
     })
+
+    logger.debug(f"Creating entry with data: {entry_dict}")
 
     db_entry = Entry(**entry_dict)
     session.add(db_entry)

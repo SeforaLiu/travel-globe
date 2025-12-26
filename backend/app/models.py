@@ -1,7 +1,7 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 from sqlmodel import SQLModel, Field, Relationship, JSON
 from datetime import date, datetime
-from pydantic import validator, BaseModel, ConfigDict
+from pydantic import validator, BaseModel, ConfigDict, field_validator
 import logging
 from passlib.context import CryptContext
 
@@ -82,6 +82,25 @@ class EntryBase(SQLModel):
 
 class EntryCreate(EntryBase):
     photos: List[PhotoBase] = []
+
+    # 添加自定义验证器来处理空字符串转换为None
+    @field_validator('date_start', 'date_end', mode='before')
+    @classmethod
+    def validate_date_fields(cls, v):
+        """处理日期字段，将空字符串转换为None"""
+        if v == "" or v is None:
+            return None
+        if isinstance(v, str):
+            if v.strip() == "":
+                return None
+            # 尝试解析日期字符串
+            try:
+                # 支持 "YYYY-MM-DD" 格式
+                return date.fromisoformat(v)
+            except ValueError:
+                # 如果解析失败，抛出有意义的错误
+                raise ValueError(f"Invalid date format: {v}. Expected format: YYYY-MM-DD")
+        return v
 
     model_config = ConfigDict(
         json_schema_extra={
