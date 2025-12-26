@@ -108,7 +108,7 @@ const DateSection: React.FC<Props> = ({
           <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end">
             <div className={`w-full pl-7 rounded-t-xl p-4 ${dark ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="mb-4">
-                <button className={`ml-80 rounded-xl px-4 text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> x </button>
+                <button className={` rounded-xl px-4 text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> 关闭 </button>
                 <DayPicker
                   mode="range"
                   selected={selectedDate}

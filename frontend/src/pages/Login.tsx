@@ -106,7 +106,6 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
           duration: 3000,
         }}
         richColors={true}
-        closeButton={true}
         visibleToasts={3}
       />
 

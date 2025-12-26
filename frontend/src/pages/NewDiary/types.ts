@@ -3,6 +3,7 @@ export type Props = {
   onClose: () => void;
   onSubmit: (data: SubmitData) => void; // 直接使用 FormData 类型
   dark: boolean;
+  loading:boolean;
 };
 
 export type LocationResult = {

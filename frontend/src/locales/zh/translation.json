@@ -15,6 +15,7 @@
   "Login failed": "登录失败",
   "Registration failed": "注册失败",
   "Network error": "网络错误",
+  "Session expired, please login again": "登录已过期，请重新登录",
   "Username must be at least 6 characters": "用户名至少需要6个字符",
   "Password must be at least 6 characters with letters and numbers": "密码至少需要6个字符，且必须包含字母和数字",
   "Passwords do not match": "密码不匹配",
@@ -45,6 +46,10 @@
   "back": "返回",
   "edit": "编辑",
   "delete": "删除",
+  "close": "关闭",
   "Your journey starts here": "开始你的旅程吧!",
-  "Click + to add your first journey": "点击 + 开始你的第一次旅程!"
+  "Click + to add your first journey": "点击 + 开始你的第一次旅程!",
+  "submit successful": "提交成功",
+  "submit error please try again": "提交失败，请重试",
+  "Preparing your travel experience": "旅行地球正在准备中..."
 }

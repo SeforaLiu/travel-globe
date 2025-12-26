@@ -1,6 +1,7 @@
 // frontend/src/pages/NewDiary/hooks/useCloudinaryUpload.ts
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import {useTranslation} from 'react-i18next';
 import { cl } from '../../../services/cloudinary';
 import { generateFileSignature, validateFile, processImage, convertHeicToJpeg } from '../../../utils/imageProcessor';
 import { UploadStatus } from '../types';
@@ -39,6 +40,7 @@ type UploadProgressCallback = (
 ) => void;
 
 export const useCloudinaryUpload = () => {
+  const {t} = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, UploadResult>>({});
   const [abortControllers, setAbortControllers] = useState<Record<string, AbortController>>({});
@@ -102,7 +104,7 @@ export const useCloudinaryUpload = () => {
       };
 
       xhr.onerror = function () {
-        reject(new Error('网络错误'));
+        toast.error(t('Network error'))
       };
 
       xhr.send(formData);
@@ -197,7 +199,6 @@ export const useCloudinaryUpload = () => {
           // **只在成功完成时通知**
           onProgress(originalIndex, 'success', result);
           console.log('上传照片---result', result);
-          toast.success(`"${file.name}" 上传成功`);
           return result;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知错误';
@@ -206,7 +207,7 @@ export const useCloudinaryUpload = () => {
           if (errorMessage !== '上传已取消') {
             // **只在失败时通知 error 状态**
             onProgress(originalIndex, 'error', undefined, errorMessage);
-            toast.error(`"${file.name}" 上传失败: ${errorMessage}`);
+            toast.error(`${t('Network error')} : "${file.name}" - ${errorMessage}`);
           }
           throw error;
         } finally {

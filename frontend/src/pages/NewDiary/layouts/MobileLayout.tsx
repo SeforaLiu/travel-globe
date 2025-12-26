@@ -7,7 +7,7 @@ import TransportationSection from '../sections/TransportationSection';
 import ContentSection from '../sections/ContentSection';
 import PhotoUploadSection from '../sections/PhotoUploadSection';
 import FooterSection from '../sections/FooterSection';
-import { FormData } from '../types';
+import {FormData} from '../types';
 
 type Props = {
   dark: boolean;
@@ -31,6 +31,7 @@ type Props = {
   handleTouchStart: (e: React.TouchEvent, index: number) => void;
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
+  loading: boolean
 };
 
 const MobileLayout: React.FC<Props> = ({
@@ -53,12 +54,14 @@ const MobileLayout: React.FC<Props> = ({
                                          handleTouchStart,
                                          handleTouchMove,
                                          handleTouchEnd,
-                                         showMapPreview
+                                         showMapPreview,
+                                         loading
                                        }) => {
   return (
     <div className={`fixed inset-0 z-50 ${dark ? 'bg-gray-900' : 'bg-white'}`}>
       <div className={`flex flex-col h-full w-full ${dark ? 'bg-gray-900' : 'bg-white'}`}>
-        <div className={`flex justify-between items-center p-4 ${dark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${dark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div
+          className={`flex justify-between items-center p-4 ${dark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${dark ? 'border-gray-700' : 'border-gray-200'}`}>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">新增日记/攻略</h2>
           <button
             onClick={onClose}
@@ -142,6 +145,7 @@ const MobileLayout: React.FC<Props> = ({
             onClose={onClose}
             onSubmit={handleSubmit}
             isMobile={true}
+            loading={loading}
           />
         </form>
       </div>

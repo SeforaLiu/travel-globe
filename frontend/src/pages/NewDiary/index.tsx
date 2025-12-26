@@ -8,7 +8,7 @@ import { usePhotoDragSort } from './hooks/usePhotoDragSort';
 import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
 import { Props, LocationResult } from './types';
 
-export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
+export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }: Props) {
   const { t } = useTranslation();
   const {
     formData,
@@ -235,6 +235,7 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark }: Props) {
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
+    loading,
   };
 
   return isMobile ? (

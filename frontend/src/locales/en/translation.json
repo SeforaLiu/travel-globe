@@ -15,6 +15,7 @@
   "Login failed": "Login failed",
   "Registration failed": "Registration failed",
   "Network error": "Network error",
+  "Session expired, please login again": "Session expired, please login again",
   "Username must be at least 6 characters": "Username must be at least 6 characters",
   "Password must be at least 6 characters with letters and numbers": "Password must be at least 6 characters with letters and numbers",
   "Passwords do not match": "Passwords do not match",
@@ -45,6 +46,10 @@
   "back": "back",
   "edit": "edit",
   "delete": "delete",
+  "close": "close",
   "Your journey starts here": "Your journey starts here!",
-  "Click + to add your first journey": "Click + to add your first journey!"
+  "Click + to add your first journey": "Click + to add your first journey!",
+  "submit successful": "Submit successful!",
+  "submit error please try again": "Ops! Submit error! Please try again",
+  "Preparing your travel experience": "Preparing your travel experience..."
 }

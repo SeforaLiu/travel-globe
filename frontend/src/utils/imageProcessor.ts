@@ -1,5 +1,4 @@
 import { MAX_FILE_SIZE } from '../services/cloudinary';
-import { toast } from 'sonner';
 
 /**
  * 检查文件是否符合要求

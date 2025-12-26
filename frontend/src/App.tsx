@@ -2,19 +2,23 @@ import React, {useState, useEffect} from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import {Routes, Route, useNavigate, useLocation} from 'react-router-dom'
-import api from './services/api'; // 引入 axios 实例
+import { toast , Toaster} from 'sonner';
+import {useTranslation} from 'react-i18next';
+import api from './services/api';
+import {FormData, SubmitData} from "./pages/NewDiary/types";
 import Home from './pages/Home'
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NewDiary from "./pages/NewDiary/index";
 import DiaryView from "./pages/DiaryView"
-import {FormData} from "./pages/NewDiary/types";
+import Loading from "./components/Loading"
 
 
 // @ts-ignore
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
 export default function App() {
+  const {t} = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [dark, setDark] = useState(false)
@@ -24,14 +28,6 @@ export default function App() {
   const [showLeftRightButtonsMobile, setShowLeftRightButtonsMobile] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-
-
-  // 从后端api获取
-  const userInfo = {
-    userName: "",
-    traveledPlaceTotal: 0,
-    totalGuideDiary: 0,
-  }
 
   const handleBack = () => {
     navigate(-1); // 返回上一页
@@ -123,7 +119,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log('location.pathname', location.pathname)
+    console.log('location.pathname---', location.pathname)
+    console.log('是不是移动端--isMobile',isMobile)
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
@@ -151,10 +148,11 @@ export default function App() {
   const textColor = dark ? 'text-white' : 'text-gray-800';
 
   if (loading && location.pathname !== '/login' && location.pathname !== '/register') {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <Loading dark={dark} />
   }
 
-  const handleSubmitDiary = async (formData: FormData) => {
+  const handleSubmitDiary = async (formData: SubmitData) => {
+    setLoading(true)
     try {
       const data = {
         title: formData.title,
@@ -177,26 +175,40 @@ export default function App() {
       });
 
       console.log('成功发请求!!!!', response);
+      toast.success(t('submit successful'));
 
       // 提交成功后可以导航到其他页面或显示成功消息
-      navigate('/'); // 或者其他成功后的操作
+      navigate('/');
+      if(isMobile){
+        setShowLeftRightButtonsMobile(true)
+      }
 
     } catch (error: any) {
       if (error.response?.status === 401) {
-        // 明确提示认证失败
-        alert('Session expired, please login again');
+        toast.error(t('Session expired, please login again'))
         navigate('/login');
       } else {
         console.error('Error:', error);
-        // 显示错误提示给用户
-        alert('提交失败，请重试');
+        toast.error(t('submit error please try again'))
       }
+    }finally {
+      setLoading(false)
     }
   };
 
 
   return (
     <div className="h-screen flex relative">
+      <Toaster
+        position={"top-center"}
+        theme={dark ? "dark" : "light"}
+        toastOptions={{
+          duration: 3000,
+        }}
+        richColors={true}
+        visibleToasts={3}
+      />
+
       {isMobile && showLeftRightButtonsMobile && (
         <button
           onClick={() => {
@@ -263,6 +275,7 @@ export default function App() {
                 handleBack()
                 setShowLeftRightButtonsMobile(true)
               }}
+              loading={loading}
               onSubmit={(formData) => handleSubmitDiary(formData)}
             />
           }/>
