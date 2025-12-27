@@ -20,14 +20,14 @@ const FooterSection: React.FC<Props> = ({loading, dark, onClose, onSubmit, isMob
           className="px-6 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           onClick={onClose}
         >
-          {t('AddCancelButton')}
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           className="px-6 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
           onClick={onSubmit}
         >
-          {t('AddSubmitButton')}
+          {t('common.submit')}
         </button>
       </div>
     );
@@ -41,14 +41,14 @@ const FooterSection: React.FC<Props> = ({loading, dark, onClose, onSubmit, isMob
           className="px-6 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           onClick={onClose}
         >
-          {t('AddCancelButton')}
+          {t('common.cancel')}
         </button>
         <button
           disabled={loading}
           type="submit"
           className="px-6 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
         >
-          {t('AddSubmitButton')}
+          {t('common.submit')}
         </button>
       </div>
     </div>

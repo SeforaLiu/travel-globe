@@ -63,7 +63,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
             ${dark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} 
             transition-colors`}
           >
-            {t('back')}
+            {t('common.back')}
           </button>
           <button
             onClick={handleEditClick}
@@ -71,7 +71,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
             ${dark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-500 hover:bg-blue-400'} 
             text-white transition-colors`}
           >
-            {t('edit')}
+            {t('common.edit')}
           </button>
           <button
             onClick={handleDeleteClick}
@@ -79,7 +79,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
             ${dark ? 'bg-red-600 hover:bg-red-500' : 'bg-red-500 hover:bg-red-400'} 
             text-white transition-colors`}
           >
-            {t('delete')}
+            {t('common.delete')}
           </button>
         </div>
 

@@ -31,10 +31,10 @@ type QueuedPhoto = {
   originalIndex: number;
 };
 
-// 改进：定义回调类型，只应该通知最终状态
+// 修改回调类型：移除 uploading 状态，只处理最终状态
 type UploadProgressCallback = (
   index: number,
-  status: 'uploading' | 'success' | 'error', // 去掉 pending，只在最终状态时通知
+  status: 'success' | 'error',  // 只保留最终状态
   result?: UploadResult,
   error?: string
 ) => void;
@@ -104,12 +104,12 @@ export const useCloudinaryUpload = () => {
       };
 
       xhr.onerror = function () {
-        toast.error(t('Network error'))
+        reject(new Error(t('Network error') || 'Network error'));
       };
 
       xhr.send(formData);
     });
-  }, [enhancedValidateFile]);
+  }, [enhancedValidateFile, t]);
 
   const processFile = async (file: File): Promise<File> => {
     let processedFile = file;
@@ -136,18 +136,34 @@ export const useCloudinaryUpload = () => {
     const results: UploadResult[] = [];
 
     try {
-      // Step 1: 去重处理
+      // Step 1: 只处理需要上传的照片（pending 或 error 状态）
+      const photosToUpload = photos.filter(photo =>
+        photo.status === 'pending' || photo.status === 'error'
+      );
+
+      if (photosToUpload.length === 0) {
+        console.log('没有需要上传的照片');
+        return results;
+      }
+
+      console.log('开始上传照片，数量:', photosToUpload.length, {
+        pending: photosToUpload.filter(p => p.status === 'pending').length,
+        error: photosToUpload.filter(p => p.status === 'error').length
+      });
+
+      // Step 2: 去重处理
       const uniquePhotos: QueuedPhoto[] = [];
       const processedSignatures = new Set<string>();
 
-      photos.forEach((photo, index) => {
+      photosToUpload.forEach((photo, index) => {
         const signature = generateFileSignature(photo.file);
 
         if (processedSignatures.has(signature)) {
           if (uploadedFiles[signature]) {
+            // 通知成功状态
             onProgress(index, 'success', uploadedFiles[signature]);
             results.push(uploadedFiles[signature]);
-            toast.info(`"${photo.file.name}" 已存在，使用缓存结果`);
+            console.log(`"${photo.file.name}" 已存在，使用缓存结果`);
           }
           return;
         }
@@ -159,7 +175,12 @@ export const useCloudinaryUpload = () => {
         });
       });
 
-      // Step 2: 准备上传任务队列
+      if (uniquePhotos.length === 0) {
+        console.log('所有照片都已处理完成');
+        return results;
+      }
+
+      // Step 3: 准备上传任务队列
       const uploadPromises = uniquePhotos.map(photo => async () => {
         const { file, originalIndex } = photo;
         const signature = generateFileSignature(file);
@@ -174,20 +195,17 @@ export const useCloudinaryUpload = () => {
         setAbortControllers(prev => ({ ...prev, [signature]: controller }));
 
         try {
-          // 再次检查缓存
+          // 检查缓存
           if (uploadedFiles[signature]) {
             const cachedResult = uploadedFiles[signature];
             onProgress(originalIndex, 'success', cachedResult);
             return cachedResult;
           }
 
-          // **重要：不在上传开始时通知 uploading 状态**
-          // onProgress(originalIndex, 'uploading');
-
           // 文件预处理
           const processedFile = await processFile(file);
 
-          // 执行上传（传入取消信号）
+          // 执行上传
           const result = await uploadToCloudinary(processedFile, controller.signal);
 
           // 更新缓存
@@ -196,18 +214,22 @@ export const useCloudinaryUpload = () => {
             [signature]: result
           }));
 
-          // **只在成功完成时通知**
           onProgress(originalIndex, 'success', result);
-          console.log('上传照片---result', result);
+          console.log('上传照片成功:', result.originalFilename);
           return result;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知错误';
 
-          // 如果不是用户取消的错误，显示提示
           if (errorMessage !== '上传已取消') {
-            // **只在失败时通知 error 状态**
+            // 通知错误状态
             onProgress(originalIndex, 'error', undefined, errorMessage);
-            toast.error(`${t('Network error')} : "${file.name}" - ${errorMessage}`);
+
+            // 根据错误类型显示不同提示
+            if (errorMessage.includes('Network error') || errorMessage.includes('网络')) {
+              console.error(`网络错误: "${file.name}"`);
+            } else {
+              console.error(`"${file.name}" 上传失败: ${errorMessage}`);
+            }
           }
           throw error;
         } finally {
@@ -220,7 +242,7 @@ export const useCloudinaryUpload = () => {
         }
       });
 
-      // Step 3: 并发执行上传
+      // Step 4: 并发执行上传
       const workers = Array.from({ length: MAX_CONCURRENT_UPLOADS }).map(async () => {
         while (uploadPromises.length > 0) {
           // 检查全局取消信号
@@ -229,17 +251,25 @@ export const useCloudinaryUpload = () => {
           }
           const task = uploadPromises.shift();
           if (task) {
-            const result = await task();
-            if (result) results.push(result);
+            try {
+              const result = await task();
+              if (result) results.push(result);
+            } catch (error) {
+              // 单个任务失败不影响其他任务
+              console.error('单个文件上传失败:', error);
+            }
           }
         }
       });
 
       await Promise.all(workers);
 
-      console.log(`上传完成，耗时 ${((performance.now() - uploadStartTime) / 1000).toFixed(2)}秒`);
+      console.log(`上传完成，成功数量: ${results.length}，耗时 ${((performance.now() - uploadStartTime) / 1000).toFixed(2)}秒`);
 
       return results;
+    } catch (error) {
+      console.error('上传过程中出现全局错误:', error);
+      throw error;
     } finally {
       setUploading(false);
     }
@@ -259,12 +289,23 @@ export const useCloudinaryUpload = () => {
     setUploadedFiles({});
   }, []);
 
+  // 清除指定文件的缓存（用于重试）
+  const clearFileCache = useCallback((file: File) => {
+    const signature = generateFileSignature(file);
+    setUploadedFiles(prev => {
+      const newFiles = { ...prev };
+      delete newFiles[signature];
+      return newFiles;
+    });
+  }, []);
+
   return {
     uploading,
     uploadPhotos,
     cancelUploads,
     uploadedFiles,
     setUploadedFiles,
-    resetCache
+    resetCache,
+    clearFileCache
   };
 };

@@ -63,14 +63,14 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     });
   };
 
-  // 添加一个基于文件标识符的更新方法，避免索引问题
+  // 更新照片状态（通过文件标识符）
   const updatePhotoStatusByFile = (
     file: File,
     status: UploadStatus,
     cloudinary?: CloudinaryPhotoInfo,
     error?: string
   ) => {
-    console.log('======通过文件更新照片状态=====', {
+    console.log('通过文件更新照片状态:', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
@@ -97,7 +97,8 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
         console.log('找到并更新照片索引:', index, {
           status: updatedPhoto.status,
-          hasCloudinary: !!updatedPhoto.cloudinary
+          hasCloudinary: !!updatedPhoto.cloudinary,
+          error: updatedPhoto.error
         });
 
         newPhotos[index] = updatedPhoto;
@@ -107,6 +108,148 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
       return { ...prev, photos: newPhotos };
     });
+  };
+
+  // 更新照片状态（通过索引）
+  const updatePhotoStatusByIndex = (
+    index: number,
+    status: UploadStatus,
+    cloudinary?: CloudinaryPhotoInfo,
+    error?: string
+  ) => {
+    console.log('通过索引更新照片状态:', {
+      index,
+      status,
+      hasCloudinary: !!cloudinary,
+      hasError: !!error
+    });
+
+    setFormData(prev => {
+      if (index < 0 || index >= prev.photos.length) {
+        console.warn('照片索引超出范围:', index);
+        return prev;
+      }
+
+      const newPhotos = [...prev.photos];
+      const updatedPhoto = {
+        ...newPhotos[index],
+        status,
+        cloudinary,
+        error
+      };
+
+      newPhotos[index] = updatedPhoto;
+      return { ...prev, photos: newPhotos };
+    });
+  };
+
+  // 重试所有失败的照片
+  const retryFailedPhotos = () => {
+    console.log('重试所有失败的照片');
+
+    setFormData(prev => {
+      const newPhotos = prev.photos.map(photo => {
+        if (photo.status === 'error') {
+          console.log(`重试照片: ${photo.file.name}`);
+          return {
+            ...photo,
+            status: 'pending' as UploadStatus,
+            error: undefined  // 清除错误信息
+          };
+        }
+        return photo;
+      });
+      return { ...prev, photos: newPhotos };
+    });
+  };
+
+  // 重试指定索引的照片
+  const retryPhotoByIndex = (index: number) => {
+    console.log('重试指定照片，索引:', index);
+
+    setFormData(prev => {
+      if (index < 0 || index >= prev.photos.length) {
+        console.warn('照片索引超出范围:', index);
+        return prev;
+      }
+
+      const newPhotos = [...prev.photos];
+      const photo = newPhotos[index];
+
+      if (photo.status === 'error') {
+        console.log(`重试照片: ${photo.file.name}`);
+        newPhotos[index] = {
+          ...photo,
+          status: 'pending' as UploadStatus,
+          error: undefined
+        };
+      } else {
+        console.log(`照片状态不是error，无需重试: ${photo.file.name} (${photo.status})`);
+      }
+
+      return { ...prev, photos: newPhotos };
+    });
+  };
+
+  // 重试指定文件
+  const retryPhotoByFile = (file: File) => {
+    console.log('重试指定文件:', file.name);
+
+    setFormData(prev => {
+      const newPhotos = [...prev.photos];
+      const index = newPhotos.findIndex(photo =>
+        photo.file.name === file.name &&
+        photo.file.size === file.size &&
+        photo.file.type === file.type
+      );
+
+      if (index !== -1) {
+        const photo = newPhotos[index];
+        if (photo.status === 'error') {
+          console.log(`重试照片: ${photo.file.name}`);
+          newPhotos[index] = {
+            ...photo,
+            status: 'pending' as UploadStatus,
+            error: undefined
+          };
+        } else {
+          console.log(`照片状态不是error，无需重试: ${photo.file.name} (${photo.status})`);
+        }
+      } else {
+        console.warn('未找到匹配的照片进行重试:', file.name);
+      }
+
+      return { ...prev, photos: newPhotos };
+    });
+  };
+
+  // 获取需要上传的照片（pending 或 error 状态）
+  const getPhotosToUpload = () => {
+    return formData.photos.filter(photo =>
+      photo.status === 'pending' || photo.status === 'error'
+    );
+  };
+
+  // 检查是否有未完成的上传
+  const hasUnfinishedUploads = () => {
+    return formData.photos.some(photo =>
+      photo.status === 'pending' || photo.status === 'uploading'
+    );
+  };
+
+  // 检查是否有上传失败的图片
+  const hasFailedUploads = () => {
+    return formData.photos.some(photo => photo.status === 'error');
+  };
+
+  // 获取失败的照片列表
+  const getFailedPhotos = () => {
+    return formData.photos.filter(photo => photo.status === 'error');
+  };
+
+  // 获取成功的照片列表
+  const getSuccessPhotos = () => {
+    return formData.photos.filter(photo => photo.status === 'success');
   };
 
   const sortPhotos = (fromIndex: number, toIndex: number) => {
@@ -129,12 +272,22 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
   return {
     formData,
+    formDataRef,
     setFormData,
     updateFormData,
     updateField,
     addPhotos,
     removePhoto,
-    updatePhotoStatusByFile, // 新增
-    sortPhotos
+    updatePhotoStatusByFile,
+    updatePhotoStatusByIndex,
+    sortPhotos,
+    retryFailedPhotos,
+    retryPhotoByIndex,
+    retryPhotoByFile,
+    getPhotosToUpload,
+    hasUnfinishedUploads,
+    hasFailedUploads,
+    getFailedPhotos,
+    getSuccessPhotos
   };
 };

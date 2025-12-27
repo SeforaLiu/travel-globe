@@ -6,9 +6,16 @@ import App from './App'
 import './styles/index.css'
 import './i18n'
 
-// 判断是否为开发环境
+// 判断是否为移动端
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  )
+}
+
+// 判断是否为开发环境且移动端
 // @ts-ignore
-if (import.meta.env.MODE === 'development') {
+if (import.meta.env.MODE === 'development' && isMobileDevice()) {
   import('vconsole').then((module) => {
     const VConsole = module.default;
     new VConsole(); // 初始化

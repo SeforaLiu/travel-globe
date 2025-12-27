@@ -178,7 +178,9 @@ export default function App() {
       toast.success(t('submit successful'));
 
       // 提交成功后可以导航到其他页面或显示成功消息
-      navigate('/');
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
       if(isMobile){
         setShowLeftRightButtonsMobile(true)
       }
@@ -188,7 +190,7 @@ export default function App() {
         toast.error(t('Session expired, please login again'))
         navigate('/login');
       } else {
-        console.error('Error:', error);
+        console.error('提交 Error:', error.message);
         toast.error(t('submit error please try again'))
       }
     }finally {

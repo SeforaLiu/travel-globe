@@ -1,12 +1,14 @@
 // frontend/src/pages/NewDiary/index.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import DesktopLayout from './layouts/DesktopLayout';
 import MobileLayout from './layouts/MobileLayout';
 import { useFormData } from './hooks/useFormData';
 import { usePhotoDragSort } from './hooks/usePhotoDragSort';
 import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
 import { Props, LocationResult } from './types';
+import UploadFailedDialog from './components/UploadFailedDialog';
 
 export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }: Props) {
   const { t } = useTranslation();
@@ -22,6 +24,15 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
 
   const [showMapPreview, setShowMapPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showFailedPhotosDialog, setShowFailedPhotosDialog] = useState(false);
+  const [failedPhotosList, setFailedPhotosList] = useState<Array<{
+    file: File;
+    error?: string;
+  }>>([]);
+  // 新增：重试加载状态
+  const [isRetryingFailedPhotos, setIsRetryingFailedPhotos] = useState(false);
+  const [userAction, setUserAction] = useState<'retry' | 'skip' | null>(null);
+  const [isWaitingForUserAction, setIsWaitingForUserAction] = useState(false);
 
   // 使用 useRef 来获取最新的 formData
   const formDataRef = useRef(formData);
@@ -37,58 +48,208 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     };
   }, [resetCache]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 修改：处理失败图片重试的函数（增加加载状态）
+  const handleRetryFailedPhotos = useCallback((failedPhotos: Array<{file: File; error?: string}>) => {
+    console.log('用户选择重试失败的图片');
+    setIsRetryingFailedPhotos(true);
+
+    try {
+      // 重置失败图片状态为 pending
+      failedPhotos.forEach(photo => {
+        updatePhotoStatusByFile(
+          photo.file,
+          'pending',
+          undefined,
+          undefined
+        );
+      });
+
+      // 显示重试成功的 toast
+      toast.success(t('photos.retryStarted', { count: failedPhotos.length }) || `正在重试 ${failedPhotos.length} 张图片`);
+    } catch (error) {
+      console.error('重置失败图片状态时出错:', error);
+      toast.error(t('photos.retryFailed') || '重试失败，请稍后重试');
+    } finally {
+      // 延迟一点时间再重置加载状态，让用户看到操作反馈
+      setTimeout(() => {
+        setIsRetryingFailedPhotos(false);
+      }, 500);
+    }
+  }, [updatePhotoStatusByFile, t]);
+
+  // 修改：处理跳过失败图片的函数
+  const handleSkipFailedPhotos = useCallback(() => {
+    console.log('用户选择跳过失败的图片');
+    setUserAction('skip');
+    // 继续执行提交逻辑，失败的图片会被过滤掉
+  }, []);
+
+  // 修改：显示失败图片对话框（简化逻辑）
+  const showFailedPhotosDialogModal = useCallback((failedPhotos: Array<{file: File; error?: string}>) => {
+    setFailedPhotosList(failedPhotos);
+    setShowFailedPhotosDialog(true);
+    setIsWaitingForUserAction(true);
+  }, []);
+
+  // 修改：处理对话框关闭
+  const handleDialogClose = useCallback(() => {
+    setShowFailedPhotosDialog(false);
+    setIsWaitingForUserAction(false);
+    setUserAction(null);
+    setIsRetryingFailedPhotos(false);
+  }, []);
+
+  // 修改：处理重试操作
+  const handleDialogRetry = useCallback(() => {
+    handleRetryFailedPhotos(failedPhotosList);
+    setShowFailedPhotosDialog(false);
+    setIsWaitingForUserAction(false);
+    setUserAction('retry');
+  }, [failedPhotosList, handleRetryFailedPhotos]);
+
+  // 修改：处理跳过操作
+  const handleDialogSkip = useCallback(() => {
+    handleSkipFailedPhotos();
+    setShowFailedPhotosDialog(false);
+    setIsWaitingForUserAction(false);
+  }, [handleSkipFailedPhotos]);
+
+  // 修改：提取提交逻辑到单独的函数（修复依赖）
+  const proceedWithSubmit = useCallback((currentFormData: any, successPhotos: any[]) => {
+    // 准备提交的数据
+    const photosToSubmit = successPhotos.map(photo => ({
+      url: photo.cloudinary!.url,
+      public_id: photo.cloudinary!.publicId,
+      width: photo.cloudinary!.width,
+      height: photo.cloudinary!.height,
+      size: photo.cloudinary!.size,
+      format: photo.cloudinary!.format,
+      folder: photo.cloudinary!.folder,
+      original_filename: photo.cloudinary!.originalFilename,
+      created_at: photo.cloudinary!.created_at
+    }));
+
+    const submitData = {
+      ...currentFormData,
+      photos: photosToSubmit
+    };
+
+    console.log('准备提交的数据:', {
+      ...submitData,
+      photosCount: submitData.photos.length
+    });
+
+    // 显示提交中的 toast
+    const submitToastId = toast.loading(t('submitting') || '正在提交...', {
+      duration: Infinity
+    });
+
+    // 最终提交
+    onSubmit(submitData);
+
+    // 提交完成后可以关闭 toast，但注意：onSubmit 可能是异步的
+    // 如果 onSubmit 是异步操作，应该在它完成后关闭 toast
+  }, [onSubmit, t]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 防止重复提交
     if (isUploading) {
       console.log('正在上传中，请稍候...');
+      toast.info(t('uploadingInProgress') || '正在上传中，请稍候...');
       return;
     }
 
-    // 首先检查是否有待上传的图片
-    const pendingPhotos = formData.photos.filter(photo => photo.status === 'pending');
+    // 检查是否有正在重试的操作
+    if (isRetryingFailedPhotos) {
+      console.log('正在重试失败图片，请稍候...');
+      toast.info(t('photos.retryInProgress') || '正在重试上传失败图片，请稍候...');
+      return;
+    }
 
-    if (pendingPhotos.length > 0) {
+    console.log('开始提交，当前照片状态:', formDataRef.current.photos.map(p => ({
+      fileName: p.file.name,
+      status: p.status,
+      error: p.error
+    })));
+
+    // 第一步：检查是否有失败的图片
+    const failedPhotos = formDataRef.current.photos.filter(p => p.status === 'error');
+
+    if (failedPhotos.length > 0 && !isWaitingForUserAction && userAction === null) {
+      console.log('发现失败的图片:', failedPhotos.map(p => p.file.name));
+
+      // 显示失败图片对话框
+      showFailedPhotosDialogModal(failedPhotos.map(p => ({
+        file: p.file,
+        error: p.error
+      })));
+
+      // 等待用户做出选择
+      return;
+    }
+
+    // 如果用户选择了重试，我们需要重新执行提交逻辑
+    if (userAction === 'retry') {
+      console.log('用户选择重试，等待重试完成...');
+      setUserAction(null); // 重置用户操作
+      // 这里我们可以延迟一点时间，让重试状态生效
+      setTimeout(() => {
+        // 重新触发提交，但使用队列的方式避免重复
+        handleSubmit(e);
+      }, 800); // 增加延迟时间，确保重试状态更新完成
+      return;
+    }
+
+    // 第二步：检查并上传所有待处理的图片
+    const photosToUpload = formDataRef.current.photos.filter(photo =>
+      photo.status === 'pending'
+    );
+
+    console.log('需要上传的图片数量:', photosToUpload.length, {
+      pending: photosToUpload.length,
+      error: formDataRef.current.photos.filter(p => p.status === 'error').length
+    });
+
+    if (photosToUpload.length > 0) {
       try {
         setIsUploading(true);
-        console.log('开始上传图片，待上传数量:', pendingPhotos.length);
+        console.log('开始上传图片...');
 
-        // **改进：使用 Promise.all 等待所有上传完成**
         const uploadResults = await uploadPhotos(
-          pendingPhotos.map(p => ({
+          photosToUpload.map(p => ({
             file: p.file,
             url: p.url,
             status: p.status
           })),
           (index, status, result, error) => {
-            // 使用文件来更新状态，避免索引问题
-            const targetFile = pendingPhotos[index].file;
+            const targetFile = photosToUpload[index].file;
 
-            console.log('上传最终状态回调:', {
+            console.log('上传回调 - 最终状态:', {
               index,
-              targetFileName: targetFile.name,
+              fileName: targetFile.name,
               status,
-              hasResult: !!result
+              hasResult: !!result,
+              error: error || '无错误'
             });
 
-            // 只在最终状态（success/error）时更新
-            if (status === 'success' || status === 'error') {
-              updatePhotoStatusByFile(
-                targetFile,
-                status,
-                status === 'success' ? result : undefined,
-                error
-              );
-            }
+            // 更新照片状态
+            updatePhotoStatusByFile(
+              targetFile,
+              status,
+              status === 'success' ? result : undefined,
+              error
+            );
           }
         );
 
-        console.log('上传完成，返回结果数量:', uploadResults.length);
-        console.log('上传完成后的formData.photos:', formDataRef.current.photos);
-
+        console.log('图片上传完成，成功数量:', uploadResults.length);
       } catch (error) {
         console.error('上传过程中出现错误:', error);
+        toast.error(
+          t('uploadFailed') || '图片上传失败，请检查网络连接后重试'
+        );
         setIsUploading(false);
         return;
       } finally {
@@ -96,69 +257,60 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
       }
     }
 
-    // 等待状态完全更新（确保React状态更新完成）
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // 第三步：等待状态完全更新（增加等待时间）
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-    // 再次检查所有图片是否都已上传成功
+    // 第四步：检查上传结果并准备提交
     const currentFormData = formDataRef.current;
-    const allPhotosUploaded = currentFormData.photos.every(photo =>
-      photo.status === 'success' || photo.status === 'error' // 允许成功或有明确错误的图片
+
+    // 检查是否有仍在处理中的图片
+    const unfinishedPhotos = currentFormData.photos.filter(p =>
+      p.status === 'pending' || p.status === 'uploading'
     );
 
-    // 检查是否有上传失败的图片
-    const failedPhotos = currentFormData.photos.filter(p => p.status === 'error');
-    if (failedPhotos.length > 0) {
-      console.error('有图片上传失败:', failedPhotos.map(p => ({
-        fileName: p.file.name,
-        error: p.error
-      })));
-      // 这里可以决定是否阻止提交，或者允许提交但忽略失败的图片
-      // 暂时为了用户体验，允许提交
-    }
-
-    // 检查是否所有图片都有最终状态（没有pending或uploading状态）
-    const hasUnfinishedPhotos = currentFormData.photos.some(photo =>
-      photo.status === 'pending' || photo.status === 'uploading'
-    );
-
-    if (hasUnfinishedPhotos) {
+    if (unfinishedPhotos.length > 0) {
       console.error('仍有图片未完成上传，无法提交');
-      console.log('当前照片状态:', currentFormData.photos.map(p => ({
-        fileName: p.file.name,
-        status: p.status,
-        hasCloudinary: !!p.cloudinary,
-        error: p.error
-      })));
-
+      toast.error(
+        t('photos.stillUploading') || '仍有图片在上传中，请稍候再提交'
+      );
       return;
     }
 
-    console.log('index.tsx------formData.photos', currentFormData.photos);
+    // 检查上传结果
+    const successPhotos = currentFormData.photos.filter(p => p.status === 'success' && p.cloudinary);
+    const newFailedPhotos = currentFormData.photos.filter(p => p.status === 'error');
 
-    // 准备提交的数据，过滤掉失败的图片
-    const photosToSubmit = currentFormData.photos
-      .filter(photo => photo.status === 'success' && photo.cloudinary)
-      .map(photo => ({
-        url: photo.cloudinary!.url,
-        public_id: photo.cloudinary!.publicId,
-        width: photo.cloudinary!.width,
-        height: photo.cloudinary!.height,
-        size: photo.cloudinary!.size,
-        format: photo.cloudinary!.format,
-        folder: photo.cloudinary!.folder,
-        original_filename: photo.cloudinary!.originalFilename,
-        created_at: photo.cloudinary!.created_at
-      }));
+    console.log('上传结果统计:', {
+      总图片数: currentFormData.photos.length,
+      成功数: successPhotos.length,
+      失败数: newFailedPhotos.length
+    });
 
-    const submitData = {
-      ...currentFormData,
-      photos: photosToSubmit
-    };
+    // 如果有新的失败图片，显示通知
+    if (newFailedPhotos.length > 0 && userAction !== 'skip') {
+      // 显示询问用户是否继续的对话框
+      showFailedPhotosDialogModal(newFailedPhotos.map(p => ({
+        file: p.file,
+        error: p.error
+      })));
+      return;
+    }
 
-    console.log('index.tsx-----submitData',submitData)
-
-    onSubmit(submitData);
-  };
+    // 如果没有新的失败图片，或者用户选择跳过，直接提交
+    proceedWithSubmit(currentFormData, successPhotos);
+  }, [
+    isUploading,
+    isRetryingFailedPhotos,
+    uploadPhotos,
+    updatePhotoStatusByFile,
+    t,
+    userAction,
+    isWaitingForUserAction,
+    handleRetryFailedPhotos,
+    handleSkipFailedPhotos,
+    showFailedPhotosDialogModal,
+    proceedWithSubmit
+  ]);
 
   const handleLocationSelect = (place: LocationResult) => {
     console.log('选择了地址', place);
@@ -238,9 +390,40 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     loading,
   };
 
-  return isMobile ? (
-    <MobileLayout {...commonProps} />
-  ) : (
-    <DesktopLayout {...commonProps} />
+  return (
+    <>
+      {isMobile ? (
+        <MobileLayout {...commonProps} />
+      ) : (
+        <DesktopLayout {...commonProps} />
+      )}
+
+      {/* 失败图片对话框 - 使用条件渲染 */}
+      {showFailedPhotosDialog && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            {/* 背景遮罩 */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              onClick={handleDialogClose}
+            />
+
+            {/* 对话框内容 - 使用通用组件 */}
+            <div className="relative transform overflow-hidden rounded-lg shadow-xl transition-all w-full max-w-md">
+              <UploadFailedDialog
+                dark={dark}
+                failedPhotos={failedPhotosList}
+                t={t}
+                onRetry={handleDialogRetry}
+                onSkip={handleDialogSkip}
+                onCancel={handleDialogClose}
+                // 新增：传递重试加载状态
+                isRetrying={isRetryingFailedPhotos}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

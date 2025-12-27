@@ -179,7 +179,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
                   dark ? 'bg-gray-900 text-blue-400 hover:text-blue-300' : 'bg-gray-50 text-blue-600 hover:text-blue-500'
                 }`}
               >
-                {t('Cancel')}
+                {t('common.cancel')}
               </button>
             </div>
 
