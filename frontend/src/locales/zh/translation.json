@@ -5,7 +5,8 @@
     "edit": "编辑",
     "delete": "删除",
     "close": "关闭",
-    "submit": "提交"
+    "submit": "提交",
+    "confirm": "确定"
   },
   "title": "旅行地球",
   "mood": "心情球",
@@ -60,5 +61,7 @@
   "Click + to add your first journey": "点击 + 开始你的第一次旅程!",
   "submit successful": "提交成功",
   "submit error please try again": "提交失败，请重试",
-  "Preparing your travel experience": "旅行地球正在准备中..."
+  "Preparing your travel experience": "旅行地球正在准备中...",
+  "sure to leave?": "确定要离开?",
+  "input will be clear": "未保存的内容将会丢失"
 }

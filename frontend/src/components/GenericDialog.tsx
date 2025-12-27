@@ -45,6 +45,7 @@ export interface GenericDialogProps {
   // 其他
   className?: string;
   dataTestId?: string;
+  isMobile?: boolean;
 }
 
 const GenericDialog: React.FC<GenericDialogProps> = ({
@@ -67,7 +68,12 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
                                                        t,
                                                        className = '',
                                                        dataTestId = 'generic-dialog',
+                                                       isMobile
                                                      }) => {
+  // 判断是否为移动端
+  // 如果外部传入了 isMobile，使用外部值；否则通过 CSS media query 处理
+  const isMobileView = isMobile !== undefined ? isMobile : false;
+
   // 获取图标颜色
   const getIconColor = () => {
     if (iconVariant) {
@@ -85,7 +91,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
 
   // 获取按钮样式
   const getButtonClasses = (variant: ButtonVariant = 'primary') => {
-    const baseClasses = 'px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'w-full px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
       primary: dark
@@ -168,9 +174,8 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
     return iconVariant ? icons[iconVariant] : null;
   };
 
-  // 收集所有按钮
+  // 收集所有按钮（不包括取消按钮）
   const allButtons: DialogButton[] = [];
-
   if (primaryButton) allButtons.push(primaryButton);
   if (secondaryButton) allButtons.push(secondaryButton);
   if (additionalButtons.length > 0) allButtons.push(...additionalButtons);
@@ -198,14 +203,30 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
     </button>
   );
 
+  // 移动端样式
+  const mobileStyles = isMobileView
+    ? `fixed bottom-0 left-0 right-0 w-full 
+       ${fullScreenOnMobile ? 'h-full' : ''}
+       rounded-t-xl rounded-b-none 
+       shadow-2xl
+       max-h-[40vh] overflow-y-auto`
+    : '';
+
+  // PC端样式 - 居中显示
+  const pcStyles = !isMobileView
+    ? `fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+       shadow-2xl
+       ${getMaxWidthClass()}`
+    : '';
+
   return (
     <div
       data-testid={dataTestId}
       className={`
         ${dark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
-        rounded-lg shadow-xl p-6 w-full
-        ${getMaxWidthClass()}
-        ${fullScreenOnMobile ? 'sm:rounded-lg sm:p-6' : ''}
+        rounded-lg p-6 z-50
+        ${isMobileView ? mobileStyles : pcStyles}
+        ${fullScreenOnMobile && isMobileView ? 'sm:rounded-lg sm:p-6' : ''}
         ${className}
         transition-all duration-200 ease-in-out
       `}
@@ -260,31 +281,86 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
       )}
 
       {/* 按钮区域 */}
-      <div className="flex flex-col sm:flex-row gap-3 mt-6">
-        {/* 主按钮和次按钮在一行 */}
-        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          {allButtons.map((button, index) => (
-            <div key={`button-container-${index}`} className="flex-1">
-              {renderButton(button, index)}
+      {isMobileView ? (
+        // 移动端按钮布局：垂直排列
+        <div className="space-y-3 mt-6">
+          {/* 主按钮 */}
+          {primaryButton && (
+            <div className="w-full">
+              {renderButton(primaryButton, 0)}
+            </div>
+          )}
+
+          {/* 次按钮 */}
+          {secondaryButton && (
+            <div className="w-full">
+              {renderButton(secondaryButton, 1)}
+            </div>
+          )}
+
+          {/* 额外按钮 */}
+          {additionalButtons.map((button, index) => (
+            <div key={`additional-${index}`} className="w-full">
+              {renderButton(button, index + 2)}
             </div>
           ))}
-        </div>
 
-        {/* 取消按钮单独一行或跟随布局 */}
-        {showCancelButton && onCancel && (
-          <button
-            onClick={onCancel}
-            className={`
-              ${allButtons.length === 0 ? 'flex-1' : 'w-full sm:w-auto'}
-              ${getButtonClasses('ghost')}
-              ${allButtons.length === 0 ? '' : 'mt-3 sm:mt-0 sm:ml-3'}
-            `}
-            data-testid="cancel-button"
-          >
-            {t ? t('common.cancel') : cancelButtonLabel}
-          </button>
-        )}
-      </div>
+          {/* 取消按钮在最下方 */}
+          {showCancelButton && onCancel && (
+            <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={onCancel}
+                className={`
+                  w-full
+                  ${getButtonClasses('ghost')}
+                `}
+                data-testid="cancel-button"
+              >
+                {t ? t('common.cancel') : cancelButtonLabel}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        // PC端按钮布局：水平排列（右对齐）
+        <div className="flex flex-row-reverse gap-3 mt-6">
+          {/* 主按钮在最右侧 */}
+          {primaryButton && (
+            <div>
+              {renderButton(primaryButton, 0)}
+            </div>
+          )}
+
+          {/* 次按钮 */}
+          {secondaryButton && (
+            <div>
+              {renderButton(secondaryButton, 1)}
+            </div>
+          )}
+
+          {/* 额外按钮 */}
+          {additionalButtons.map((button, index) => (
+            <div key={`additional-${index}`}>
+              {renderButton(button, index + 2)}
+            </div>
+          ))}
+
+          {/* 取消按钮在最左侧 */}
+          {showCancelButton && onCancel && (
+            <div className="mr-auto">
+              <button
+                onClick={onCancel}
+                className={`
+                  ${getButtonClasses('ghost')}
+                `}
+                data-testid="cancel-button"
+              >
+                {t ? t('common.cancel') : cancelButtonLabel}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

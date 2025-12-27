@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import NewDiary from "./pages/NewDiary/index";
 import DiaryView from "./pages/DiaryView"
 import Loading from "./components/Loading"
+import GenericDialog, {ButtonVariant} from "./components/GenericDialog";
 
 
 // @ts-ignore
@@ -28,6 +29,7 @@ export default function App() {
   const [showLeftRightButtonsMobile, setShowLeftRightButtonsMobile] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showNewDiaryCloseDialog, setShowNewDiaryCloseDialog] = useState(false)
 
   const handleBack = () => {
     navigate(-1); // 返回上一页
@@ -179,9 +181,10 @@ export default function App() {
 
       // 提交成功后可以导航到其他页面或显示成功消息
       setTimeout(() => {
-        navigate('/');
+        // navigate('/');
+        handleBack()
       }, 1500);
-      if(isMobile){
+      if(isMobile && location.pathname === '/'){
         setShowLeftRightButtonsMobile(true)
       }
 
@@ -198,6 +201,18 @@ export default function App() {
     }
   };
 
+  const handleNewDiaryCloseDialogConfirm =()=>{
+    setShowNewDiaryCloseDialog(false)
+    handleBack()
+    setShowLeftRightButtonsMobile(true)
+    //   清理localstorage的缓存
+  }
+
+
+  const handleNewDiaryCloseDialogCancel = ()=>{
+  // 隐藏 close dialog
+    setShowNewDiaryCloseDialog(false)
+  }
 
   return (
     <div className="h-screen flex relative">
@@ -274,8 +289,7 @@ export default function App() {
               isMobile={isMobile}
               onClose={() => {
                 console.log('点击关闭')
-                handleBack()
-                setShowLeftRightButtonsMobile(true)
+                setShowNewDiaryCloseDialog(true)
               }}
               loading={loading}
               onSubmit={(formData) => handleSubmitDiary(formData)}
@@ -326,6 +340,34 @@ export default function App() {
         </div>
       )
       }
+
+      {/*New Diary点击取消的时候弹出对话框*/}
+      { ( showNewDiaryCloseDialog ?  <GenericDialog
+        dark={dark}
+        title={t('sure to leave?')}
+        iconVariant="warning"
+        showCancelButton={false}
+        cancelButtonLabel={t('common.cancel')}
+        primaryButton={{
+          label: t('common.confirm'),
+          onClick: handleNewDiaryCloseDialogConfirm,
+          variant: 'warning' as ButtonVariant,
+          dataTestId: 'confirm-button',
+        }}
+        secondaryButton={{
+          label: t('common.cancel'),
+          onClick: handleNewDiaryCloseDialogCancel,
+          variant: 'secondary' as ButtonVariant,
+          dataTestId: 'cancel-button',
+        }}
+        fullScreenOnMobile={true}
+        maxWidth="md"
+        className=''
+        t={t}
+        isMobile={isMobile}
+      >
+        {t('input will be clear')}
+      </GenericDialog> : null)}
     </div>
   )
 }

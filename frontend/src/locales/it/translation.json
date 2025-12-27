@@ -5,7 +5,8 @@
     "edit": "modifica",
     "delete": "elimina",
     "close": "chiude",
-    "submit": "applica"
+    "submit": "applica",
+    "confirm": "conferma"
   },
   "title": "Mappa Viaggi",
   "mood": "Mood",
@@ -60,5 +61,7 @@
   "Click + to add your first journey": "Clicca + per il primo viaggio!",
   "submit successful": "Operazione riuscita",
   "submit error please try again": "Ops! Invio fallito. Prova di nuovo!",
-  "Preparing your travel experience": "Preparando la tua esperienza di viaggio..."
+  "Preparing your travel experience": "Preparando la tua esperienza di viaggio...",
+  "sure to leave?": "Uscire ora?",
+  "input will be clear": "I dati non salvati saranno persi."
 }
