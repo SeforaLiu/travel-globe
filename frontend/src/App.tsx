@@ -5,7 +5,7 @@ import {Routes, Route, useNavigate, useLocation} from 'react-router-dom'
 import { toast , Toaster} from 'sonner';
 import {useTranslation} from 'react-i18next';
 import api from './services/api';
-import {FormData, SubmitData} from "./pages/NewDiary/types";
+import {SubmitData} from "./pages/NewDiary/types";
 import Home from './pages/Home'
 import Login from "./pages/Login";
 import Register from "./pages/Register";

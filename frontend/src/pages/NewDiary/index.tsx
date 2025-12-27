@@ -337,7 +337,9 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
   };
 
   const handleInputFocus = () => {
-    setShowMapPreview(false);
+    if(!isMobile){
+      setShowMapPreview(false);
+    }
   };
 
   const handleLocationInputFocus = () => {

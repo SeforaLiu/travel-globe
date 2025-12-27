@@ -108,7 +108,7 @@ const DateSection: React.FC<Props> = ({
           <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end">
             <div className={`w-full pl-7 rounded-t-xl p-4 ${dark ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="mb-4">
-                <button className={` rounded-xl px-4 text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> 关闭 </button>
+                <button className={`mb-4 rounded-xl px-4 py-2 text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> {t('common.close')} </button>
                 <DayPicker
                   mode="range"
                   selected={selectedDate}
@@ -154,6 +154,7 @@ const DateSection: React.FC<Props> = ({
 
       {isOpen && (
         <div className={`mt-2 p-3 w-1/3 rounded-lg shadow-lg ${dark ? 'bg-gray-800' : 'bg-white'}`}>
+          <button className={` rounded-xl mb-4 px-6 py-2  text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> {t('common.close')} </button>
           <DayPicker
             mode="range"
             selected={selectedDate}
