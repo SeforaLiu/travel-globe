@@ -31,7 +31,7 @@ type Props = {
   handleTouchStart: (e: React.TouchEvent, index: number) => void;
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
-  loading:boolean
+  isUploading:boolean
 };
 
 const DesktopLayout: React.FC<Props> = ({
@@ -55,7 +55,7 @@ const DesktopLayout: React.FC<Props> = ({
                                           handleTouchMove,
                                           handleTouchEnd,
                                           showMapPreview,
-                                          loading
+                                          isUploading
                                         }) => {
   return (
     <div className={`ml-10 mr-8 h-full p-6 overflow-hidden ${dark ? "bg-black" : "bg-white"}`}>
@@ -133,7 +133,7 @@ const DesktopLayout: React.FC<Props> = ({
             dark={dark}
             onClose={onClose}
             onSubmit={handleSubmit}
-            loading={loading}
+            isUploading={isUploading}
           />
         </form>
       </div>

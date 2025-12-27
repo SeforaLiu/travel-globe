@@ -6,10 +6,10 @@ type Props = {
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   isMobile?: boolean;
-  loading?:boolean
+  isUploading?:boolean
 };
 
-const FooterSection: React.FC<Props> = ({loading, dark, onClose, onSubmit, isMobile = false }) => {
+const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, isMobile = false }) => {
   const { t } = useTranslation();
 
   if (isMobile) {
@@ -44,7 +44,7 @@ const FooterSection: React.FC<Props> = ({loading, dark, onClose, onSubmit, isMob
           {t('common.cancel')}
         </button>
         <button
-          disabled={loading}
+          disabled={isUploading}
           type="submit"
           className="px-6 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
         >

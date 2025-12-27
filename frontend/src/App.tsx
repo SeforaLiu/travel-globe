@@ -11,8 +11,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NewDiary from "./pages/NewDiary/index";
 import DiaryView from "./pages/DiaryView"
-import Loading from "./components/Loading"
 import GenericDialog, {ButtonVariant} from "./components/GenericDialog";
+import Loading from './components/Loading'
 
 
 // @ts-ignore
@@ -154,7 +154,6 @@ export default function App() {
   }
 
   const handleSubmitDiary = async (formData: SubmitData) => {
-    setLoading(true)
     try {
       const data = {
         title: formData.title,
@@ -196,8 +195,7 @@ export default function App() {
         console.error('提交 Error:', error.message);
         toast.error(t('submit error please try again'))
       }
-    }finally {
-      setLoading(false)
+      return false;
     }
   };
 

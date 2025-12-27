@@ -9,6 +9,7 @@ import { usePhotoDragSort } from './hooks/usePhotoDragSort';
 import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
 import { Props, LocationResult } from './types';
 import UploadFailedDialog from './components/UploadFailedDialog';
+import Loading from "../../components/Loading"
 
 export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }: Props) {
   const { t } = useTranslation();
@@ -137,11 +138,6 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     console.log('准备提交的数据:', {
       ...submitData,
       photosCount: submitData.photos.length
-    });
-
-    // 显示提交中的 toast
-    const submitToastId = toast.loading(t('submitting') || '正在提交...', {
-      duration: Infinity
     });
 
     // 最终提交
@@ -387,7 +383,7 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
-    loading,
+    isUploading,
   };
 
   return (
@@ -397,6 +393,8 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
       ) : (
         <DesktopLayout {...commonProps} />
       )}
+
+      {isUploading? <Loading dark={dark} />: null}
 
       {/* 失败图片对话框 - 使用条件渲染 */}
       {showFailedPhotosDialog && (
