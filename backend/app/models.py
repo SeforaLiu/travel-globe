@@ -133,3 +133,54 @@ class Entry(EntryBase, table=True):
     photos: List[Photo] = Relationship(back_populates="entry")
     user: User = Relationship(back_populates="entries")
     location: Optional[Location] = Relationship(back_populates="entries")
+
+# --- 日记列表摘要模型 ---
+class DiarySummary(BaseModel):
+    """日记列表项，只包含必要字段"""
+    id: int
+    entry_type: str
+    title: str
+    location_name: str
+    coordinates: Dict[str, float]
+    date_start: Optional[date]
+    date_end: Optional[date]
+    transportation: Optional[str]
+
+    model_config = ConfigDict(from_attributes=True)  # 允许从 ORM 对象转换
+
+
+class DiaryListResponse(BaseModel):
+    """分页响应格式"""
+    items: List[DiarySummary]  # 当前页数据
+    total: int  # 总条数
+    page: int  # 当前页码
+    page_size: int  # 每页大小
+    total_pages: int  # 总页数
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EntryUpdate(SQLModel):
+    """更新日记的请求体（只允许修改这些字段）"""
+    title: Optional[str] = Field(None, min_length=1)
+    content: Optional[str] = None
+    date_start: Optional[date] = None
+    date_end: Optional[date] = None
+    location_name: Optional[str] = Field(None, min_length=1)
+    coordinates: Optional[Dict[str, float]] = Field(None, sa_type=JSON)
+    transportation: Optional[str] = None
+    entry_type: Optional[str] = Field(None, regex="^(visited|wishlist)$")
+
+    @field_validator('coordinates', mode='before')
+    @classmethod
+    def validate_coordinates(cls, v):
+        """验证坐标格式"""
+        if v is None:
+            return None
+        if not isinstance(v, dict):
+            raise ValueError("坐标必须是字典格式")
+        if not {'lat', 'lng'}.issubset(v.keys()):
+            raise ValueError("坐标必须包含 'lat' 和 'lng'")
+        if not all(isinstance(val, (int, float)) for val in v.values()):
+            raise ValueError("坐标值必须是数字")
+        return v

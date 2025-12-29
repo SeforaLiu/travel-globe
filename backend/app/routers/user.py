@@ -9,14 +9,19 @@ import logging
 from app.models import User, UserCreate
 from app.database import get_session
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 从环境变量读取配置
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production") # 在生产环境中应该从环境变量读取
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY 环境变量未设置！在生产环境中必须设置！")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 1
 
 # 修改router前缀为/api/auth
-router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -39,9 +39,13 @@ app.add_middleware(
 # 注册路由
 from app.routers import location
 
-app.include_router(location.router)
-app.include_router(user.router)
-app.include_router(entry.router)
+# app.include_router(location.router)
+# app.include_router(user.router)
+# app.include_router(entry.router)
+
+app.include_router(entry.router, prefix="/api", tags=["entries"])  # ✅ 确保 prefix="/api"
+app.include_router(user.router, prefix="/api", tags=["users"])
+app.include_router(location.router, prefix="/api", tags=["locations"])
 
 @app.get("/")
 def read_root():

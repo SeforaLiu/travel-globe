@@ -15,6 +15,19 @@ def create_db_and_tables():
     logging.info("数据库正在创建 --- Creating database and tables...")
     SQLModel.metadata.create_all(engine)
 
+def create_indexes():
+    """创建性能索引"""
+    with engine.connect() as conn:
+        # 为用户ID和日期创建复合索引
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS idx_entries_user_date ON entry (user_id, date_start DESC)"
+        )
+        # 为坐标创建GIN索引（PostgreSQL）
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS idx_location_coords ON location USING GIN (coordinates)"
+        )
+        conn.commit()
+
 def get_session():
     # 依赖注入函数：每次 API 调用时创建一个新的 Session
     with Session(engine) as session:
