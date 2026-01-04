@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path' // 需要确保安装了 @types/node
+
+// 如果是 ESM 环境，可以通过以下方式获取 __dirname 的效果
+// 或者直接使用 fileURLToPath，但最简单的是直接引入 path
 
 export default defineConfig({
   plugins: [react()],
@@ -8,11 +12,17 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000', // 明确使用IPv4地址
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-        rewrite: (path) => path,  // 修改这里，保留完整路径
+        rewrite: (path) => path,
         secure: false
       },
+    },
+  },
+  resolve: {
+    alias: {
+      // 将 @ 指向 src 目录
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 })

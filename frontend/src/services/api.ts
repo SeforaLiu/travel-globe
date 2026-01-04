@@ -1,5 +1,6 @@
 // frontend/src/services/api.ts
 import axios from 'axios';
+import {navigation} from "../utils/navigation";
 
 // 创建 axios 实例
 const api = axios.create({
@@ -63,8 +64,12 @@ api.interceptors.response.use(
                 isRefreshing = true;
                 originalRequest._retry = true;
 
-                // 重定向到登录页
-                window.location.href = '/login';
+                if (navigation.navigate) {
+                    navigation.navigate('/login');
+                } else {
+                    // 如果路由还没准备好，回退到硬刷新
+                    window.location.href = '/login';
+                }
             }
 
             return new Promise((resolve, reject) => {

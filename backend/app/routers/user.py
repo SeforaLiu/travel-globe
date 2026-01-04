@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import logging
-from app.models import User, UserCreate
+from app.models import User, UserCreate, UserLogin  # 添加 UserLogin 导入
 from app.database import get_session
 import os
 from dotenv import load_dotenv
@@ -62,8 +62,11 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):
         )
 
     # 创建新用户
-    db_user = User(username=user.username)
-    db_user.set_password(user.password)
+    db_user = User(
+        username=user.username,
+        hashed_password=get_password_hash(user.password)  # 修复：直接设置哈希密码
+    )
+    # db_user.set_password(user.password)  # 移除：User模型没有set_password方法
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
@@ -72,7 +75,7 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):
 
 
 @router.post("/login")
-def login_user(response: Response, user_data: UserCreate, session: Session = Depends(get_session)):
+def login_user(response: Response, user_data: UserLogin, session: Session = Depends(get_session)):  # 修复：使用UserLogin而不是UserCreate
     user = authenticate_user(session, user_data.username, user_data.password)
     if not user:
         raise HTTPException(

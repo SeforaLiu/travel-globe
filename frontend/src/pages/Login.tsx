@@ -4,6 +4,7 @@ import {useTranslation} from 'react-i18next';
 import {useNavigate} from 'react-router-dom';
 import api from '../services/api';
 import {toast, Toaster} from 'sonner';
+import {useTravelStore} from "@/store/useTravelStore";
 
 type Props = {
   dark: boolean;
@@ -17,6 +18,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const {checkAuth} = useTravelStore();
 
   const validateForm = () => {
     if (username.length < 6) {
@@ -30,34 +32,6 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
     return true;
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setError('');
-  //
-  //   if (!validateForm()) {
-  //     return;
-  //   }
-  //   setLoading(true);
-  //
-  //   try {
-  //     const response = await api.post('/auth/login', {username, password});
-  //
-  //     if (response.status === 200) {
-  //       toast.success(t('Login successful!'));
-  //       setTimeout(() => {
-  //         navigate('/');
-  //       }, 1500);
-  //     }
-  //   } catch (err: any) {
-  //     const errorMessage = err.response?.data?.detail || t('Login failed');
-  //     setError(errorMessage);
-  //     toast.error(errorMessage);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // frontend/src/pages/Login.tsx
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -70,6 +44,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
     try {
       const response = await api.post('/auth/login', {username, password});
       if (response.status === 200) {
+        await checkAuth();
         toast.success(t('Login successful!'));
         setTimeout(() => {
           navigate('/');

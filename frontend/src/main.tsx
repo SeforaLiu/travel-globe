@@ -1,10 +1,12 @@
 import React from 'react'
 // @ts-ignore
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react';
 import App from './App'
 import './styles/index.css'
 import './i18n'
+import {setGlobalNavigate} from "@/utils/navigation";
 
 // 判断是否为移动端
 const isMobileDevice = () => {
@@ -22,6 +24,18 @@ if (import.meta.env.MODE === 'development' && isMobileDevice()) {
   });
 }
 
+// 定义一个“注入器”组件
+const AxiosNavigateSetter = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // 将 react-router 的 navigate 实例赋给外部工具
+    setGlobalNavigate(navigate);
+  }, [navigate]);
+
+  return null;
+};
+
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter
     future={{
@@ -29,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
       v7_relativeSplatPath: true,
     }}
   >
+    <AxiosNavigateSetter />
     <App />
   </BrowserRouter>
 )

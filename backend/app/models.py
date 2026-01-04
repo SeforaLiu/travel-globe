@@ -1,186 +1,225 @@
-from typing import Optional, List, Dict, Union
-from sqlmodel import SQLModel, Field, Relationship, JSON
+# backend/app/models.py
+from sqlmodel import Field, SQLModel, Relationship
+from typing import Optional, List
 from datetime import date, datetime
-from pydantic import validator, BaseModel, ConfigDict, field_validator
-import logging
-from passlib.context import CryptContext
+from pydantic import BaseModel, field_validator, ConfigDict
+from sqlalchemy import Column, DateTime, JSON
+from sqlalchemy.sql import func
 
-logger = logging.getLogger(__name__)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# --- Coordinates 模型 ---
-class Coordinates(BaseModel):
-    lat: float = Field(..., ge=-90, le=90, description="纬度，范围-90到90")
-    lng: float = Field(..., ge=-180, le=180, description="经度，范围-180到180")
-
-    def to_dict(self):
-        return {"lat": self.lat, "lng": self.lng}
-
-# --- Users ---
+# ==================== 用户相关模型 ====================
 class UserBase(SQLModel):
-    username: str = Field(index=True, unique=True)
+    username: str
+    # email 字段已移除，注册和登录只需要用户名和密码
+    # email: str
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
 
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)
 
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # 关系
     entries: List["Entry"] = Relationship(back_populates="user")
 
-    def set_password(self, raw_password: str):
-        self.hashed_password = pwd_context.hash(raw_password)
 
-# --- Photo 模型 ---
-class PhotoBase(SQLModel):
-    # 原有字段
-    public_id: str
-    url: str
-    width: int
-    height: int
-    created_at: Optional[datetime] = Field(default=None)
-    folder: Optional[str] = Field(default=None)
-    format: Optional[str] = Field(default=None)
-    original_filename: Optional[str] = Field(default=None)
-    size: Optional[int] = Field(default=None)
+class UserCreate(UserBase):
+    password: str
 
-class Photo(PhotoBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    entry_id: int = Field(foreign_key="entry.id")
-    entry: "Entry" = Relationship(back_populates="photos")
 
-# --- Location 模型 ---
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class UserResponse(UserBase):
+    id: int
+    user_id: int  # 兼容前端，实际是 id
+
+    model_config = {"from_attributes": True}
+
+
+# ==================== 位置相关模型 ====================
 class LocationBase(SQLModel):
     name: str = Field(index=True)
-    coordinates: Dict[str, float] = Field(sa_type=JSON)
+    # FIXED: 使用 JSON 列存储字典数据
+    coordinates: dict = Field(
+        sa_column=Column(JSON),
+        description="坐标字典，包含 lat 和 lng 键"
+    )
+    country: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+
 
 class Location(LocationBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+
+    # 关系
     entries: List["Entry"] = Relationship(back_populates="location")
 
-# --- Entry 模型 ---
-class EntryBase(SQLModel):
-    title: str = Field(..., min_length=1)
-    content: Optional[str] = Field(None)
-    date_start: Optional[date] = Field(None)
-    date_end: Optional[date] = Field(None)
-    location_name: str = Field(..., min_length=1)
-    coordinates: Dict[str, float] = Field(..., sa_type=JSON, description="必须包含 lat 和 lng")
-    transportation: Optional[str] = Field(None)
-    entry_type: str = Field(..., regex="^(visited|wishlist)$")
 
-    @validator('coordinates')
-    def validate_coordinates(cls, v):
-        if not isinstance(v, dict):
-            raise ValueError("Coordinates must be a dictionary")
-        if not {'lat', 'lng'}.issubset(v.keys()):
-            raise ValueError("Coordinates must contain 'lat' and 'lng'")
-        if not all(isinstance(val, (int, float)) for val in v.values()):
-            raise ValueError("Coordinates values must be numbers")
+class LocationCreate(LocationBase):
+    pass
+
+
+class LocationResponse(LocationBase):
+    id: int
+
+    model_config = {"from_attributes": True}
+
+
+# ==================== 照片相关模型 ====================
+class PhotoBase(SQLModel):
+    """照片模型基类 - 包含所有照片字段定义"""
+    public_id: str = Field(index=True)
+    url: str
+    width: int
+    height: int
+    format: str
+    bytes: int = Field(default=0)  # 提供默认值
+    original_filename: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+# ADD: 缺失的 Photo 表模型
+class Photo(PhotoBase, table=True):
+    """数据库照片表模型 - 映射到数据库表"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    entry_id: int = Field(foreign_key="entry.id")
+
+    # 关系
+    entry: "Entry" = Relationship(back_populates="photos")
+
+class PhotoCreate(SQLModel):
+    """创建照片的请求模型 - 所有字段可选，灵活接收前端数据"""
+    public_id: Optional[str] = None
+    url: Optional[str] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    format: Optional[str] = None
+    bytes: Optional[int] = None
+    size: Optional[int] = None  # 接受前端的 size 字段
+    original_filename: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    # 允许接收前端额外字段（如 folder, originalFilename 等）
+    model_config = ConfigDict(extra='allow')
+
+    @field_validator('bytes', mode='before')
+    @classmethod
+    def map_size_to_bytes(cls, v, info):
+        """如果 bytes 为空但 size 存在，自动映射"""
+        if v is None and info.data.get('size') is not None:
+            return info.data['size']
+        elif v is None:
+            return 0  # 提供默认值
         return v
 
-class EntryCreate(EntryBase):
-    photos: List[PhotoBase] = []
 
-    # 添加自定义验证器来处理空字符串转换为None
+# ==================== 日记相关模型 ====================
+class EntryBase(SQLModel):
+    title: str
+    location_name: str
+    description: Optional[str] = None
+    date_start: Optional[date] = None  # ✅ 改为可选
+    date_end: Optional[date] = None    # ✅ 改为可选
+    entry_type: str = "visited"
+    coordinates: dict = Field(
+        sa_column=Column(JSON),
+        description="坐标字典，包含 lat 和 lng 键"
+    )
+    travel_partner: Optional[str] = None
+    cost: Optional[float] = None
+    mood: Optional[str] = None
+
+# FIX: 移除重复的 EntryCreate 定义，保留带验证器的版本
+class EntryCreate(EntryBase):
+    """创建日记的请求模型"""
+    photos: List[PhotoCreate] = []
+
     @field_validator('date_start', 'date_end', mode='before')
     @classmethod
-    def validate_date_fields(cls, v):
-        """处理日期字段，将空字符串转换为None"""
-        if v == "" or v is None:
+    def empty_string_to_none(cls, v):
+        """将空字符串转换为 None，避免验证错误"""
+        if v == "":
             return None
-        if isinstance(v, str):
-            if v.strip() == "":
-                return None
-            # 尝试解析日期字符串
-            try:
-                # 支持 "YYYY-MM-DD" 格式
-                return date.fromisoformat(v)
-            except ValueError:
-                # 如果解析失败，抛出有意义的错误
-                raise ValueError(f"Invalid date format: {v}. Expected format: YYYY-MM-DD")
         return v
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "title": "My Trip",
-                "coordinates": {"lat": 35.6895, "lng": 139.6917},
-                "entry_type": "visited",
-                "location_name": "Tokyo",
-                "photos": [
-                    {
-                        "created_at": "2024-01-01T10:00:00Z",
-                        "folder": "travel_photos",
-                        "format": "jpg",
-                        "original_filename": "sunset_tokyo.jpg",
-                        "public_id": "travel/sunset_tokyo_123",
-                        "size": 1024000,
-                        "width": 1920,
-                        "height": 1080,
-                        "url": "https://res.cloudinary.com/demo/image/upload/v123/travel/sunset_tokyo_123.jpg"
-                    }
-                ]
-            }
-        }
-    )
 
 class Entry(EntryBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    created_time: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+        default_factory=datetime.now
+    )
     user_id: int = Field(foreign_key="user.id")
-    location_id: Optional[int] = Field(None, foreign_key="location.id")
-    photos: List[Photo] = Relationship(back_populates="entry")
-    user: User = Relationship(back_populates="entries")
-    location: Optional[Location] = Relationship(back_populates="entries")
-
-# --- 日记列表摘要模型 ---
-class DiarySummary(BaseModel):
-    """日记列表项，只包含必要字段"""
-    id: int
-    entry_type: str
-    title: str
-    location_name: str
-    coordinates: Dict[str, float]
-    date_start: Optional[date]
-    date_end: Optional[date]
-    transportation: Optional[str]
-
-    model_config = ConfigDict(from_attributes=True)  # 允许从 ORM 对象转换
+    location_id: Optional[int] = Field(default=None, foreign_key="location.id")
+    # 关系
+    user: "User" = Relationship(back_populates="entries")
+    photos: List["Photo"] = Relationship(
+        back_populates="entry",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "lazy": "selectin"
+        }
+    )
+    location: Optional["Location"] = Relationship(back_populates="entries")
 
 
-class DiaryListResponse(BaseModel):
-    """分页响应格式"""
-    items: List[DiarySummary]  # 当前页数据
-    total: int  # 总条数
-    page: int  # 当前页码
-    page_size: int  # 每页大小
-    total_pages: int  # 总页数
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class EntryUpdate(SQLModel):
-    """更新日记的请求体（只允许修改这些字段）"""
-    title: Optional[str] = Field(None, min_length=1)
-    content: Optional[str] = None
+class EntryUpdate(BaseModel):
+    title: Optional[str] = None
+    location_name: Optional[str] = None
+    description: Optional[str] = None
     date_start: Optional[date] = None
     date_end: Optional[date] = None
-    location_name: Optional[str] = Field(None, min_length=1)
-    coordinates: Optional[Dict[str, float]] = Field(None, sa_type=JSON)
-    transportation: Optional[str] = None
-    entry_type: Optional[str] = Field(None, regex="^(visited|wishlist)$")
+    entry_type: Optional[str] = None
+    coordinates: Optional[dict] = None
+    travel_partner: Optional[str] = None
+    cost: Optional[float] = None
+    mood: Optional[str] = None
+    location_id: Optional[int] = None
 
-    @field_validator('coordinates', mode='before')
-    @classmethod
-    def validate_coordinates(cls, v):
-        """验证坐标格式"""
-        if v is None:
-            return None
-        if not isinstance(v, dict):
-            raise ValueError("坐标必须是字典格式")
-        if not {'lat', 'lng'}.issubset(v.keys()):
-            raise ValueError("坐标必须包含 'lat' 和 'lng'")
-        if not all(isinstance(val, (int, float)) for val in v.values()):
-            raise ValueError("坐标值必须是数字")
-        return v
+
+# FIX: 将 date_start 和 date_end 改为 Optional，与 EntryBase 保持一致
+class DiarySummary(SQLModel):
+    id: int
+    title: str
+    location_name: str
+    description: Optional[str] = None
+    date_start: Optional[date] = None  # FIX: 允许为 None
+    date_end: Optional[date] = None    # FIX: 允许为 None
+    entry_type: str
+    coordinates: dict
+    travel_partner: Optional[str] = None
+    cost: Optional[float] = None
+    mood: Optional[str] = None
+    created_time: datetime
+
+    # 关联信息
+    location_id: Optional[int] = None
+    user_id: int
+    photo_count: Optional[int] = None
+
+    model_config = {"from_attributes": True}
+
+
+class DiaryListResponse(SQLModel):
+    items: List[DiarySummary]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    diary_total: int
+    guide_total: int
+    place_total: int
+
+
+# ==================== Token 相关模型 ====================
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+    user_id: Optional[int] = None
