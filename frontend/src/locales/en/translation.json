@@ -33,6 +33,7 @@
   "Logging in...": "Logging in...",
   "Registration successful! Redirecting to login...": "Registration successful!",
   "Login successful!": "Login successful!",
+  "Incorrect username or password": "Incorrect username or password",
   "No diaries yet": "No diaries yet",
   "Click the button above to create your first diary": "Click the button above to create your first diary",
   "addDiary": "+ Diary",

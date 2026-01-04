@@ -386,17 +386,22 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     handleTouchMove,
     handleTouchEnd,
     isUploading,
+    loading,
+  };
+
+  const renderContent = () => {
+    if (isUploading) return <Loading dark={dark} />;
+
+    return isMobile ? (
+      <MobileLayout {...commonProps} />
+    ) : (
+      <DesktopLayout {...commonProps} />
+    );
   };
 
   return (
     <>
-      {isMobile ? (
-        <MobileLayout {...commonProps} />
-      ) : (
-        <DesktopLayout {...commonProps} />
-      )}
-
-      {isUploading? <Loading dark={dark} />: null}
+      {renderContent()}
 
       {/* 失败图片对话框 - 使用条件渲染 */}
       {showFailedPhotosDialog && (

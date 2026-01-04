@@ -2,15 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { useTranslation } from 'react-i18next';
 import { useTravelStore } from '@/store/useTravelStore';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { useDiarySubmission } from '@/hooks/useDiarySubmission';
 import { MainLayout } from '@/layouts/MainLayout';
 import Loading from '@/components/Loading';
 import { NewDiaryCloseDialog } from '@/components/NewDiaryCloseDialog';
-
-// 页面组件
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -26,7 +23,7 @@ export default function App() {
 
   // 使用自定义 Hooks
   useGoogleMaps();
-  const { submitDiary } = useDiarySubmission();
+  const { submitDiary,isSubmitting } = useDiarySubmission();
 
   // 主题切换
   useEffect(() => {
@@ -70,7 +67,7 @@ export default function App() {
                 onClose={() => setShowNewDiaryCloseDialog(true)}
                 onSubmit={submitDiary}
                 isMobile={isMobile}
-                loading={loading}
+                loading={isSubmitting}
               />
             }
           />

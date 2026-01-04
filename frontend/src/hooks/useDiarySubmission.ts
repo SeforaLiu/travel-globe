@@ -1,16 +1,23 @@
 // src/hooks/useDiarySubmission.ts
-import { useCallback } from 'react';
+import {useCallback, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import api from '@/services/api';
 import { SubmitData } from '@/pages/NewDiary/types';
+import {useTravelStore} from "@/store/useTravelStore";
 
 export const useDiarySubmission = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    fetchDiaries,
+    fetchAllDiaries,
+  } = useTravelStore();
 
   const submitDiary = useCallback(async (formData: SubmitData) => {
+    setIsSubmitting(true);
     try {
       const data = {
         title: formData.title,
@@ -34,6 +41,11 @@ export const useDiarySubmission = () => {
 
       console.log('✅ 日记提交成功:', response);
       toast.success(t('submit successful'));
+      navigate('/');
+
+      fetchDiaries(1, 10).catch(err => {
+        console.error('获取失败:', err);
+      });
 
       // 成功后的回调由调用方决定
       return { success: true, data: response.data };
@@ -48,8 +60,10 @@ export const useDiarySubmission = () => {
       }
 
       return { success: false, error };
+    }finally {
+      setIsSubmitting(false);
     }
   }, [navigate, t]);
 
-  return { submitDiary };
+  return { submitDiary,isSubmitting };
 };

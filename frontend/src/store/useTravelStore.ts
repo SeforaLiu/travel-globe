@@ -121,10 +121,10 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     try {
       const response = await api.get<DiaryDetail>(`/entries/${id}`);
       set({ currentDiary: response.data, loading: false });
-      return response.data;
+      return response.data; // 正常返回 DiaryDetail
     } catch (err: any) {
       set({ loading: false });
-      throw err;
+      throw err; // 抛出错误，符合 Promise 失败的逻辑
     }
   },
 

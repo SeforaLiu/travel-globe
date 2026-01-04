@@ -1,10 +1,11 @@
 // DiaryView.tsx
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
+import {useTravelStore} from "@/store/useTravelStore";
 
 interface DiaryData {
-  id: string;
+  id: number;
   title: string;
   type: 'visited' | 'wishlist';
   location: string;
@@ -16,23 +17,24 @@ interface DiaryData {
 
 const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMobile}) => {
   const {t} = useTranslation();
-  const {id} = useParams<{ id: string }>();
+  const {id} = useParams();
   const navigate = useNavigate();
 
-  // 模拟数据 - 实际应用中应该从API或状态管理获取
-  const diaryData: DiaryData = {
-    id: id || '1',
-    title: '广州之旅!',
-    type: 'visited',
-    location: '广州',
-    transportation: '飞机',
-    dateRange: ['2025-12-10', '2025-12-10'],
-    content: '这次玩得很开心!',
-    photos: [
-      'https://www.thnet.gov.cn/img/0/981/981042/9137475.png',
-      'https://www.gz.gov.cn/img/1/1309/1309198/9954422.png'
-    ]
-  };
+  const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail);
+  const currentDiary = useTravelStore(state => state.currentDiary);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!id || currentDiary?.id === Number(id)) return;
+      try {
+        await fetchDiaryDetail(Number(id));
+      } catch (error) {
+        console.error('加载失败:', error);
+      }
+    };
+
+    loadData();
+  }, [id, fetchDiaryDetail]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -87,13 +89,13 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
         <div className="mb-8">
           <div className="flex items-center mb-2">
           <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium 
-            ${diaryData.type === 'visited' ? 'bg-diary text-white' : 'bg-guide text-white'}
-            ${dark && diaryData.type === 'visited' ? 'bg-diary text-white' : ''}
-            ${dark && diaryData.type === 'wishlist' ? 'bg-guide text-white' : ''}`}>
-              {diaryData.type === 'visited' ? t('AddTypeVisited') : t('AddTypeWishList')}
+            ${currentDiary?.entry_type === 'visited' ? 'bg-diary text-white' : 'bg-guide text-white'}
+            ${dark && currentDiary?.entry_type === 'visited' ? 'bg-diary text-white' : ''}
+            ${dark && currentDiary?.entry_type === 'wishlist' ? 'bg-guide text-white' : ''}`}>
+              {currentDiary?.entry_type === 'visited' ? t('AddTypeVisited') : t('AddTypeWishList')}
           </span>
           </div>
-          <h1 className="text-3xl font-bold  text-center">{diaryData.title}</h1>
+          <h1 className="text-3xl font-bold  text-center">{currentDiary?.title}</h1>
         </div>
 
         {/* 信息卡片 - 苹果风格 */}
@@ -104,40 +106,40 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
               {/* 地点 - 左对齐 */}
               <div className="flex-1 min-w-[200px] mb-4 md:mb-0">
                 {/*<p className="text-lg font-medium mb-1">{t('location')}</p>*/}
-                <p className="text-lg">{diaryData.location}</p>
+                <p className="text-lg">{currentDiary?.location_name}</p>
               </div>
 
               {/* 交通 - 居中 */}
               <div className="flex-1 min-w-[200px] mb-4 md:mb-0 md:text-center">
                 {/*<p className="text-lg font-medium mb-1">{t('transportation')}</p>*/}
-                <p className="text-lg">{diaryData.transportation}</p>
+                <p className="text-lg">{currentDiary?.transportation}</p>
               </div>
 
               {/* 日期 - 右对齐 */}
               <div className="flex-1 min-w-[200px] md:text-right">
                 {/*<p className="text-lg font-medium mb-1">{t('date')}</p>*/}
                 <p className="text-lg">
-                  {formatDate(diaryData.dateRange[0])}
-                  {diaryData.dateRange[0] !== diaryData.dateRange[1] && ` - ${formatDate(diaryData.dateRange[1])}`}
+                  {formatDate(currentDiary?.date_start)}
+                  {currentDiary?.date_start !== currentDiary?.date_end && ` - ${formatDate(currentDiary?.date_end)}`}
                 </p>
               </div>
             </div>
 
-            {/* 正文 */}
+             正文
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-lg whitespace-pre-line">{diaryData.content}</p>
+              <p className="text-lg whitespace-pre-line">{currentDiary?.content}</p>
             </div>
           </div>
         </div>
 
         {/* 照片展示 */}
-        {diaryData.photos.length > 0 && (
+        {currentDiary?.photos.length > 0 && (
           <div className={`rounded-xl p-6 ${dark ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <div className={`grid gap-4 ${diaryData.photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {diaryData.photos.map((photo, index) => (
+            <div className={`grid gap-4 ${currentDiary?.photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {currentDiary?.photos.map((photo, index) => (
                 <div key={index} className="rounded-lg overflow-hidden">
                   <img
-                    src={photo}
+                    src={photo.url}
                     alt={`Photo ${index + 1}`}
                     className="w-full h-auto object-cover"
                     loading="lazy"

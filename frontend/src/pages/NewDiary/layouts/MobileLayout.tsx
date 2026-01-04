@@ -31,7 +31,8 @@ type Props = {
   handleTouchStart: (e: React.TouchEvent, index: number) => void;
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
-  isUploading: boolean
+  isUploading: boolean;
+  loading?:boolean;
 };
 
 const MobileLayout: React.FC<Props> = ({
@@ -55,7 +56,8 @@ const MobileLayout: React.FC<Props> = ({
                                          handleTouchMove,
                                          handleTouchEnd,
                                          showMapPreview,
-                                         isUploading
+                                         isUploading,
+                                         loading
                                        }) => {
   return (
     <div className={`fixed inset-0 z-50 ${dark ? 'bg-gray-900' : 'bg-white'}`}>
@@ -146,6 +148,7 @@ const MobileLayout: React.FC<Props> = ({
             onSubmit={handleSubmit}
             isMobile={true}
             isUploading={isUploading}
+            loading={loading}
           />
         </form>
       </div>

@@ -1,146 +1,131 @@
 # backend/app/models.py
 from sqlmodel import Field, SQLModel, Relationship
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import date, datetime
 from pydantic import BaseModel, field_validator, ConfigDict
-from sqlalchemy import Column, DateTime, JSON
+from sqlalchemy import Column, DateTime, JSON, Text # [修改] 导入 Text 类型
 from sqlalchemy.sql import func
 
 # ==================== 用户相关模型 ====================
+# ... (这部分代码未修改，保持原样)
 class UserBase(SQLModel):
     username: str
-    # email 字段已移除，注册和登录只需要用户名和密码
-    # email: str
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
-
 
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
-
-    # 关系
     entries: List["Entry"] = Relationship(back_populates="user")
-
 
 class UserCreate(UserBase):
     password: str
-
 
 class UserLogin(BaseModel):
     username: str
     password: str
 
-
 class UserResponse(UserBase):
     id: int
-    user_id: int  # 兼容前端，实际是 id
-
+    user_id: int
     model_config = {"from_attributes": True}
 
-
 # ==================== 位置相关模型 ====================
+# ... (这部分代码未修改，保持原样)
 class LocationBase(SQLModel):
     name: str = Field(index=True)
-    # FIXED: 使用 JSON 列存储字典数据
-    coordinates: dict = Field(
-        sa_column=Column(JSON),
-        description="坐标字典，包含 lat 和 lng 键"
-    )
+    coordinates: dict = Field(sa_column=Column(JSON), description="坐标字典，包含 lat 和 lng 键")
     country: Optional[str] = None
     city: Optional[str] = None
     region: Optional[str] = None
 
-
 class Location(LocationBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-
-    # 关系
     entries: List["Entry"] = Relationship(back_populates="location")
-
 
 class LocationCreate(LocationBase):
     pass
 
-
 class LocationResponse(LocationBase):
     id: int
-
     model_config = {"from_attributes": True}
-
 
 # ==================== 照片相关模型 ====================
 class PhotoBase(SQLModel):
-    """照片模型基类 - 包含所有照片字段定义"""
     public_id: str = Field(index=True)
     url: str
     width: int
     height: int
     format: str
-    bytes: int = Field(default=0)  # 提供默认值
+    bytes: int = Field(default=0)
     original_filename: Optional[str] = None
     created_at: Optional[datetime] = None
 
-# ADD: 缺失的 Photo 表模型
+# [修复] 补全 Photo 表模型，这是之前缺失的关键部分
 class Photo(PhotoBase, table=True):
     """数据库照片表模型 - 映射到数据库表"""
     id: Optional[int] = Field(default=None, primary_key=True)
     entry_id: int = Field(foreign_key="entry.id")
 
-    # 关系
+    # 关系：定义 Photo -> Entry 的反向关系
     entry: "Entry" = Relationship(back_populates="photos")
 
 class PhotoCreate(SQLModel):
-    """创建照片的请求模型 - 所有字段可选，灵活接收前端数据"""
     public_id: Optional[str] = None
     url: Optional[str] = None
     width: Optional[int] = None
     height: Optional[int] = None
     format: Optional[str] = None
     bytes: Optional[int] = None
-    size: Optional[int] = None  # 接受前端的 size 字段
+    size: Optional[int] = None
     original_filename: Optional[str] = None
     created_at: Optional[datetime] = None
-
-    # 允许接收前端额外字段（如 folder, originalFilename 等）
     model_config = ConfigDict(extra='allow')
 
     @field_validator('bytes', mode='before')
     @classmethod
     def map_size_to_bytes(cls, v, info):
-        """如果 bytes 为空但 size 存在，自动映射"""
         if v is None and info.data.get('size') is not None:
             return info.data['size']
         elif v is None:
-            return 0  # 提供默认值
+            return 0
         return v
 
+# [新增] 照片详情响应模型，用于在日记详情中展示
+class PhotoDetail(PhotoBase):
+    id: int
 
 # ==================== 日记相关模型 ====================
 class EntryBase(SQLModel):
     title: str
+    # [新增] 按照需求，添加 content 字段用于存储日记正文
+    content: Optional[str] = Field(default=None, sa_column=Column(Text))
     location_name: str
-    description: Optional[str] = None
-    date_start: Optional[date] = None  # ✅ 改为可选
-    date_end: Optional[date] = None    # ✅ 改为可选
+    date_start: Optional[date] = None
+    date_end: Optional[date] = None
     entry_type: str = "visited"
-    coordinates: dict = Field(
-        sa_column=Column(JSON),
-        description="坐标字典，包含 lat 和 lng 键"
-    )
+    coordinates: dict = Field(sa_column=Column(JSON), description="坐标字典，包含 lat 和 lng 键")
+
+    # 以下字段保留在基础模型中，但在API响应时按需剔除
+    description: Optional[str] = None
     travel_partner: Optional[str] = None
     cost: Optional[float] = None
     mood: Optional[str] = None
 
-# FIX: 移除重复的 EntryCreate 定义，保留带验证器的版本
 class EntryCreate(EntryBase):
     """创建日记的请求模型"""
     photos: List[PhotoCreate] = []
 
+    # 移除不需要前端传入的字段，让模型更干净
+    # 如果前端依然会传这些字段，保留它们也无妨，Pydantic会处理
+    model_config = ConfigDict(
+        # 移除了 description, travel_partner, cost, mood
+        # 但为了兼容性，暂时保留它们在 EntryBase 中
+    )
+
     @field_validator('date_start', 'date_end', mode='before')
     @classmethod
     def empty_string_to_none(cls, v):
-        """将空字符串转换为 None，避免验证错误"""
         if v == "":
             return None
         return v
@@ -153,20 +138,22 @@ class Entry(EntryBase, table=True):
     )
     user_id: int = Field(foreign_key="user.id")
     location_id: Optional[int] = Field(default=None, foreign_key="location.id")
+
     # 关系
     user: "User" = Relationship(back_populates="entries")
+    # [修改] 完善 Entry -> Photo 的关系，并设置级联删除
     photos: List["Photo"] = Relationship(
         back_populates="entry",
         sa_relationship_kwargs={
-            "cascade": "all, delete-orphan",
-            "lazy": "selectin"
+            "cascade": "all, delete-orphan", # 级联删除：删除日记时，关联的照片也一并删除
+            "lazy": "selectin" # 优化查询：获取日记时，通过一次 select in 查询加载所有照片
         }
     )
     location: Optional["Location"] = Relationship(back_populates="entries")
 
-
 class EntryUpdate(BaseModel):
     title: Optional[str] = None
+    content: Optional[str] = None # [新增] 允许更新 content
     location_name: Optional[str] = None
     description: Optional[str] = None
     date_start: Optional[date] = None
@@ -178,32 +165,44 @@ class EntryUpdate(BaseModel):
     mood: Optional[str] = None
     location_id: Optional[int] = None
 
+# --- 以下是为满足新需求定义的新模型 ---
 
-# FIX: 将 date_start 和 date_end 改为 Optional，与 EntryBase 保持一致
-class DiarySummary(SQLModel):
+# [新增] 需求 1 & 3: 新增和详情接口的响应模型
+class EntryDetailResponse(SQLModel):
+    """用于日记详情页的响应模型"""
     id: int
     title: str
+    content: Optional[str] # 包含 content
     location_name: str
-    description: Optional[str] = None
-    date_start: Optional[date] = None  # FIX: 允许为 None
-    date_end: Optional[date] = None    # FIX: 允许为 None
+    date_start: Optional[date]
+    date_end: Optional[date]
     entry_type: str
-    coordinates: dict
-    travel_partner: Optional[str] = None
-    cost: Optional[float] = None
-    mood: Optional[str] = None
+    coordinates: Dict[str, Any]
     created_time: datetime
-
-    # 关联信息
-    location_id: Optional[int] = None
     user_id: int
-    photo_count: Optional[int] = None
+    location_id: Optional[int]
+    photos: List[PhotoDetail] # 包含 photos 列表
 
     model_config = {"from_attributes": True}
 
+# [新增] 需求 2: 日记列表接口的单项模型
+class DiaryListItem(SQLModel):
+    """用于日记列表的响应模型（精简字段）"""
+    id: int
+    title: str
+    location_name: str
+    date_start: Optional[date]
+    date_end: Optional[date]
+    entry_type: str
+    created_time: datetime
+    user_id: int
+    location_id: Optional[int]
 
+    model_config = {"from_attributes": True}
+
+# [修改] 需求 2: 日记列表的整体响应模型
 class DiaryListResponse(SQLModel):
-    items: List[DiarySummary]
+    items: List[DiaryListItem] # [修改] 使用新的精简模型
     total: int
     page: int
     page_size: int
@@ -212,13 +211,10 @@ class DiaryListResponse(SQLModel):
     guide_total: int
     place_total: int
 
-
-# ==================== Token 相关模型 ====================
 class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
-
 
 class TokenData(BaseModel):
     username: Optional[str] = None

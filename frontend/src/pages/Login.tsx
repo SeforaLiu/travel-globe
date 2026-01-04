@@ -46,9 +46,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
       if (response.status === 200) {
         await checkAuth();
         toast.success(t('Login successful!'));
-        setTimeout(() => {
           navigate('/');
-        }, 1500);
       }
     } catch (err: any) {
       // 更健壮的错误处理
@@ -63,8 +61,8 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
         errorMessage = t('No response from server');
       }
 
-      setError(errorMessage);
-      toast.error(errorMessage);
+      setError(t(errorMessage));
+      toast.error(t(errorMessage));
     } finally {
       setLoading(false);
     }

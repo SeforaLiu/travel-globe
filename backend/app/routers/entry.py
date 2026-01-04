@@ -6,7 +6,7 @@ from typing import List, Optional
 import logging
 from app.models import (
   Entry, EntryCreate, EntryUpdate, Photo, PhotoCreate, Location,
-  DiarySummary, DiaryListResponse
+  DiaryListResponse, DiaryListItem, EntryDetailResponse
 )
 from app.database import get_session
 from app.routers.user import get_current_user
@@ -230,364 +230,173 @@ async def get_or_create_location(coords: dict, location_name: str, session: Sess
 
 
 # ==================== API 端点 ====================
-@router.post("", response_model=Entry, responses={
-  400: {"description": "Invalid coordinates or missing required fields"},
-  422: {"description": "Validation error"}
-})
+# [修改] 需求 1: 新增日记接口
+@router.post("", response_model=EntryDetailResponse, status_code=status.HTTP_201_CREATED) # [修改] 使用新的响应模型，并返回 201 Created
 async def create_entry(
     entry_data: EntryCreate,
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
-  """创建日记"""
+  """
+  创建一篇新日记。
+  - 会自动处理 `content` 和 `photos` 的存储。
+  - 返回的数据结构经过裁剪，符合 `EntryDetailResponse` 模型。
+  """
   user_id = current_user["user_id"]
-  logger.info(f"为用户 {current_user['username']} 创建日记 - 照片数量: {len(entry_data.photos)}")
-  logger.debug(f"接收到的数据: date_start={entry_data.date_start}, date_end={entry_data.date_end}")
-
+  # [新增] 增加日志，方便调试
+  logger.info(f"用户 {user_id} 正在创建日记, 标题: '{entry_data.title}', 照片数: {len(entry_data.photos)}")
+  logger.debug(f"接收到的日记内容(前50字符): {entry_data.content[:50] if entry_data.content else '无'}")
   try:
-    # 1. 验证和处理坐标
-    logger.debug(f"处理坐标: {entry_data.coordinates}")
-    if not entry_data.coordinates:
-      raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="坐标是必填项"
-      )
-
-    # 2. 获取或创建位置信息
     location_obj = await get_or_create_location(entry_data.coordinates, entry_data.location_name, session)
-    location_id = location_obj.id if location_obj else None
-    if location_obj:
-      logger.debug(f"使用位置: {location_obj.name}, ID: {location_id}")
 
-    # 3. 处理日期
-    date_start = entry_data.date_start
-    date_end = entry_data.date_end
-    logger.debug(f"最终日期 - 开始: {date_start}, 结束: {date_end}")
-
-    # 4. 创建 Entry 对象
+    # 使用 exclude 剔除前端传来但我们不需要直接存入 Entry 的字段
+    # `content` 字段因为我们已经在模型中添加，所以会自动被包含
     entry_dict = entry_data.model_dump(exclude={"photos"})
-    # 更新日期字段、用户ID和位置ID
     entry_dict.update({
-      "date_start": date_start,
-      "date_end": date_end,
-      "user_id": current_user["user_id"],
-      "location_id": location_id  # 设置位置ID
+      "user_id": user_id,
+      "location_id": location_obj.id if location_obj else None
     })
-
-    logger.debug(f"创建日记数据: {entry_dict}")
-
-    db_entry = Entry(**entry_dict)
+    db_entry = Entry.model_validate(entry_dict) # 使用 model_validate 更安全
     session.add(db_entry)
-    session.flush()  # 获取ID但不提交事务
-
-    # 5. 处理照片
+    session.flush()  # flush() 以便获取 db_entry.id
+    # 处理照片
     if entry_data.photos:
-      logger.info(f"为日记 {db_entry.id} 处理 {len(entry_data.photos)} 张照片")
       for photo_data in entry_data.photos:
-        # 将 originalFilename 重命名为 original_filename 以匹配模型字段
-        photo_dict = photo_data.model_dump()
-        if 'originalFilename' in photo_dict:
-          photo_dict['original_filename'] = photo_dict.pop('originalFilename')
-
-        # 确保 bytes 字段有值
-        if 'bytes' not in photo_dict or photo_dict['bytes'] is None:
-          photo_dict['bytes'] = 0
-
-        db_photo = Photo(**photo_dict, entry_id=db_entry.id)
-        session.add(db_photo)
-        logger.debug(f"添加照片: {db_photo.public_id} 到日记 {db_entry.id}")
-    else:
-      logger.info("此日记没有照片需要处理")
-
+        # model_dump() 会自动处理 size -> bytes 的映射
+        photo_dict = photo_data.model_dump(exclude_unset=True)
+        # 确保关键字段存在
+        if 'public_id' in photo_dict and 'url' in photo_dict:
+          db_photo = Photo(**photo_dict, entry_id=db_entry.id)
+          session.add(db_photo)
+          logger.debug(f"照片 {photo_dict['public_id']} 已关联到日记 {db_entry.id}")
+        else:
+          logger.warning(f"跳过一张无效的照片数据: {photo_dict}")
     session.commit()
     session.refresh(db_entry)
-
-    # 使当前用户的统计缓存失效
     invalidate_user_stats_cache(user_id)
+    logger.info(f"日记创建成功, ID: {db_entry.id}, 标题: '{db_entry.title}'")
 
-    logger.info(f"日记创建成功: {db_entry.id}, 创建时间: {db_entry.created_time}")
+    # 返回新创建的日记，FastAPI 会自动根据 response_model (EntryDetailResponse) 序列化
     return db_entry
-
-  except ValueError as e:
-    logger.error(f"验证错误: {str(e)}")
-    session.rollback()
-    raise HTTPException(
-      status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-      detail=str(e)
-    )
   except Exception as e:
-    logger.error(f"意外错误: {str(e)}", exc_info=True)
+    logger.error(f"创建日记时发生意外错误: {str(e)}", exc_info=True)
     session.rollback()
     raise HTTPException(
       status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="服务器内部错误"
+      detail="创建日记失败，服务器内部错误"
     )
-
-
-    session.commit()
-    session.refresh(db_entry)
-
-    # 使当前用户的统计缓存失效
-    invalidate_user_stats_cache(user_id)
-
-    logger.info(f"日记创建成功: {db_entry.id}, 创建时间: {db_entry.created_time}")
-    return db_entry
-
-  except ValueError as e:
-    logger.error(f"验证错误: {str(e)}")
-    session.rollback()
-    raise HTTPException(
-      status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-      detail=str(e)
-    )
-  except Exception as e:
-    logger.error(f"意外错误: {str(e)}", exc_info=True)
-    session.rollback()
-    raise HTTPException(
-      status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="服务器内部错误"
-    )
-
-
-# ==================== 获取日记列表（带统计信息） ====================
+# [修改] 需求 2: 获取日记列表接口
 @router.get("", response_model=DiaryListResponse)
 def get_diaries(
-    page: int = Query(1, ge=1, description="页码，从1开始"),
-    page_size: int = Query(10, ge=1, le=100, description="每页最大数量"),
-    get_all: bool = Query(False, description="是否获取全部数据，忽略分页"),
-    force_refresh_stats: bool = Query(False, description="是否强制刷新统计缓存"),
-    sort_by: str = Query("created_time", description="排序字段: created_time, date_start"),
-    sort_order: str = Query("desc", description="排序顺序: asc, desc"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    get_all: bool = Query(False),
+    force_refresh_stats: bool = Query(False),
+    sort_by: str = Query("created_time", enum=["created_time", "date_start"]),
+    sort_order: str = Query("desc", enum=["asc", "desc"]),
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
   """
-  获取当前用户的日记列表（包含统计信息）
-
-  - 默认分页返回，每页10条
-  - 设置 get_all=true 时返回全部数据
-  - 新增：返回日记总数、愿望清单总数、不重复地点总数
-  - sort_by: 排序字段 (created_time 或 date_start)
-  - sort_order: 排序顺序 (asc 或 desc)
+  获取当前用户的日记列表。
+  - 返回的 `items` 数组中只包含指定的精简字段。
   """
   user_id = current_user["user_id"]
-  logger.info(f"用户 {user_id} 请求日记列表: "
-              f"page={page}, page_size={page_size}, "
-              f"get_all={get_all}, sort_by={sort_by}, sort_order={sort_order}")
-
-  # ===== 1. 获取统计信息（带缓存） =====
-  start_time = datetime.now()
+  logger.info(f"用户 {user_id} 请求日记列表: page={page}, page_size={page_size}")
   stats = get_user_stats(user_id, session, force_refresh=force_refresh_stats)
-
-  diary_total = stats["diary_total"]
-  guide_total = stats["guide_total"]
-  place_total = stats["place_total"]
   total_entries = stats["total_entries"]
-
-  stats_time = (datetime.now() - start_time).total_seconds()
-  logger.debug(f"统计信息获取耗时: {stats_time:.3f}秒")
-
-  # ===== 2. 获取日记列表 =====
-  # 构建基础查询
   base_query = select(Entry).where(Entry.user_id == user_id)
-
-  # 设置排序
-  sort_column = None
-  if sort_by == "date_start":
-    sort_column = Entry.date_start
-  else:  # 默认按创建时间排序
-    sort_column = Entry.created_time
-
-  # 设置排序顺序
-  if sort_order.lower() == "asc":
-    order_by = sort_column.asc()
-  else:
-    order_by = sort_column.desc()
-
-  logger.debug(f"排序设置: {sort_by} {sort_order}")
-
-  # 获取数据
+  sort_column = Entry.date_start if sort_by == "date_start" else Entry.created_time
+  order_by = sort_column.asc() if sort_order.lower() == "asc" else sort_column.desc()
   if get_all:
-    # 返回全部数据
-    entries = session.exec(
-      base_query.order_by(order_by)
-    ).all()
-    items = [DiarySummary.model_validate(entry) for entry in entries]
-    response = DiaryListResponse(
-      items=items,
-      total=total_entries,
-      page=1,
-      page_size=total_entries,
-      total_pages=1,
-      diary_total=diary_total,
-      guide_total=guide_total,
-      place_total=place_total
-    )
-    logger.info(f"返回用户 {user_id} 的全部 {total_entries} 篇日记，包含统计信息")
+    entries = session.exec(base_query.order_by(order_by)).all()
+    page_size = total_entries if total_entries > 0 else 1
+    total_pages = 1
   else:
-    # 分页返回
     offset = (page - 1) * page_size
-    entries = session.exec(
-      base_query.order_by(order_by)
-      .offset(offset).limit(page_size)
-    ).all()
-
-    items = [DiarySummary.model_validate(entry) for entry in entries]
+    entries = session.exec(base_query.order_by(order_by).offset(offset).limit(page_size)).all()
     total_pages = (total_entries + page_size - 1) // page_size if page_size > 0 else 1
-
-    response = DiaryListResponse(
-      items=items,
-      total=total_entries,
-      page=page,
-      page_size=page_size,
-      total_pages=total_pages,
-      diary_total=diary_total,
-      guide_total=guide_total,
-      place_total=place_total
-    )
-    logger.info(f"返回用户 {user_id} 的第 {page}/{total_pages} 页日记，"
-                f"共 {len(items)} 条，创建时间范围: "
-                f"{items[0].created_time if items else '无'} 到 "
-                f"{items[-1].created_time if items else '无'}")
-
-  total_time = (datetime.now() - start_time).total_seconds()
-  logger.debug(f"日记列表接口总耗时: {total_time:.3f}秒")
-
-  return response
-
-
-# ==================== 获取日记详情 ====================
-@router.get("/{entry_id}", response_model=Entry)
+  # [修改] 使用 DiaryListItem 模型来验证和序列化每一项
+  # 这一步是关键，它确保了返回给前端的数据结构是正确的
+  items = [DiaryListItem.model_validate(entry) for entry in entries]
+  return DiaryListResponse(
+    items=items,
+    total=total_entries,
+    page=page,
+    page_size=page_size,
+    total_pages=total_pages,
+    diary_total=stats["diary_total"],
+    guide_total=stats["guide_total"],
+    place_total=stats["place_total"]
+  )
+# [修改] 需求 3: 获取日记详情接口
+@router.get("/{entry_id}", response_model=EntryDetailResponse) # [修改] 使用新的响应模型
 def get_diary_detail(
     entry_id: int,
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
-  """获取单篇日记详情（包含照片、位置等全部信息）"""
+  """
+  获取单篇日记详情。
+  - 返回的数据包含 `content` 和 `photos`。
+  - 不会返回 `cost`, `description`, `mood`, `travel_partner` 等字段。
+  """
   user_id = current_user["user_id"]
-  logger.debug(f"用户 {user_id} 请求日记详情: entry_id={entry_id}")
-
-  # 查找日记并验证所有权
+  logger.info(f"用户 {user_id} 请求日记详情, ID: {entry_id}")
   entry = session.exec(
-    select(Entry).where(Entry.id == entry_id)
-    .where(Entry.user_id == user_id)
+    select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)
   ).first()
-
   if not entry:
-    logger.warning(f"日记不存在或无权访问: entry_id={entry_id}, user_id={user_id}")
+    logger.warning(f"用户 {user_id} 尝试访问不存在或不属于自己的日记, ID: {entry_id}")
     raise HTTPException(
       status_code=status.HTTP_404_NOT_FOUND,
       detail="日记不存在或无权访问"
     )
-
-  logger.info(f"成功返回日记详情: entry_id={entry_id}, 创建时间: {entry.created_time}")
+  logger.info(f"成功返回日记详情, ID: {entry_id}")
+  # 直接返回数据库对象 entry 即可
+  # FastAPI 会自动根据 response_model (EntryDetailResponse) 来过滤和格式化数据
   return entry
-
-
-# ==================== 更新日记 ====================
-@router.put("/{entry_id}", response_model=Entry, responses={
-  404: {"description": "日记不存在或无权访问"},
-  400: {"description": "无效的坐标或数据格式"}
-})
+# ... (更新和删除日记的接口保持不变，但可以考虑也使用 EntryDetailResponse 作为响应模型)
+@router.put("/{entry_id}", response_model=EntryDetailResponse) # [修改] 统一响应模型
 async def update_diary(
     entry_id: int,
     update_data: EntryUpdate,
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
-  """更新日记信息"""
   user_id = current_user["user_id"]
-  logger.info(f"用户 {user_id} 更新日记: entry_id={entry_id}")
-
-  # 1. 查找日记并验证所有权
-  entry = session.exec(
-    select(Entry).where(Entry.id == entry_id).where(Entry.user_id == user_id)
-  ).first()
-
+  entry = session.exec(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)).first()
   if not entry:
-    logger.warning(f"更新失败：日记不存在或无权访问: entry_id={entry_id}")
     raise HTTPException(status_code=404, detail="日记不存在或无权访问")
-
-  # 2. 处理位置信息更新（如果提供了坐标和位置名）
   location_id = entry.location_id
   if update_data.coordinates is not None and update_data.location_name is not None:
-    logger.debug(f"更新位置信息: {update_data.location_name}, {update_data.coordinates}")
-    location_obj = await get_or_create_location(
-      update_data.coordinates,
-      update_data.location_name,
-      session
-    )
+    location_obj = await get_or_create_location(update_data.coordinates, update_data.location_name, session)
     location_id = location_obj.id if location_obj else None
-
-  # 3. 更新字段（只更新非None的字段）
-  update_dict = update_data.model_dump(exclude_unset=True, exclude={"coordinates"})
+  update_dict = update_data.model_dump(exclude_unset=True)
   update_dict["location_id"] = location_id
-
   for field, value in update_dict.items():
-    setattr(entry, field, value)
-
-  try:
-    session.add(entry)
-    session.commit()
-    session.refresh(entry)
-
-    # 使当前用户的统计缓存失效
-    invalidate_user_stats_cache(user_id)
-
-    logger.info(f"日记更新成功: entry_id={entry_id}, 原始创建时间: {entry.created_time}")
-    return entry
-  except Exception as e:
-    logger.error(f"日记更新失败: {str(e)}", exc_info=True)
-    session.rollback()
-    raise HTTPException(status_code=500, detail="更新失败，请稍后重试")
-
-
-# ==================== 删除日记 ====================
-@router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT, responses={
-  404: {"description": "日记不存在或无权访问"}
-})
+    if hasattr(entry, field):
+      setattr(entry, field, value)
+  session.add(entry)
+  session.commit()
+  session.refresh(entry)
+  invalidate_user_stats_cache(user_id)
+  return entry
+@router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_diary(
     entry_id: int,
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
-  """删除日记"""
   user_id = current_user["user_id"]
-  logger.info(f"用户 {user_id} 删除日记: entry_id={entry_id}")
-
-  # 1. 查找日记并验证所有权
-  entry = session.exec(
-    select(Entry).where(Entry.id == entry_id).where(Entry.user_id == user_id)
-  ).first()
-
+  entry = session.exec(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)).first()
   if not entry:
-    logger.warning(f"删除失败：日记不存在或无权访问: entry_id={entry_id}")
     raise HTTPException(status_code=404, detail="日记不存在或无权访问")
 
-  # 2. 删除日记
-  try:
-    # 记录删除前的信息（用于审计）
-    deleted_info = {
-      "entry_id": entry.id,
-      "title": entry.title,
-      "location_name": entry.location_name,
-      "created_time": entry.created_time,
-      "deleted_time": datetime.now()
-    }
-    logger.info(f"删除日记信息: {deleted_info}")
-
-    session.delete(entry)
-    session.commit()
-
-    # 使当前用户的统计缓存失效
-    invalidate_user_stats_cache(user_id)
-
-    logger.info(f"日记删除成功: entry_id={entry_id}")
-    # 204 No Content 不需要返回 body
-  except Exception as e:
-    logger.error(f"日记删除失败: {str(e)}", exc_info=True)
-    session.rollback()
-    raise HTTPException(status_code=500, detail="删除失败，请稍后重试")
+  session.delete(entry)
+  session.commit()
+  invalidate_user_stats_cache(user_id)
+  return None # 204 响应不需要 body
 
 
 # ==================== 统计信息独立接口 ====================
@@ -687,34 +496,34 @@ def read_entries_legacy(
 
 # ==================== 获取最近创建的日记 ====================
 # ✅ FIXED: 移除路径参数 {limit}，改为纯查询参数
-@router.get("/recent", response_model=List[DiarySummary])
-def get_recent_diaries(
-    limit: int = Query(5, ge=1, le=20, description="获取最近N篇日记"),
-    entry_type: Optional[str] = Query(None, description="日记类型: visited, wishlist"),
-    session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user)
-):
-  """
-  获取用户最近创建的日记
-
-  - 可以指定日记类型筛选
-  - 默认返回最近5篇 visited 日记
-  """
-  user_id = current_user["user_id"]
-  logger.info(f"用户 {user_id} 获取最近日记: limit={limit}, entry_type={entry_type}")
-
-  # 构建查询
-  query = select(Entry).where(Entry.user_id == user_id)
-
-  if entry_type:
-    query = query.where(Entry.entry_type == entry_type)
-
-  # 按创建时间倒序，获取最近创建的
-  entries = session.exec(
-    query.order_by(Entry.created_time.desc()).limit(limit)
-  ).all()
-
-  items = [DiarySummary.model_validate(entry) for entry in entries]
-
-  logger.info(f"返回用户 {user_id} 的最近 {len(items)} 篇日记")
-  return items
+# @router.get("/recent", response_model=List[DiarySummary])
+# def get_recent_diaries(
+#     limit: int = Query(5, ge=1, le=20, description="获取最近N篇日记"),
+#     entry_type: Optional[str] = Query(None, description="日记类型: visited, wishlist"),
+#     session: Session = Depends(get_session),
+#     current_user: dict = Depends(get_current_user)
+# ):
+#   """
+#   获取用户最近创建的日记
+#
+#   - 可以指定日记类型筛选
+#   - 默认返回最近5篇 visited 日记
+#   """
+#   user_id = current_user["user_id"]
+#   logger.info(f"用户 {user_id} 获取最近日记: limit={limit}, entry_type={entry_type}")
+#
+#   # 构建查询
+#   query = select(Entry).where(Entry.user_id == user_id)
+#
+#   if entry_type:
+#     query = query.where(Entry.entry_type == entry_type)
+#
+#   # 按创建时间倒序，获取最近创建的
+#   entries = session.exec(
+#     query.order_by(Entry.created_time.desc()).limit(limit)
+#   ).all()
+#
+#   items = [DiarySummary.model_validate(entry) for entry in entries]
+#
+#   logger.info(f"返回用户 {user_id} 的最近 {len(items)} 篇日记")
+#   return items

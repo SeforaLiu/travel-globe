@@ -1,20 +1,22 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 
 type Props = {
   dark: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   isMobile?: boolean;
-  isUploading?:boolean
+  isUploading?: boolean;
+  loading?:boolean;
 };
 
-const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, isMobile = false }) => {
-  const { t } = useTranslation();
+const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, isMobile = false, loading}) => {
+  const {t} = useTranslation();
 
   if (isMobile) {
     return (
-      <div className={`p-4 border-t ${dark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'} flex justify-end gap-3`}>
+      <div
+        className={`p-4 border-t ${dark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'} flex justify-end gap-3`}>
         <button
           type="button"
           className="px-6 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -44,7 +46,7 @@ const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, i
           {t('common.cancel')}
         </button>
         <button
-          disabled={isUploading}
+          disabled={isUploading || loading}
           type="submit"
           className="px-6 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
         >
