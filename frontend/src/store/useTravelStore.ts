@@ -31,7 +31,7 @@ interface TravelState {
   // B. 获取全部日记 (常用于 3D 地球打点)
   fetchAllDiaries: (force?: boolean) => Promise<void>;
   // 【新增】创建日记 Action
-  createDiary: (data: Omit<DiaryDetail, 'id' | 'created_at' | 'updated_at'>) => Promise<DiaryDetail>;
+  createDiary: (data: Omit<DiaryDetail, 'id' | 'created_time' | 'updated_at' | 'location_id' | 'user_id'>) => Promise<DiaryDetail>;
   // C. 获取详情
   fetchDiaryDetail: (id: number) => Promise<DiaryDetail>;
   // D. 更新日记 (包含局部状态更新)
@@ -125,6 +125,10 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       set({
         allDiaries: response.data.items,
         loading: false,
+        diaryTotal:response.data.diary_total,
+        guideTotal:response.data.guide_total,
+        placeTotal:response.data.place_total,
+        total: response.data.total,
         allDiariesInitialized: true // 无论如何，执行后都应标记为已初始化
       });
     } catch (err: any) {

@@ -1,15 +1,15 @@
 // src/hooks/useDiarySubmission.ts
 import {useCallback, useState} from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
+import {useNavigate} from 'react-router-dom';
+import {toast} from 'sonner';
+import {useTranslation} from 'react-i18next';
 import api from '@/services/api';
-import { SubmitData } from '@/pages/NewDiary/types';
+import {SubmitData} from '@/pages/NewDiary/types';
 import {useTravelStore} from "@/store/useTravelStore";
 
 export const useDiarySubmission = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const {t} = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fetchAllDiaries = useTravelStore(state => state.fetchAllDiaries);
   const fetchDiaries = useTravelStore(state => state.fetchDiaries);
@@ -24,7 +24,7 @@ export const useDiarySubmission = () => {
         content: formData.content,
         location_name: formData.location,
         entry_type: formData.type,
-        coordinates: formData.coordinates,
+        coordinates: formData.coordinates ?? null,
         date_start: formData.dateStart ?? null,
         date_end: formData.dateEnd ?? null,
         transportation: formData.transportation ?? null,
@@ -33,20 +33,14 @@ export const useDiarySubmission = () => {
 
       console.log('📤 创建日记数据:', data);
 
-      // const response = await api.post('/entries', data, {
-      //   headers: {
-      //     'X-Requested-With': 'XMLHttpRequest',
-      //   },
-      // });
-
-    const response =  await createDiary(data);
+      const response = await createDiary(data);
 
       console.log('✅ 日记提交成功:', response);
       toast.success(t('submit successful'));
       navigate('/');
 
       // 成功后的回调由调用方决定
-      return { success: true, data: response.data };
+      return {success: true, data: response.data};
     } catch (error: any) {
       console.error('❌ 日记提交失败:', error.message);
 
@@ -57,11 +51,11 @@ export const useDiarySubmission = () => {
         toast.error(t('submit error please try again'));
       }
 
-      return { success: false, error };
-    }finally {
+      return {success: false, error};
+    } finally {
       setIsSubmitting(false);
     }
   }, [navigate, t]);
 
-  return { submitDiary,isSubmitting };
+  return {submitDiary, isSubmitting};
 };

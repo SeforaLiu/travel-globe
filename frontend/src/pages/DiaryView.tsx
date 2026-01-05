@@ -16,7 +16,7 @@ interface DiaryData {
 }
 
 const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMobile}) => {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const {id} = useParams();
   const navigate = useNavigate();
 
@@ -39,6 +39,39 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-CN', {year: 'numeric', month: 'long', day: 'numeric'});
+  };
+
+  const renderDateRange = () => {
+    const start = currentDiary?.date_start;
+    const end = currentDiary?.date_end;
+
+    // 1. 如果没有开始日期，则不显示（根据需求：没有就为空）
+    if (!start) return null;
+
+    // 定义格式化配置
+    const formatDate = (dateStr: string) => {
+      try {
+        const date = new Date(dateStr);
+        // 使用 Intl 对象根据当前 i18n 语言自动格式化 (如: 2023/10/27 或 Oct 27, 2023)
+        return new Intl.DateTimeFormat(i18n.language, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }).format(date);
+      } catch (e) {
+        return dateStr; // 备选方案：如果日期非法则返回原字符串
+      }
+    };
+
+    const formattedStart = formatDate(start);
+    const formattedEnd = end ? formatDate(end) : null;
+
+    // 2. 逻辑判断：如果日期一致或没有结束日期，只显示开始日期；否则显示范围
+    if (!end || start === end) {
+      return formattedStart;
+    }
+
+    return `${formattedStart} - ${formattedEnd}`;
   };
 
   // 按钮点击处理函数
@@ -117,10 +150,8 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
 
               {/* 日期 - 右对齐 */}
               <div className="flex-1 min-w-[200px] md:text-right">
-                {/*<p className="text-lg font-medium mb-1">{t('date')}</p>*/}
                 <p className="text-lg">
-                  {formatDate(currentDiary?.date_start)}
-                  {currentDiary?.date_start !== currentDiary?.date_end && ` - ${formatDate(currentDiary?.date_end)}`}
+                  {renderDateRange()}
                 </p>
               </div>
             </div>
@@ -131,9 +162,9 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
         </div>
 
         {/* 照片展示 */}
-        {currentDiary?.photos.length > 0 && (
+        {currentDiary?.photos?.length > 0 && (
           <div className={`rounded-xl p-6 ${dark ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <div className={`grid gap-4 ${currentDiary?.photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className={`grid gap-4 ${currentDiary?.photos?.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {currentDiary?.photos.map((photo, index) => (
                 <div key={index} className="rounded-lg overflow-hidden">
                   <img

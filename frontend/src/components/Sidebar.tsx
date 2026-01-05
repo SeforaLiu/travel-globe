@@ -29,18 +29,19 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const  fetchDiaries= useTravelStore((state) => state.fetchDiaries);
   const  diaries= useTravelStore((state) => state.diaries);
   const  total= useTravelStore((state) => state.total);
-
+  const  allDiaries= useTravelStore((state) => state.allDiaries);
+  console.log('总共日记total',total,guideTotal, diaryTotal)
 
   // 关键修改：添加数据获取逻辑
-  useEffect(() => {
-    if (isLoggedIn && !initialized && !loading) {
-      console.log('Sidebar: 第一次加载数据');
-
-      fetchDiaries(1, 10).catch(err => {
-        console.error('获取失败:', err);
-      });
-    }
-  }, [isLoggedIn, initialized, loading]);
+  // useEffect(() => {
+  //   if (isLoggedIn && !initialized && !loading) {
+  //     console.log('Sidebar: 第一次加载数据');
+  //
+  //     fetchDiaries(1, 10).catch(err => {
+  //       console.error('获取失败:', err);
+  //     });
+  //   }
+  // }, [isLoggedIn, initialized, loading]);
 
   const handleAddDiary = () => {
     navigate(isLoggedIn ? '/new-diary' : '/login');
@@ -138,7 +139,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
         ) : (
           <>
             {/* 加载状态提示 */}
-            {loading && diaries.length === 0 && (
+            {loading && allDiaries.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 <div className="mt-2 text-sm opacity-70">{t('Loading diaries...')}</div>
@@ -146,7 +147,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
             )}
 
             {/* 空状态提示 */}
-            {!loading && diaries.length === 0 && (
+            {!loading && allDiaries.length === 0 && (
               <div className="flex flex-col items-center h-full text-center space-y-4">
                 <div className="text-4xl">📝</div>
                 <div className="text-lg font-semibold">{t('No diaries yet')}</div>
@@ -157,9 +158,9 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
             )}
 
             {/* 显示日记列表 */}
-            {!loading && diaries.length > 0 && (
+            {!loading && allDiaries.length > 0 && (
               <ul className="space-y-2">
-                {diaries.map(item => (
+                {allDiaries.map(item => (
                   <li
                     key={item.id}
                     className="p-2 border rounded cursor-pointer hover:bg-opacity-20 hover:bg-blue-500 transition-colors"

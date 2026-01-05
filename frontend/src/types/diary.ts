@@ -8,6 +8,8 @@ export interface DiarySummary {
   date_start: string;
   date_end: string | null;
   transportation: string | null;
+  created_time: string | null;
+  user_id: number;
 }
 
 export interface DiaryListResponse {
