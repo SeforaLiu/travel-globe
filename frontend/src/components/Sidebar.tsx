@@ -21,16 +21,15 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const user = useTravelStore((state) => state.user);
   const navigate = useNavigate();
 
-  const {
-    diaries,
-    currentPage,
-    total,
-    fetchDiaries,
-    fetchAllDiaries,
-    loading,
-    initialized,
-    placeTotal
-  } = useTravelStore();
+  const loading = useTravelStore((state) => state.loading);
+  const  guideTotal= useTravelStore((state) => state.guideTotal);
+  const  diaryTotal= useTravelStore((state) => state.diaryTotal);
+  const  placeTotal= useTravelStore((state) => state.placeTotal);
+  const  initialized= useTravelStore((state) => state.initialized);
+  const  fetchDiaries= useTravelStore((state) => state.fetchDiaries);
+  const  diaries= useTravelStore((state) => state.diaries);
+  const  total= useTravelStore((state) => state.total);
+
 
   // 关键修改：添加数据获取逻辑
   useEffect(() => {
@@ -55,19 +54,6 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
 
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
   const textColor = dark ? 'text-white' : 'text-gray-800';
-
-  // 关键修改：使用 store 中的真实数据替换硬编码数据
-  const sidebarData = {
-    diaryTotal: total,  // 使用 store 中的 total
-    guideTotal: 0,      // 暂时保留，后续可以添加攻略功能
-    diaryList: diaries.map(diary => ({
-      id: diary.id,
-      title: diary.title || `${diary.location_name || '未命名地点'} - ${new Date(diary.date_start).getFullYear()}`,
-      // 使用 diary.id 作为 pathId，或者根据你的路由结构调整
-      pathId: diary.id,
-      startDate: diary.date_start
-    })),
-  }
 
   // 展开时的内容
   return (
@@ -130,13 +116,13 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
       </div>
 
       {/* Tabs */}
-      {isLoggedIn && sidebarData.diaryTotal > 0 && (
+      {isLoggedIn && total > 0 && (
         <div className="cursor-pointer flex gap-4 font-semibold">
           <div className="px-2 py-1 rounded bg-opacity-20 bg-blue-500">
-            {t('diary')}: {sidebarData.diaryTotal}
+            {t('diary')}: {diaryTotal}
           </div>
            <div className="px-2 py-1 rounded bg-opacity-20 bg-guide">
-              {t('guide')}: {sidebarData.guideTotal}
+              {t('guide')}: {guideTotal}
             </div>
         </div>
       )}
@@ -173,16 +159,16 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
             {/* 显示日记列表 */}
             {!loading && diaries.length > 0 && (
               <ul className="space-y-2">
-                {sidebarData.diaryList.map(item => (
+                {diaries.map(item => (
                   <li
                     key={item.id}
                     className="p-2 border rounded cursor-pointer hover:bg-opacity-20 hover:bg-blue-500 transition-colors"
                     onClick={() => {
-                      navigate(`/diary/${item.pathId}`)
+                      navigate(`/diary/${item.id}`)
                       if (isMobile) toggleSidebar()
                     }}
                   >
-                    {item.title}{item.startDate?` - ${item.startDate}` : ''}
+                    {item.title}{item.date_start?` - ${item.date_end}` : ''}
                   </li>
                 ))}
               </ul>

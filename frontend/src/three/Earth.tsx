@@ -6,6 +6,7 @@ import {TextureLoader} from 'three/src/loaders/TextureLoader'
 import {useTranslation} from 'react-i18next'
 import {useNavigate} from "react-router-dom";
 import {Perf} from "r3f-perf";
+import {useTravelStore} from "@/store/useTravelStore";
 
 function latLonToCartesian(lat: number, lon: number, radius = 2) {
   const phi = (90 - lat) * (Math.PI / 180)
@@ -15,10 +16,6 @@ function latLonToCartesian(lat: number, lon: number, radius = 2) {
   const y = radius * Math.cos(phi)
   return new THREE.Vector3(x, y, z)
 }
-
-// 数据从后端接口获取
-const points = [
-]
 
 type Props = {
   dark: boolean;
@@ -33,6 +30,9 @@ export default function Earth({dark, isMobile}: Props) {
   const navigate = useNavigate();
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
   const [shouldRotate, setShouldRotate] = useState(true)
+  const fetchAllDiaries = useTravelStore(state => state.fetchAllDiaries);
+  const allDiaries = useTravelStore(state => state.allDiaries);
+  const isLoggedIn = useTravelStore(state => state.isLoggedIn);
 
   const [dayMap, nightMap] = useLoader(TextureLoader, [
     '/textures/8k_day.jpg',
@@ -43,6 +43,13 @@ export default function Earth({dark, isMobile}: Props) {
     dayMap.anisotropy = 16;
     dayMap.needsUpdate = true;
   },[dayMap])
+
+  useEffect(() => {
+    if(isLoggedIn){
+      fetchAllDiaries()
+    }
+    console.log('earth获取的全部日记',allDiaries)
+  }, [allDiaries, fetchAllDiaries]);
 
 
   useFrame((_, delta) => {
@@ -101,8 +108,8 @@ export default function Earth({dark, isMobile}: Props) {
           </mesh>
         )}
 
-        {points.map(p => {
-          const pos = latLonToCartesian(p.lat, p.lng, 2.02)
+        {allDiaries?.map(p => {
+          const pos = latLonToCartesian(p.coordinates.lat, p.coordinates.lng, 2.02)
           const isHovered = hoveredPoint === p.id
           const shouldShowLabel = isMobile ? true : isHovered
 
@@ -113,7 +120,7 @@ export default function Earth({dark, isMobile}: Props) {
             >
               <mesh
                 visible={false}
-                onClick={(e) => handleClick(e, p.pathId)}
+                onClick={(e) => handleClick(e, p.id)}
                 onPointerEnter={() => handlePointerEnter(p.id)}
                 onPointerLeave={handlePointerLeave}
               >
@@ -124,8 +131,8 @@ export default function Earth({dark, isMobile}: Props) {
               <mesh>
                 <sphereGeometry args={[visualPointSize, 16, 16]}/>
                 <meshStandardMaterial
-                  color={p.color}
-                  emissive={(!isMobile && isHovered) ? p.color : '#ffffff'}
+                  color="orange"
+                  emissive={(!isMobile && isHovered) ? 'orange' : '#ffffff'}
                   emissiveIntensity={(!isMobile && isHovered) ? 0.8 : 0}
                 />
               </mesh>
@@ -142,14 +149,14 @@ export default function Earth({dark, isMobile}: Props) {
                 >
                   <div
                     style={{pointerEvents: 'auto'}}
-                    onClick={(e) => handleClick(e, p.pathId)}
+                    onClick={(e) => handleClick(e, p.id)}
                     className={`
                       bg-black/70 text-white text-xs px-2 py-1 rounded whitespace-nowrap
                       cursor-pointer transition-opacity duration-200
                       ${isHovered ? 'opacity-100' : 'opacity-90'}
                     `}
                   >
-                    {p.label}
+                    {p.title}
                   </div>
                 </Html>
               )}

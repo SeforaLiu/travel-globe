@@ -6,6 +6,7 @@ import { DiarySummary, DiaryListResponse, DiaryDetail } from '@/types/diary';
 interface TravelState {
   // --- 数据状态 ---
   diaries: DiarySummary[];     // 当前显示的日记列表
+  allDiaries:DiarySummary[];
   total: number;               // 总条数
   currentPage: number;         // 当前页码
   loading: boolean;
@@ -14,7 +15,8 @@ interface TravelState {
   diaryTotal: number;
   guideTotal: number;
   placeTotal: number;
-  initialized: boolean, // 新增：标记是否完成过初次加载
+  initialized: boolean; // 新增：标记是否完成过初次加载
+  allDiariesInitialized: boolean;
 
   // --- 用户状态 ---
   isLoggedIn: boolean;
@@ -27,7 +29,9 @@ interface TravelState {
   // A. 获取分页列表
   fetchDiaries: (page?: number, pageSize?: number) => Promise<DiaryListResponse>;
   // B. 获取全部日记 (常用于 3D 地球打点)
-  fetchAllDiaries: () => Promise<void>;
+  fetchAllDiaries: (force?: boolean) => Promise<void>;
+  // 【新增】创建日记 Action
+  createDiary: (data: Omit<DiaryDetail, 'id' | 'created_at' | 'updated_at'>) => Promise<DiaryDetail>;
   // C. 获取详情
   fetchDiaryDetail: (id: number) => Promise<DiaryDetail>;
   // D. 更新日记 (包含局部状态更新)
@@ -47,6 +51,7 @@ interface TravelState {
 
 export const useTravelStore = create<TravelState>((set, get) => ({
   diaries: [],
+  allDiaries:[],
   total: 0,
   diaryTotal: 0,
   guideTotal: 0,
@@ -60,6 +65,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   isMobile: false,
   darkMode: false,
   initialized:false,
+  allDiariesInitialized:false,
 
   // --- 动作实现 ---
 
@@ -102,16 +108,34 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     }
   },
 
-  // B. 获取全部 (用于地图展示)
-  fetchAllDiaries: async () => {
+// B. 获取全部 (用于地图展示)
+  fetchAllDiaries: async (force = false) => {
+    // 1. 【修改保护逻辑】如果已经初始化过 且 不是强制刷新，则直接返回
+    if (get().allDiariesInitialized && !force) {
+      console.log('fetchAllDiaries: Already initialized and not forced, skipping fetch.');
+      return;
+    }
+    console.log(`call 获取全部日记 fetchAllDiaries called. Force refresh: ${force}`);
     set({ loading: true, error: null });
     try {
       const response = await api.get<DiaryListResponse>('/entries', {
         params: { get_all: true }
       });
-      set({ diaries: response.data.items, loading: false });
+      console.log(`获取全部日记成功 fetchAllDiaries success: got ${response.data.items.length} items.`);
+      set({
+        allDiaries: response.data.items,
+        loading: false,
+        allDiariesInitialized: true // 无论如何，执行后都应标记为已初始化
+      });
     } catch (err: any) {
-      set({ error: '获取全部数据失败', loading: false });
+      console.error('获取全部日记失败 fetchAllDiaries failed:', err);
+      set({
+        error: '获取全部数据失败',
+        loading: false,
+        // 失败时不再标记为 true，以便下次可以重试。
+        // 但在强制刷新场景下，这可能不是最佳选择，具体取决于产品需求。
+        // 为简单起见，我们先保持原样，成功后标记。
+      });
     }
   },
 
@@ -128,13 +152,38 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     }
   },
 
+  // 【新增】创建日记 Action
+  createDiary: async (newDiaryData) => {
+    set({ loading: true });
+    try {
+      const response = await api.post<DiaryDetail>('/entries', newDiaryData);
+      console.log('日记创建成功, Diary created successfully.');
 
-  // D. 更新
+      // 【核心】强制刷新 allDiaries 列表
+      await get().fetchAllDiaries(true);
+
+      // 注意：此时 loading 状态可能已被 fetchAllDiaries 重置
+      // 我们可以在这里再次设置，或让 fetchAllDiaries 处理
+      set({ loading: false });
+      return response.data;
+    } catch (err: any) {
+      console.error('创建日记失败, Create diary failed:', err);
+      set({ loading: false, error: '创建日记失败' });
+      throw err;
+    }
+  },
+
+  // D. 更新 - 【重点修改】
   updateDiary: async (id, updateData) => {
     set({ loading: true });
     try {
       const response = await api.put<DiaryDetail>(`/entries/${id}`, updateData);
-      // 同步更新本地列表中的数据，避免重新请求整个列表
+      console.log(`日记 ${id} 更新成功, Diary ${id} updated successfully.`);
+
+      // 【核心】强制刷新 allDiaries 列表
+      await get().fetchAllDiaries(true);
+
+      // 局部更新分页列表（如果存在）
       const updatedDiaries = get().diaries.map(d => d.id === id ? { ...d, ...response.data } : d);
       set({
         diaries: updatedDiaries,
@@ -148,12 +197,17 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     }
   },
 
-  // E. 删除
+  // E. 删除 - 【重点修改】
   deleteDiary: async (id) => {
     set({ loading: true });
     try {
       await api.delete(`/entries/${id}`);
-      // 从本地状态中移除，实现即时 UI 反馈
+      console.log(`日记 ${id} 删除成功, Diary ${id} deleted successfully.`);
+
+      // 【核心】强制刷新 allDiaries 列表
+      await get().fetchAllDiaries(true);
+
+      // 从本地分页列表状态中移除
       set({
         diaries: get().diaries.filter(d => d.id !== id),
         loading: false

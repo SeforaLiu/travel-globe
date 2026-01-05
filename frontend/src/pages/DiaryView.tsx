@@ -124,8 +124,6 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
                 </p>
               </div>
             </div>
-
-             正文
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
               <p className="text-lg whitespace-pre-line">{currentDiary?.content}</p>
             </div>
