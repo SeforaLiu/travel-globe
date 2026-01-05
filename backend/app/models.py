@@ -105,6 +105,7 @@ class EntryBase(SQLModel):
     date_end: Optional[date] = None
     entry_type: str = "visited"
     coordinates: dict = Field(sa_column=Column(JSON), description="坐标字典，包含 lat 和 lng 键")
+    transportation: Optional[str] = None
 
     # 以下字段保留在基础模型中，但在API响应时按需剔除
     description: Optional[str] = None
@@ -160,6 +161,7 @@ class EntryUpdate(BaseModel):
     date_end: Optional[date] = None
     entry_type: Optional[str] = None
     coordinates: Optional[dict] = None
+    transportation: Optional[str] = None
     travel_partner: Optional[str] = None
     cost: Optional[float] = None
     mood: Optional[str] = None
@@ -178,6 +180,7 @@ class EntryDetailResponse(SQLModel):
     date_end: Optional[date]
     entry_type: str
     coordinates: Dict[str, Any]
+    transportation: Optional[str]
     created_time: datetime
     user_id: int
     location_id: Optional[int]
@@ -191,12 +194,14 @@ class DiaryListItem(SQLModel):
     id: int
     title: str
     location_name: str
+    transportation: Optional[str]
     date_start: Optional[date]
     date_end: Optional[date]
     entry_type: str
     created_time: datetime
     user_id: int
     location_id: Optional[int]
+    coordinates: Dict[str, Any]
 
     model_config = {"from_attributes": True}
 
