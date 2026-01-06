@@ -103,7 +103,6 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
   }, [lat, lng, dark, onMapClick]); // 4. 确保 onMapClick 也作为依赖项
 
 
-
   return (
     <div className="mt-4 w-full h-96 border border-gray-300 rounded-lg dark:border-gray-600 overflow-hidden">
       <div ref={mapRef} className="w-full h-full" />

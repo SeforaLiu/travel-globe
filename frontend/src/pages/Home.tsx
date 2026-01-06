@@ -3,7 +3,7 @@ import {Canvas} from '@react-three/fiber'
 import {OrbitControls, PresentationControls} from '@react-three/drei'
 import {useTranslation} from 'react-i18next'
 import {MoodSphere} from '../three/MoodSphere'
-import Earth from '../three/Earth'
+import Earth from '@/three/Earth/Earth'
 import {SkyGradientBackground} from "../three/SkyGradientBackground";
 
 type Props = {

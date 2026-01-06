@@ -25,23 +25,8 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const  guideTotal= useTravelStore((state) => state.guideTotal);
   const  diaryTotal= useTravelStore((state) => state.diaryTotal);
   const  placeTotal= useTravelStore((state) => state.placeTotal);
-  const  initialized= useTravelStore((state) => state.initialized);
-  const  fetchDiaries= useTravelStore((state) => state.fetchDiaries);
-  const  diaries= useTravelStore((state) => state.diaries);
   const  total= useTravelStore((state) => state.total);
   const  allDiaries= useTravelStore((state) => state.allDiaries);
-  console.log('总共日记total',total,guideTotal, diaryTotal)
-
-  // 关键修改：添加数据获取逻辑
-  // useEffect(() => {
-  //   if (isLoggedIn && !initialized && !loading) {
-  //     console.log('Sidebar: 第一次加载数据');
-  //
-  //     fetchDiaries(1, 10).catch(err => {
-  //       console.error('获取失败:', err);
-  //     });
-  //   }
-  // }, [isLoggedIn, initialized, loading]);
 
   const handleAddDiary = () => {
     navigate(isLoggedIn ? '/new-diary' : '/login');
