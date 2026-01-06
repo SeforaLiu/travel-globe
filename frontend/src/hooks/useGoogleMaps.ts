@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
 export const useGoogleMaps = () => {
+  console.log('开始处理 maps api')
   useEffect(() => {
     // 防止重复加载
     // @ts-ignore

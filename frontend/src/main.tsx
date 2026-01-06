@@ -7,6 +7,7 @@ import App from './App'
 import './styles/index.css'
 import './i18n'
 import {setGlobalNavigate} from "@/utils/navigation";
+import {GlobalDataInitializer} from "@/components/App/GlobalDataInitializer";
 
 // 判断是否为移动端
 const isMobileDevice = () => {
@@ -44,6 +45,7 @@ createRoot(document.getElementById('root')!).render(
     }}
   >
     <AxiosNavigateSetter />
+    <GlobalDataInitializer />
     <App />
   </BrowserRouter>
 )

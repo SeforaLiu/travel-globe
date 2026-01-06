@@ -64,7 +64,8 @@ const DesktopLayout: React.FC<Props> = ({
       <div className={`max-w-full mx-auto ${dark ? "bg-gray-900" : "bg-white"} rounded-xl shadow-lg overflow-hidden`}>
         <HeaderSection dark={dark} onClose={onClose} />
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto scrollbar-custom" style={{maxHeight: 'calc(100vh - 120px)'}}>
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto
+        scrollbar-custom" style={{maxHeight: 'calc(100vh - 120px)'}}>
           <div className="space-y-6">
             <TitleSection
               title={formData.title}

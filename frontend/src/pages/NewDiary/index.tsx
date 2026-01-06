@@ -10,6 +10,7 @@ import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
 import { Props, LocationResult } from './types';
 import UploadFailedDialog from './components/UploadFailedDialog';
 import Loading from "../../components/Loading"
+import {useGoogleMaps} from "@/hooks/useGoogleMaps";
 
 export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }: Props) {
   const { t } = useTranslation();
@@ -22,6 +23,8 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     updatePhotoStatusByFile
   } = useFormData();
   const { uploadPhotos, resetCache } = useCloudinaryUpload();
+
+  useGoogleMaps()
 
   const [showMapPreview, setShowMapPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);

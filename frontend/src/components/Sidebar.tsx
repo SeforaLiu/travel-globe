@@ -28,6 +28,8 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const  total= useTravelStore((state) => state.total);
   const  allDiaries= useTravelStore((state) => state.allDiaries);
 
+  console.log('sidebar--allDiaries 全部日记:',allDiaries)
+
   const handleAddDiary = () => {
     navigate(isLoggedIn ? '/new-diary' : '/login');
 
@@ -44,7 +46,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   // 展开时的内容
   return (
     <div
-      className={`p-4 space-y-4 h-full flex flex-col ${textColor}`}
+      className={`p-4 space-y-4 h-full flex flex-col ${textColor} scrollbar-custom`}
       style={{backgroundColor: sidebarBg}}
     >
       {/* Controls */}

@@ -35,9 +35,7 @@ export default function Earth({ dark, isMobile }: Props) {
   const [hoveredPointKey, setHoveredPointKey] = useState<string | null>(null);
   const [expandedClusterKey, setExpandedClusterKey] = useState<string | null>(null); // 新增 state
   const [shouldRotate, setShouldRotate] = useState(true);
-  const fetchAllDiaries = useTravelStore(state => state.fetchAllDiaries);
   const allDiaries = useTravelStore(state => state.allDiaries as Diary[]);
-  const isLoggedIn = useTravelStore(state => state.isLoggedIn);
 
   const [dayMap, nightMap] = useLoader(TextureLoader, [
     '/textures/8k_day.jpg',
@@ -48,12 +46,6 @@ export default function Earth({ dark, isMobile }: Props) {
     dayMap.anisotropy = 16;
     dayMap.needsUpdate = true;
   }, [dayMap]);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchAllDiaries();
-    }
-  }, [isLoggedIn, fetchAllDiaries]);
 
   // 聚合逻辑保持不变
   const groupedPoints = useMemo<GroupedPoint[]>(() => {
@@ -124,7 +116,7 @@ export default function Earth({ dark, isMobile }: Props) {
 
   return (
     <group>
-      {!isMobile && <Perf position="top-left" />}
+      {/*{!isMobile && <Perf position="top-left" />}*/}
       <group ref={earthGroupRef} scale={1.5}>
         <mesh ref={earthMeshRef} geometry={earthGeometry} onClick={handleEarthClick}>
           <meshStandardMaterial map={dayMap} />

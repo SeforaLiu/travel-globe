@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useTravelStore } from '@/store/useTravelStore';
-import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { useDiarySubmission } from '@/hooks/useDiarySubmission';
 import { MainLayout } from '@/layouts/MainLayout';
 import Loading from '@/components/Loading';
@@ -19,10 +18,12 @@ export default function App() {
   const [showNewDiaryCloseDialog, setShowNewDiaryCloseDialog] = useState(false);
 
   const navigate = useNavigate();
-  const { loading, darkMode, setDarkMode, setIsMobile, isMobile, checkAuth} = useTravelStore();
+  const loading = useTravelStore(state => state.loading);
+  const darkMode = useTravelStore(state => state.darkMode);
+  const setDarkMode = useTravelStore(state => state.setDarkMode);
+  const setIsMobile = useTravelStore(state => state.setIsMobile);
+  const isMobile = useTravelStore(state => state.isMobile);
 
-  // 使用自定义 Hooks
-  useGoogleMaps();
   const { submitDiary,isSubmitting } = useDiarySubmission();
 
   // 主题切换
@@ -34,10 +35,6 @@ export default function App() {
     const mobile = window.innerWidth < 768
     setIsMobile(mobile)
   }, []);
-
-  useEffect(() => {
-    checkAuth()
-  }, [checkAuth]);
 
   // 加载状态保护
   if (loading) {
