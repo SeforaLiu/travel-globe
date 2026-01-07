@@ -7,7 +7,6 @@ from sqlalchemy import Column, DateTime, JSON, Text # [修改] 导入 Text 类�
 from sqlalchemy.sql import func
 
 # ==================== 用户相关模型 ====================
-# ... (这部分代码未修改，保持原样)
 class UserBase(SQLModel):
     username: str
     avatar_url: Optional[str] = None
@@ -31,7 +30,6 @@ class UserResponse(UserBase):
     model_config = {"from_attributes": True}
 
 # ==================== 位置相关模型 ====================
-# ... (这部分代码未修改，保持原样)
 class LocationBase(SQLModel):
     name: str = Field(index=True)
     coordinates: dict = Field(sa_column=Column(JSON), description="坐标字典，包含 lat 和 lng 键")
@@ -60,8 +58,17 @@ class PhotoBase(SQLModel):
     bytes: int = Field(default=0)
     original_filename: Optional[str] = None
     created_at: Optional[datetime] = None
+    # [新增] 添加验证器，使模型更健壮
+    # 这个验证器确保在验证数据时，如果 bytes 字段为 None，则自动替换为 0
+    # 这可以防止前端在更新时未提供 bytes 字段而导致的验证失败
+    @field_validator('bytes', mode='before')
+    @classmethod
+    def set_bytes_default(cls, v):
+        if v is None:
+            return 0
+        return v
 
-# [修复] 补全 Photo 表模型，这是之前缺失的关键部分
+
 class Photo(PhotoBase, table=True):
     """数据库照片表模型 - 映射到数据库表"""
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -166,6 +173,7 @@ class EntryUpdate(BaseModel):
     cost: Optional[float] = None
     mood: Optional[str] = None
     location_id: Optional[int] = None
+    photos: Optional[List[PhotoCreate]] = None
 
 # --- 以下是为满足新需求定义的新模型 ---
 

@@ -356,32 +356,96 @@ def get_diary_detail(
   # 直接返回数据库对象 entry 即可
   # FastAPI 会自动根据 response_model (EntryDetailResponse) 来过滤和格式化数据
   return entry
-# ... (更新和删除日记的接口保持不变，但可以考虑也使用 EntryDetailResponse 作为响应模型)
-@router.put("/{entry_id}", response_model=EntryDetailResponse) # [修改] 统一响应模型
+
+# 更新日记
+@router.put("/{entry_id}", response_model=EntryDetailResponse)
 async def update_diary(
     entry_id: int,
     update_data: EntryUpdate,
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
+  """
+  更新一篇日记。
+  - 支持部分字段更新。
+  - 照片列表会进行完全同步（先删后增）。
+  - 自动处理位置信息和缓存失效。
+  """
   user_id = current_user["user_id"]
-  entry = session.exec(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)).first()
-  if not entry:
-    raise HTTPException(status_code=404, detail="日记不存在或无权访问")
-  location_id = entry.location_id
-  if update_data.coordinates is not None and update_data.location_name is not None:
-    location_obj = await get_or_create_location(update_data.coordinates, update_data.location_name, session)
-    location_id = location_obj.id if location_obj else None
-  update_dict = update_data.model_dump(exclude_unset=True)
-  update_dict["location_id"] = location_id
-  for field, value in update_dict.items():
-    if hasattr(entry, field):
-      setattr(entry, field, value)
-  session.add(entry)
-  session.commit()
-  session.refresh(entry)
-  invalidate_user_stats_cache(user_id)
-  return entry
+  logger.info(f"用户 {user_id} 正在更新日记, ID: {entry_id}")
+  logger.debug(f"收到的更新数据: {update_data.model_dump_json(indent=2)}")
+  # 1. 获取并验证日记所有权
+  db_entry = session.exec(
+    select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)
+  ).first()
+  if not db_entry:
+    logger.warning(f"用户 {user_id} 尝试更新不存在或不属于自己的日记, ID: {entry_id}")
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="日记不存在或无权访问"
+    )
+  # [新增] 增加日志，记录更新前的数据状态
+  logger.info(f"[BEFORE UPDATE] 日记ID {entry_id}: location_name='{db_entry.location_name}', coordinates={db_entry.coordinates}")
+  try:
+    # 2. 更新基础字段 (除照片外的所有字段)
+    # [修复] 移除 exclude 中的 "coordinates" 和 "location_name"，让它们可以被正常更新
+    update_dict = update_data.model_dump(exclude_unset=True, exclude={"photos"})
+    logger.debug(f"准备更新的字段: {update_dict}")
+    for key, value in update_dict.items():
+      # 只有当值不为 None 时才更新，允许前端传 null 来清空某些字段
+      # 如果你的业务逻辑是传了就必须更新（即使是None），可以去掉 if value is not None
+      if value is not None:
+        setattr(db_entry, key, value)
+    # 3. [重构] 单独处理位置信息更新逻辑
+    # 检查前端是否意图更新位置（提供了坐标和名称）
+    if update_data.coordinates is not None and update_data.location_name is not None:
+      logger.info(f"日记 {entry_id} 正在更新位置: '{update_data.location_name}'")
+
+      # 3.1 获取或创建新的 Location 对象，并更新 location_id
+      location_obj = await get_or_create_location(
+        update_data.coordinates, update_data.location_name, session
+      )
+      db_entry.location_id = location_obj.id if location_obj else db_entry.location_id
+
+      # 3.2 [修复] 关键步骤：同步更新 Entry 对象自身的 location_name 和 coordinates
+      # 无论 location_obj 是否是新建的，都用前端传来的最新值为准
+      db_entry.location_name = update_data.location_name
+      db_entry.coordinates = update_data.coordinates
+    # 4. 同步照片列表 (如果提供了 photos 字段)
+    # `update_data.photos is not None` 允许前端传一个空数组来删除所有照片
+    if update_data.photos is not None:
+      logger.info(f"日记 {entry_id} 正在同步照片列表...")
+      # 4.1 先删除所有旧照片
+      old_photos = session.exec(select(Photo).where(Photo.entry_id == entry_id)).all()
+      if old_photos:
+        logger.debug(f"找到 {len(old_photos)} 张旧照片, 准备删除...")
+        for photo in old_photos:
+          session.delete(photo)
+      # 4.2 添加所有新照片
+      if update_data.photos:
+        logger.debug(f"准备添加 {len(update_data.photos)} 张新照片...")
+        for photo_data in update_data.photos:
+          new_photo = Photo.model_validate(photo_data, update={"entry_id": db_entry.id})
+          session.add(new_photo)
+    # [新增] 增加日志，记录提交前的最终数据状态
+    logger.info(f"[AFTER UPDATE] 日记ID {entry_id}: location_name='{db_entry.location_name}', coordinates={db_entry.coordinates}")
+    # 5. 提交事务
+    session.add(db_entry)
+    session.commit()
+    # 6. 刷新数据并使缓存失效
+    session.refresh(db_entry)
+    invalidate_user_stats_cache(user_id)
+    logger.info(f"日记 {entry_id} 更新成功!")
+    return db_entry
+  except Exception as e:
+    logger.error(f"更新日记 {entry_id} 时发生意外错误: {str(e)}", exc_info=True)
+    session.rollback() # 关键：发生错误时回滚事务
+    raise HTTPException(
+      status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="更新日记失败，服务器内部错误"
+    )
+
+# 删除日记
 @router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_diary(
     entry_id: int,
