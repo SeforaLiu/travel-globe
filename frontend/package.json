@@ -1,5 +1,5 @@
 {
-  "name": "travel-globe-ts2",
+  "name": "travel-globe",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
+    "@types/react-dom": "^19.2.3",
     "@types/three": "^0.181.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.0",

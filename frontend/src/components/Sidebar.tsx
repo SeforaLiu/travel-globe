@@ -28,8 +28,6 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const  total= useTravelStore((state) => state.total);
   const  allDiaries= useTravelStore((state) => state.allDiaries);
 
-  console.log('sidebar--allDiaries 全部日记:',allDiaries)
-
   const handleAddDiary = () => {
     navigate(isLoggedIn ? '/new-diary' : '/login');
 

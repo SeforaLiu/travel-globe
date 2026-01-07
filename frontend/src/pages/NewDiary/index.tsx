@@ -10,7 +10,6 @@ import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
 import { Props, LocationResult } from './types';
 import UploadFailedDialog from './components/UploadFailedDialog';
 import Loading from "../../components/Loading"
-import {useGoogleMaps} from "@/hooks/useGoogleMaps";
 
 export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }: Props) {
   const { t } = useTranslation();
@@ -24,8 +23,6 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
   } = useFormData();
   const { uploadPhotos, resetCache } = useCloudinaryUpload();
 
-  useGoogleMaps()
-
   const [showMapPreview, setShowMapPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showFailedPhotosDialog, setShowFailedPhotosDialog] = useState(false);
@@ -33,7 +30,6 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     file: File;
     error?: string;
   }>>([]);
-  // 新增：重试加载状态
   const [isRetryingFailedPhotos, setIsRetryingFailedPhotos] = useState(false);
   const [userAction, setUserAction] = useState<'retry' | 'skip' | null>(null);
   const [isWaitingForUserAction, setIsWaitingForUserAction] = useState(false);

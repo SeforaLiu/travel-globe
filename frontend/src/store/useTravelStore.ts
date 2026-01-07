@@ -1,36 +1,46 @@
+// src/store/useTravelStore.ts
 import { create } from 'zustand';
 import api from '../services/api';
 import { DiarySummary, DiaryListResponse, DiaryDetail } from '@/types/diary';
 
+// @ts-ignore
+const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+
 // 定义 Store 的状态类型
 interface TravelState {
   // --- 数据状态 ---
-  diaries: DiarySummary[];     // 当前显示的日记列表
+  diaries: DiarySummary[];
   allDiaries:DiarySummary[];
-  total: number;               // 总条数
-  currentPage: number;         // 当前页码
+  total: number;
+  currentPage: number;
   loading: boolean;
   error: string | null;
-  currentDiary: DiaryDetail | null; // 当前正在查看/编辑的详情
+  currentDiary: DiaryDetail | null;
   diaryTotal: number;
   guideTotal: number;
   placeTotal: number;
-  initialized: boolean; // 新增：标记是否完成过初次加载
+  initialized: boolean;
   allDiariesInitialized: boolean;
 
   // --- 用户状态 ---
   isLoggedIn: boolean;
   user: any | null;
 
+  // --- UI 状态 ---
   isMobile: boolean;
   darkMode: boolean;
+
+  // --- Google Maps API 状态 ---
+  isGoogleMapsLoading: boolean; // 新增：标记 API 是否正在加载
+  isGoogleMapsLoaded: boolean;  // 新增：标记 API 是否已成功加载
+  googleMapsError: string | null; // 新增：记录加载错误
 
   // --- 动作 (Actions) ---
   // A. 获取分页列表
   fetchDiaries: (page?: number, pageSize?: number) => Promise<DiaryListResponse>;
   // B. 获取全部日记 (常用于 3D 地球打点)
   fetchAllDiaries: (force?: boolean) => Promise<void>;
-  // 【新增】创建日记 Action
+  // 创建日记 Action
   createDiary: (data: Omit<DiaryDetail, 'id' | 'created_time' | 'updated_at' | 'location_id' | 'user_id'>) => Promise<DiaryDetail>;
   // C. 获取详情
   fetchDiaryDetail: (id: number) => Promise<DiaryDetail>;
@@ -40,13 +50,16 @@ interface TravelState {
   deleteDiary: (id: number) => Promise<void>;
 
   // UI 控制 Actions
-  setIsMobile: (isMobile: boolean) => void; // 新增：设置移动端状态
-  toggleDarkMode: () => void;               // 新增：切换暗黑模式
-  setDarkMode: (isDark: boolean) => void;   // 新增：直接设置暗黑模式
+  setIsMobile: (isMobile: boolean) => void;
+  toggleDarkMode: () => void;
+  setDarkMode: (isDark: boolean) => void;
 
   // 用户相关
   checkAuth: () => Promise<void>;
   logout: () => void;
+
+  // Google Maps Action
+  loadGoogleMaps: () => Promise<void>; // 新增：加载 Google Maps API 的 Action
 }
 
 export const useTravelStore = create<TravelState>((set, get) => ({
@@ -67,7 +80,63 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   initialized:false,
   allDiariesInitialized:false,
 
+  // --- Google Maps API 初始状态 ---
+  isGoogleMapsLoading: false,
+  isGoogleMapsLoaded: false,
+  googleMapsError: null,
+
   // --- 动作实现 ---
+
+  // 新增：加载 Google Maps API 的实现
+  loadGoogleMaps: () => {
+    return new Promise((resolve, reject) => {
+      // 核心：防止重复加载的逻辑
+      // 1. 如果已经加载成功，直接成功返回
+      if (get().isGoogleMapsLoaded) {
+        console.log('Google Maps API 已加载，跳过。');
+        return resolve();
+      }
+      // 2. 如果正在加载中，也直接返回一个等待中的 Promise (这里我们简单返回，让调用者等待状态变化)
+      // 实践中，可以设计更复杂的逻辑，如返回一个正在进行中的 Promise
+      if (get().isGoogleMapsLoading) {
+        console.log('Google Maps API 正在加载中，请等待...');
+        // 这是一个简化的处理，高级用法可以订阅加载完成事件
+        // 但对于大多数场景，组件会根据 isGoogleMapsLoaded 状态重新渲染，所以这样就够了
+        return resolve();
+      }
+      // 3. 最终检查 window 对象，作为双重保险
+      // @ts-ignore
+      if (window.google && window.google.maps) {
+        console.log('Google Maps API 已存在于 window 对象，直接标记为已加载。');
+        set({ isGoogleMapsLoaded: true });
+        return resolve();
+      }
+
+      // 如果以上条件都不满足，开始加载
+      console.log('开始加载 Google Maps API...');
+      set({ isGoogleMapsLoading: true, googleMapsError: null });
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () => {
+        console.log('✅ Google Maps API 加载完毕');
+        set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: true });
+        resolve();
+      };
+
+      script.onerror = () => {
+        const errorMsg = '❌ 加载 Google Maps API 失败';
+        console.error(errorMsg);
+        set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: false, googleMapsError: errorMsg });
+        reject(new Error(errorMsg));
+      };
+
+      document.head.appendChild(script);
+    });
+  },
 
   // 设置移动端状态
   setIsMobile: (isMobile) => set({ isMobile }),
@@ -115,13 +184,11 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       console.log('fetchAllDiaries: Already initialized and not forced, skipping fetch.');
       return;
     }
-    console.log(`call 获取全部日记 fetchAllDiaries called. Force refresh: ${force}`);
     set({ loading: true, error: null });
     try {
       const response = await api.get<DiaryListResponse>('/entries', {
         params: { get_all: true }
       });
-      console.log(`获取全部日记成功 fetchAllDiaries success: got ${response.data.items.length} items.`);
       set({
         allDiaries: response.data.items,
         loading: false,
@@ -136,9 +203,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       set({
         error: '获取全部数据失败',
         loading: false,
-        // 失败时不再标记为 true，以便下次可以重试。
-        // 但在强制刷新场景下，这可能不是最佳选择，具体取决于产品需求。
-        // 为简单起见，我们先保持原样，成功后标记。
       });
     }
   },
@@ -149,10 +213,10 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     try {
       const response = await api.get<DiaryDetail>(`/entries/${id}`);
       set({ currentDiary: response.data, loading: false });
-      return response.data; // 正常返回 DiaryDetail
+      return response.data;
     } catch (err: any) {
       set({ loading: false });
-      throw err; // 抛出错误，符合 Promise 失败的逻辑
+      throw err;
     }
   },
 
@@ -162,12 +226,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     try {
       const response = await api.post<DiaryDetail>('/entries', newDiaryData);
       console.log('日记创建成功, Diary created successfully.');
-
-      // 【核心】强制刷新 allDiaries 列表
       await get().fetchAllDiaries(true);
-
-      // 注意：此时 loading 状态可能已被 fetchAllDiaries 重置
-      // 我们可以在这里再次设置，或让 fetchAllDiaries 处理
       set({ loading: false });
       return response.data;
     } catch (err: any) {
@@ -177,17 +236,13 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     }
   },
 
-  // D. 更新 - 【重点修改】
+  // D. 更新
   updateDiary: async (id, updateData) => {
     set({ loading: true });
     try {
       const response = await api.put<DiaryDetail>(`/entries/${id}`, updateData);
       console.log(`日记 ${id} 更新成功, Diary ${id} updated successfully.`);
-
-      // 【核心】强制刷新 allDiaries 列表
       await get().fetchAllDiaries(true);
-
-      // 局部更新分页列表（如果存在）
       const updatedDiaries = get().diaries.map(d => d.id === id ? { ...d, ...response.data } : d);
       set({
         diaries: updatedDiaries,
@@ -201,17 +256,13 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     }
   },
 
-  // E. 删除 - 【重点修改】
+  // E. 删除
   deleteDiary: async (id) => {
     set({ loading: true });
     try {
       await api.delete(`/entries/${id}`);
       console.log(`日记 ${id} 删除成功, Diary ${id} deleted successfully.`);
-
-      // 【核心】强制刷新 allDiaries 列表
       await get().fetchAllDiaries(true);
-
-      // 从本地分页列表状态中移除
       set({
         diaries: get().diaries.filter(d => d.id !== id),
         loading: false
@@ -227,12 +278,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     try {
       const res = await api.get('/auth/me');
       set({ user: res.data, isLoggedIn: true });
-
-      const updatedUser = get().user;
-      const updatedStatus = get().isLoggedIn;
-
-      console.log('useTravelStore---user', updatedUser);
-      console.log('useTravelStore---isLoggedIn', updatedStatus);
     } catch {
       set({ user: null, isLoggedIn: false });
     }
