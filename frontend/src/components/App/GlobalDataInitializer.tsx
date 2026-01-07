@@ -17,7 +17,6 @@ export const GlobalDataInitializer = () => {
 
   // 效果1: 应用首次加载时，检查用户认证状态
   useEffect(() => {
-    console.log('GlobalDataInitializer: Checking authentication...');
     checkAuth();
   }, [checkAuth]); // 依赖 checkAuth，确保它只在初始化时运行一次
 
@@ -25,7 +24,6 @@ export const GlobalDataInitializer = () => {
   useEffect(() => {
     // 只有在用户已登录且 allDiaries 尚未初始化时才去获取
     if (isLoggedIn && !allDiariesInitialized) {
-      console.log('GlobalDataInitializer: User is logged in, fetching all diaries...');
       fetchAllDiaries();
     }
   }, [isLoggedIn, allDiariesInitialized, fetchAllDiaries]); // 依赖登录状态和初始化标记
