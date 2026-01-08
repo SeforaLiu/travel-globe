@@ -33,6 +33,7 @@ type Props = {
   handleTouchEnd: () => void;
   isUploading:boolean;
   loading:boolean;
+  isEditMode: boolean;
 };
 
 const DesktopLayout: React.FC<Props> = ({
@@ -57,12 +58,13 @@ const DesktopLayout: React.FC<Props> = ({
                                           handleTouchEnd,
                                           showMapPreview,
                                           isUploading,
-                                          loading
+                                          loading,
+                                          isEditMode
                                         }) => {
   return (
     <div className={`ml-10 mr-8 h-full p-6 overflow-hidden ${dark ? "bg-black" : "bg-white"}`}>
       <div className={`max-w-full mx-auto ${dark ? "bg-gray-900" : "bg-white"} rounded-xl shadow-lg overflow-hidden`}>
-        <HeaderSection dark={dark} onClose={onClose} />
+        <HeaderSection dark={dark} onClose={onClose}  isEditMode={isEditMode}/>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto
         scrollbar-custom" style={{maxHeight: 'calc(100vh - 120px)'}}>

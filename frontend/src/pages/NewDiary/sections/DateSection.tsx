@@ -1,13 +1,14 @@
-import React, {useId, useState } from 'react';
+// frontend/src/pages/NewDiary/sections/DateSection.tsx
+import React, { useId, useState, useEffect } from 'react'; // 引入 useEffect
 import { useTranslation } from 'react-i18next';
 import { DayPicker } from 'react-day-picker';
-import { format, } from 'date-fns';
+import { format, parseISO } from 'date-fns'; // 引入 parseISO
 import { zhCN, enUS, it } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 
 type Props = {
-  dateStart: string;
-  dateEnd: string;
+  dateStart: string; // 格式: 'yyyy-MM-dd'
+  dateEnd: string;   // 格式: 'yyyy-MM-dd'
   dark: boolean;
   onFocus?: () => void;
   onDateChange: (dateStart: string, dateEnd: string) => void;
@@ -19,7 +20,10 @@ interface DateRange {
   to?: Date | undefined;
 }
 
+
 const DateSection: React.FC<Props> = ({
+                                        dateStart, // 接收 props
+                                        dateEnd,   // 接收 props
                                         dark,
                                         onDateChange,
                                         onFocus,
@@ -31,31 +35,50 @@ const DateSection: React.FC<Props> = ({
   const [selectedDate, setSelectedDate] = useState<DateRange>({ from: undefined });
   const [displayDate, setDisplayDate] = useState("");
 
+  // --- 新增 Effect: 响应外部数据变化 ---
+  useEffect(() => {
+    if (dateStart) {
+      try {
+        const from = parseISO(dateStart);
+        const to = dateEnd ? parseISO(dateEnd) : from;
+        const newRange = { from, to };
+
+        setSelectedDate(newRange);
+        updateDisplayDate(newRange);
+      } catch (error) {
+        console.error("无效的日期格式:", { dateStart, dateEnd });
+      }
+    }
+  }, [dateStart, dateEnd, i18n.language]); // 依赖项包含语言，以便在切换语言时重新格式化
+
+  // 提取更新显示日期的逻辑为一个函数
+  const updateDisplayDate = (range: DateRange) => {
+    if (range.from) {
+      const locale = handleLocale();
+      const formattedStart = i18n.language === 'zh'
+        ? format(range.from, 'yyyy年M月d日', { locale })
+        : format(range.from, 'd MMM yyyy', { locale });
+
+      if (range.to && format(range.from, 'yyyy-MM-dd') !== format(range.to, 'yyyy-MM-dd')) {
+        const formattedEnd = i18n.language === 'zh'
+          ? format(range.to, 'yyyy年M月d日', { locale })
+          : format(range.to, 'd MMM yyyy', { locale });
+        setDisplayDate(`${formattedStart} - ${formattedEnd}`);
+      } else {
+        setDisplayDate(formattedStart);
+      }
+    } else {
+      setDisplayDate("");
+    }
+  };
+
   const handleDayPickerSelect = (range: DateRange | undefined) => {
     if (range) {
       setSelectedDate(range);
-
-      let dateStart: string = '';
-      let dateEnd: string = '';
+      updateDisplayDate(range); // 使用提取的函数
 
       if (range.from && range.to) {
-        // 根据语言获取对应的本地化对象
-        const locale = handleLocale();
-
-        if (i18n.language === 'zh') {
-          dateStart = format(range.from, 'yyyy年M月d日', { locale });
-          dateEnd = format(range.to, 'yyyy年M月d日', { locale });
-        } else {
-          dateStart = format(range.from, 'd MMM yyyy', { locale });
-          dateEnd = format(range.to, 'd MMM yyyy', { locale });
-        }
-
-        if (dateStart !== dateEnd) {
-          setDisplayDate(`${dateStart} - ${dateEnd}`);
-          setIsOpen(false)
-        } else {
-          setDisplayDate(dateStart);
-        }
+        setIsOpen(false);
       }
 
       onDateChange(
@@ -64,6 +87,8 @@ const DateSection: React.FC<Props> = ({
       );
     } else {
       setSelectedDate({ from: undefined });
+      setDisplayDate("");
+      onDateChange('', '');
     }
   };
 
@@ -165,7 +190,7 @@ const DateSection: React.FC<Props> = ({
         </div>
       )}
     </div>
-  );
+  )
 };
 
 export default DateSection;

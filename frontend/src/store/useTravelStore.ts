@@ -45,7 +45,8 @@ interface TravelState {
   // C. 获取详情
   fetchDiaryDetail: (id: number) => Promise<DiaryDetail>;
   // D. 更新日记 (包含局部状态更新)
-  updateDiary: (id: number, data: Partial<DiaryDetail>) => Promise<DiaryDetail>;
+  updateDiary: (id: number, data: any) => Promise<any>; // 新增
+  clearCurrentDiary: () => void;
   // E. 删除日记
   deleteDiary: (id: number) => Promise<void>;
 
@@ -209,16 +210,18 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   // C. 获取详情
   fetchDiaryDetail: async (id) => {
-    set({ loading: true });
+    // 【优化】在获取详情前，先清空旧数据，可以改善用户体验
+    set({ currentDiary: null });
     try {
       const response = await api.get<DiaryDetail>(`/entries/${id}`);
-      set({ currentDiary: response.data, loading: false });
+      set({ currentDiary: response.data });
       return response.data;
     } catch (err: any) {
-      set({ loading: false });
       throw err;
     }
   },
+
+  clearCurrentDiary: () => set({ currentDiary: null }),
 
   // 【新增】创建日记 Action
   createDiary: async (newDiaryData) => {
@@ -237,22 +240,20 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   },
 
   // D. 更新
-  updateDiary: async (id, updateData) => {
-    set({ loading: true });
+  updateDiary: async (id, data) => {
     try {
-      const response = await api.put<DiaryDetail>(`/entries/${id}`, updateData);
-      console.log(`日记 ${id} 更新成功, Diary ${id} updated successfully.`);
-      await get().fetchAllDiaries(true);
-      const updatedDiaries = get().diaries.map(d => d.id === id ? { ...d, ...response.data } : d);
-      set({
-        diaries: updatedDiaries,
-        currentDiary: response.data,
-        loading: false
-      });
-      return response.data;
-    } catch (err: any) {
+      set({ loading: true, error: null });
+      console.log(`[Store] 准备更新日记，ID: ${id}`, data);
+      const response = await api.put(`/entries/${id}`, data);
+      console.log('[Store] 日记更新成功:', response.data);
+      // 更新成功后，刷新日记列表以显示最新数据
+      await get().fetchAllDiaries(true); // 或者只更新列表中的单个条目以提高性能
       set({ loading: false });
-      throw err;
+      return response.data;
+    } catch (error: any) {
+      console.error(`[Store] 更新日记失败，ID: ${id}`, error);
+      set({ loading: false, error: error.message });
+      throw error;
     }
   },
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import HeaderSection from '../sections/HeaderSection';
 import TitleSection from '../sections/TitleSection';
 import LocationSection from '../sections/LocationSection';
 import DateSection from '../sections/DateSection';
@@ -33,6 +32,7 @@ type Props = {
   handleTouchEnd: () => void;
   isUploading: boolean;
   loading?:boolean;
+  isEditMode?:boolean
 };
 
 const MobileLayout: React.FC<Props> = ({
@@ -57,7 +57,8 @@ const MobileLayout: React.FC<Props> = ({
                                          handleTouchEnd,
                                          showMapPreview,
                                          isUploading,
-                                         loading
+                                         loading,
+                                         isEditMode
                                        }) => {
   return (
     <div className={`fixed inset-0 z-50 ${dark ? 'bg-gray-900' : 'bg-white'}`}>

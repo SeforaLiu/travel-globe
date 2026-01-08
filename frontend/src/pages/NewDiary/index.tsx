@@ -1,54 +1,136 @@
 // frontend/src/pages/NewDiary/index.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams, useNavigate } from 'react-router-dom'; // 引入 useSearchParams
 import { toast } from 'sonner';
 import DesktopLayout from './layouts/DesktopLayout';
 import MobileLayout from './layouts/MobileLayout';
 import { useFormData } from './hooks/useFormData';
 import { usePhotoDragSort } from './hooks/usePhotoDragSort';
 import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
-import { Props, LocationResult } from './types';
+import { useDiarySubmission } from '@/hooks/useDiarySubmission'; // 引入新的 Hook
+import { useTravelStore } from '@/store/useTravelStore'; // 引入 Store
+import { Props, LocationResult, FormData as FormDataT } from './types';
 import UploadFailedDialog from './components/UploadFailedDialog';
-import Loading from "../../components/Loading"
+import Loading from "../../components/Loading";
 
-export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }: Props) {
+const INITIAL_FORM_DATA: FormDataT = {
+  title: '',
+  type: 'visited', // 默认类型
+  location: '',
+  coordinates: null,
+  dateStart: '',
+  dateEnd: '',
+  transportation: '',
+  content: '',
+  photos: [], // 关键修复：确保 photos 是一个空数组
+};
+
+export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSubmit' | 'loading'>) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const diaryId = searchParams.get('id'); // 获取 URL 中的 id
+
+  // --- 内部状态和 Hooks ---
+  const currentDiary = useTravelStore(state => state.currentDiary)
+  const clearCurrentDiary = useTravelStore(state => state.clearCurrentDiary)
+  const { submitDiary, isSubmitting } = useDiarySubmission();
   const {
     formData,
+    setFormData, // 需要 setFormData 来初始化表单
     updateField,
     addPhotos,
     removePhoto,
     sortPhotos,
     updatePhotoStatusByFile
-  } = useFormData();
+  } = useFormData(INITIAL_FORM_DATA); // 初始为空
   const { uploadPhotos, resetCache } = useCloudinaryUpload();
 
+  const [isPageLoading, setIsPageLoading] = useState(!!diaryId);
   const [showMapPreview, setShowMapPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showFailedPhotosDialog, setShowFailedPhotosDialog] = useState(false);
-  const [failedPhotosList, setFailedPhotosList] = useState<Array<{
-    file: File;
-    error?: string;
-  }>>([]);
+  const [failedPhotosList, setFailedPhotosList] = useState<Array<{ file: File; error?: string; }>>([]);
   const [isRetryingFailedPhotos, setIsRetryingFailedPhotos] = useState(false);
   const [userAction, setUserAction] = useState<'retry' | 'skip' | null>(null);
   const [isWaitingForUserAction, setIsWaitingForUserAction] = useState(false);
 
-  // 使用 useRef 来获取最新的 formData
   const formDataRef = useRef(formData);
-  // 同步最新的 formData 到 ref
   useEffect(() => {
     formDataRef.current = formData;
   }, [formData]);
 
-  // 组件卸载时重置上传缓存
+  // 将两个 useEffect 合并，逻辑更清晰，并修复无限循环问题
   useEffect(() => {
-    return () => {
-      resetCache();
-    };
-  }, [resetCache]);
+    const loadAndSetDiaryData = async () => {
+      if (diaryId) {
+        console.log(`[Edit Mode] 开始加载日记数据, ID: ${diaryId}`);
+        setIsPageLoading(true);
+        try {
+          const diaryDetail =  currentDiary
+          console.log('[Edit Mode] 获取数据成功, 开始填充表单:', diaryDetail);
 
-  // 修改：处理失败图片重试的函数（增加加载状态）
+          // 数据转换：将后端数据格式转换为前端 FormData 格式
+          const transformedData: Partial<FormDataT> = {
+            title: diaryDetail.title,
+            type: diaryDetail.entry_type,
+            location: diaryDetail.location_name,
+            coordinates: diaryDetail.coordinates,
+            dateStart: diaryDetail.date_start ? diaryDetail.date_start.split('T')[0] : '',
+            dateEnd: diaryDetail.date_end ? diaryDetail.date_end.split('T')[0] : '',
+            transportation: diaryDetail.transportation || '',
+            content: diaryDetail.content || null,
+            photos: diaryDetail.photos.map(photo => ({
+              file: null,
+              url: photo.url,
+              publicId: photo.public_id,
+              status: 'success',
+              cloudinary: {
+                publicId: photo.public_id,
+                url: photo.url,
+                width: photo.width,
+                height: photo.height,
+                size: photo.size,
+                format: photo.format,
+                folder: photo.folder,
+                originalFilename: photo.original_filename,
+                created_at: photo.created_at,
+              }
+            }))
+          };
+
+          setFormData(transformedData as FormDataT);
+          setShowMapPreview(!!transformedData.coordinates);
+        } catch (error) {
+          console.error(`[Edit Mode] 加载日记 ${diaryId} 失败:`, error);
+          toast.error(t('diary.loadFailed') || '加载日记详情失败');
+          navigate('/'); // 加载失败可以考虑跳转回首页或列表页
+        } finally {
+          setIsPageLoading(false);
+        }
+      } else {
+        console.log('[New Mode] 新建日记');
+        // 新建模式下，确保表单是空的（如果之前有编辑数据的话）
+        setFormData(INITIAL_FORM_DATA);
+        setIsPageLoading(false);
+      }
+    };
+    loadAndSetDiaryData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diaryId, setFormData]);
+
+    useEffect(() => {
+      return () => {
+        // 当组件卸载时（用户离开此页面），清空 store 中的当前日记
+        // 这样可以防止数据污染，例如从编辑页返回新建页时看到旧数据
+        clearCurrentDiary();
+        resetCache();
+        console.log('NewDiary component unmounted, clearing current diary.');
+      };
+    }, [clearCurrentDiary, resetCache]);
+
+// 修改：处理失败图片重试的函数（增加加载状态）
   const handleRetryFailedPhotos = useCallback((failedPhotos: Array<{file: File; error?: string}>) => {
     console.log('用户选择重试失败的图片');
     setIsRetryingFailedPhotos(true);
@@ -114,7 +196,7 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     setIsWaitingForUserAction(false);
   }, [handleSkipFailedPhotos]);
 
-  // 修改：提取提交逻辑到单独的函数（修复依赖）
+  // --- 提交逻辑 ---
   const proceedWithSubmit = useCallback((currentFormData: any, successPhotos: any[]) => {
     // 准备提交的数据
     const photosToSubmit = successPhotos.map(photo => ({
@@ -134,17 +216,10 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
       photos: photosToSubmit
     };
 
-    console.log('准备提交的数据:', {
-      ...submitData,
-      photosCount: submitData.photos.length
-    });
+    // 最终提交，传入 diaryId (如果存在)
+    submitDiary(submitData, diaryId ? Number(diaryId) : undefined);
 
-    // 最终提交
-    onSubmit(submitData);
-
-    // 提交完成后可以关闭 toast，但注意：onSubmit 可能是异步的
-    // 如果 onSubmit 是异步操作，应该在它完成后关闭 toast
-  }, [onSubmit, t]);
+  }, [submitDiary, diaryId]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -370,7 +445,6 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     updateField,
     addPhotos,
     removePhoto,
-    updatePhotoStatusByFile,
     sortPhotos,
     handleLocationSelect,
     handleLocationChange,
@@ -385,11 +459,14 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
     handleTouchMove,
     handleTouchEnd,
     isUploading,
-    loading,
+    loading: isSubmitting, // 传递 isSubmitting 状态给 Footer
+    isEditMode: !!diaryId, // 新增一个 prop 告诉子组件是编辑模式
   };
 
+  // --- 渲染逻辑 ---
   const renderContent = () => {
-    if (isUploading) return <Loading dark={dark} />;
+    // 增加页面加载状态
+    if (isUploading || isPageLoading) return <Loading dark={dark} />;
 
     return isMobile ? (
       <MobileLayout {...commonProps} />
@@ -430,4 +507,5 @@ export default function NewDiary({ isMobile, onClose, onSubmit, dark, loading }:
       )}
     </>
   );
+
 }

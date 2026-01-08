@@ -3,53 +3,12 @@ import {useTravelStore} from "@/store/useTravelStore";
 import {DiarySummary} from "@/types/diary";
 
 export const DiaryManager: React.FC = () => {
-  // 1. 从 Store 中挑选需要的状态和方法
-  const {
-    diaries,
-    loading,
-    error,
-    currentPage,
-    total, // 注意：如果后端没返回总页数，可以根据 total 计算
-    fetchDiaries,
-    fetchAllDiaries,
-    updateDiary,
-    deleteDiary
-  } = useTravelStore();
-
-  // 局部状态仅保留 UI 交互相关的
-  const [isExporting, setIsExporting] = useState(false);
-
-  // 假设后端每页返回 10 条，计算总页数
-  const totalPages = Math.ceil(total / 10) || 1;
-
-  // 2. 初始化加载
-  useEffect(() => {
-    fetchDiaries(1, 10);
-  }, [fetchDiaries]);
-
-  // 3. 导出全部（这里演示如何从 Store 获取数据）
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      // 也可以直接调用 fetchAllDiaries 更新 Store 中的 diaries 再读取，
-      // 但为了不破坏当前分页 UI，建议这里直接发起局部请求或从 Store 逻辑获取
-      const response = await fetchDiaries(1, 999); // 临时获取大量数据
-      const data = JSON.stringify(response.items, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `travel_records_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      // 导出完恢复第一页
-      fetchDiaries(1, 10);
-    } catch (err) {
-      alert('导出失败');
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  const allDiaries = useTravelStore(state => state.allDiaries);
+  const loading = useTravelStore(state => state.loading);
+  const updateDiary = useTravelStore(state => state.updateDiary);
+  const deleteDiary = useTravelStore(state => state.deleteDiary);
+  const total = useTravelStore(state => state.total);
+  const error = useTravelStore(state => state.error);
 
   // 4. 编辑逻辑
   const handleEdit = async (diary: DiarySummary) => {
@@ -78,7 +37,7 @@ export const DiaryManager: React.FC = () => {
 
   // --- UI 渲染部分 ---
 
-  if (loading && diaries.length === 0) {
+  if (loading && allDiaries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -91,13 +50,6 @@ export const DiaryManager: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">旅行日记管理</h1>
-        <button
-          onClick={handleExport}
-          disabled={isExporting}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors"
-        >
-          {isExporting ? '导出中...' : '导出 JSON'}
-        </button>
       </div>
 
       {error && (

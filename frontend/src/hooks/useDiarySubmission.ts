@@ -1,23 +1,22 @@
 // src/hooks/useDiarySubmission.ts
-import {useCallback, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {toast} from 'sonner';
-import {useTranslation} from 'react-i18next';
-import api from '@/services/api';
-import {SubmitData} from '@/pages/NewDiary/types';
-import {useTravelStore} from "@/store/useTravelStore";
+import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { SubmitData } from '@/pages/NewDiary/types';
+import { useTravelStore } from "@/store/useTravelStore";
 
 export const useDiarySubmission = () => {
   const navigate = useNavigate();
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fetchAllDiaries = useTravelStore(state => state.fetchAllDiaries);
-  const fetchDiaries = useTravelStore(state => state.fetchDiaries);
-  const createDiary = useTravelStore((state) => state.createDiary);
-  const loading = useTravelStore((state) => state.loading);
+  const createDiaryAction = useTravelStore((state) => state.createDiary);
+  const updateDiaryAction = useTravelStore((state) => state.updateDiary);
 
-  const submitDiary = useCallback(async (formData: SubmitData) => {
+  const submitDiary = useCallback(async (formData: SubmitData, diaryId?: number) => {
     setIsSubmitting(true);
+    const isEditMode = !!diaryId;
+
     try {
       const data = {
         title: formData.title,
@@ -25,24 +24,27 @@ export const useDiarySubmission = () => {
         location_name: formData.location,
         entry_type: formData.type,
         coordinates: formData.coordinates ?? null,
-        date_start: formData.dateStart ?? null,
-        date_end: formData.dateEnd ?? null,
-        transportation: formData.transportation ?? null,
+        date_start: formData.dateStart || null,
+        date_end: formData.dateEnd || null,
+        transportation: formData.transportation || null,
         photos: formData.photos,
       };
 
-      console.log('📤 创建日记数据:', data);
+      if (isEditMode) {
+        console.log(`📤 更新日记数据 (ID: ${diaryId}):`, data);
+        await updateDiaryAction(diaryId, data);
+        toast.success(t('submit successful'));
+        navigate(`/diary/${diaryId}`);
+      } else {
+        console.log('📤 创建日记数据:', data);
+        await createDiaryAction(data);
+        toast.success(t('submit successful'));
+        navigate('/');
+      }
 
-      const response = await createDiary(data);
-
-      console.log('✅ 日记提交成功:', response);
-      toast.success(t('submit successful'));
-      navigate('/');
-
-      // 成功后的回调由调用方决定
-      return {success: true, data: response.data};
     } catch (error: any) {
-      console.error('❌ 日记提交失败:', error.message);
+      const actionType = isEditMode ? '更新' : '提交';
+      console.error(`❌ 日记${actionType}失败:`, error.message);
 
       if (error.response?.status === 401) {
         toast.error(t('Session expired, please login again'));
@@ -50,12 +52,10 @@ export const useDiarySubmission = () => {
       } else {
         toast.error(t('submit error please try again'));
       }
-
-      return {success: false, error};
     } finally {
       setIsSubmitting(false);
     }
-  }, [navigate, t]);
+  }, [navigate, t, createDiaryAction, updateDiaryAction]);
 
-  return {submitDiary, isSubmitting};
+  return { submitDiary, isSubmitting };
 };

@@ -1,6 +1,6 @@
 // src/App.tsx
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react'; // 引入 useCallback
+import {Routes, Route, useNavigate, useLocation} from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useTravelStore } from '@/store/useTravelStore';
 import { useDiarySubmission } from '@/hooks/useDiarySubmission';
@@ -12,10 +12,12 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import NewDiary from '@/pages/NewDiary';
 import DiaryView from '@/pages/DiaryView';
-import {DiaryManager} from '@/components/DiaryManager';
+import { DiaryManager } from '@/components/DiaryManager';
 
 export default function App() {
+  const location = useLocation();
   const [showNewDiaryCloseDialog, setShowNewDiaryCloseDialog] = useState(false);
+  const [shouldFetchDiaryDetail, setShouldFetchDiaryDetail] = useState(false);
 
   const navigate = useNavigate();
   const loading = useTravelStore(state => state.loading);
@@ -24,7 +26,11 @@ export default function App() {
   const setIsMobile = useTravelStore(state => state.setIsMobile);
   const isMobile = useTravelStore(state => state.isMobile);
 
-  const { submitDiary,isSubmitting } = useDiarySubmission();
+  const { submitDiary, isSubmitting } = useDiarySubmission();
+
+  const handleNewDiaryClose = useCallback(() => {
+    setShowNewDiaryCloseDialog(true);
+  }, []); // 空依赖数组意味着这个函数永远不会被重新创建
 
   // 主题切换
   useEffect(() => {
@@ -32,9 +38,15 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    const mobile = window.innerWidth < 768
-    setIsMobile(mobile)
-  }, []);
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    // 修复：这里应该添加一个 resize 事件监听器，以便在窗口大小变化时更新 isMobile
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setIsMobile]); // 依赖项应包含 setIsMobile
 
   // 加载状态保护
   if (loading) {
@@ -53,26 +65,41 @@ export default function App() {
 
       <Routes>
         <Route element={<MainLayout dark={darkMode} setDark={setDarkMode} />}>
-          <Route path="/" element={<Home dark={darkMode} isMobile={isMobile}/>} />
-          <Route path="/login" element={<Login dark={darkMode} isMobile={isMobile}/>} />
+          <Route path="/" element={<Home dark={darkMode} isMobile={isMobile} />} />
+          <Route path="/login" element={<Login dark={darkMode} isMobile={isMobile} />} />
           <Route path="/register" element={<Register dark={darkMode} isMobile={isMobile} />} />
+
+          {/* 创建新日记的路由 */}
           <Route
             path="/new-diary"
             element={
               <NewDiary
                 dark={darkMode}
-                onClose={() => setShowNewDiaryCloseDialog(true)}
+                onClose={handleNewDiaryClose} // 使用 useCallback 包装后的稳定函数
                 onSubmit={submitDiary}
                 isMobile={isMobile}
                 loading={isSubmitting}
               />
             }
           />
-          <Route path="/diary/:id" element={<DiaryView dark={darkMode} isMobile={isMobile}/>} />
+          <Route
+            path="/diary/edit"
+            element={
+              <NewDiary
+                dark={darkMode}
+                onClose={handleNewDiaryClose} // 复用同一个稳定函数
+                onSubmit={submitDiary}
+                isMobile={isMobile}
+                loading={isSubmitting}
+                shouldFetchDiaryDetail={shouldFetchDiaryDetail}
+              />
+            }
+          />
+
+          <Route path="/diary/:id" element={<DiaryView dark={darkMode} isMobile={isMobile} shouldFetchDiaryDetail={shouldFetchDiaryDetail}/>} />
           <Route path="/diary-manage" element={<DiaryManager />} />
         </Route>
       </Routes>
-
 
       {/* New Diary 关闭确认对话框 */}
       {showNewDiaryCloseDialog && (
@@ -83,6 +110,7 @@ export default function App() {
             setShowNewDiaryCloseDialog(false);
             navigate(-1);
             // TODO: 清理 localStorage 缓存
+            if(location.pathname ==='/diary/edit') setShouldFetchDiaryDetail(true)
           }}
           onCancel={() => setShowNewDiaryCloseDialog(false)}
         />
