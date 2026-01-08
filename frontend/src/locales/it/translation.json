@@ -69,5 +69,8 @@
   "Preparing your travel experience": "Preparando la tua esperienza di viaggio...",
   "sure to leave?": "Uscire ora?",
   "input will be clear": "I dati non salvati saranno persi.",
-  "cannot find this diary": "Ops! Questo diario non è stato trovato"
+  "cannot find this diary": "Ops! Questo diario non è stato trovato",
+  "validation": {
+    "fillRequiredFields": "Si prega di inserire il titolo, selezionare la località e il tipo di diario"
+  }
 }

@@ -5,7 +5,7 @@ export interface DiarySummary {
   title: string;
   location_name: string;
   coordinates: { lat: number; lng: number };
-  date_start: string;
+  date_start: string | null;
   date_end: string | null;
   transportation: string | null;
   created_time: string | null;

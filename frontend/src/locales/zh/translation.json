@@ -69,5 +69,8 @@
   "Preparing your travel experience": "旅行地球正在准备中...",
   "sure to leave?": "确定要离开?",
   "input will be clear": "未保存的内容将会丢失",
-  "cannot find this diary": "找不到相关内容"
+  "cannot find this diary": "找不到相关内容",
+  "validation": {
+    "fillRequiredFields": "请填写标题、并选择地点、是否去过"
+  }
 }

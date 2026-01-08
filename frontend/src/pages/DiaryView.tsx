@@ -114,7 +114,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
     const handleBackClick = () => navigate('/');
 
     return (
-      <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      (currentDiary? <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <div className={`max-w-3xl mx-auto p-6 ${isMobile ? 'px-4' : ''}`}>
           <div className="flex justify-end gap-2 mb-4">
             <button onClick={handleBackClick} className="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">{t('common.back')}</button>
@@ -149,7 +149,8 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
             </div>
           )}
         </div>
-      </div>
+      </div> : '不存在diary!')
+
     );
   };
 

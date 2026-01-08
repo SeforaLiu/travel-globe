@@ -210,7 +210,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   // C. 获取详情
   fetchDiaryDetail: async (id) => {
-    // 【优化】在获取详情前，先清空旧数据，可以改善用户体验
     set({ currentDiary: null });
     try {
       const response = await api.get<DiaryDetail>(`/entries/${id}`);
@@ -223,18 +222,15 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   clearCurrentDiary: () => set({ currentDiary: null }),
 
-  // 【新增】创建日记 Action
+  // 创建日记 Action
   createDiary: async (newDiaryData) => {
-    set({ loading: true });
     try {
       const response = await api.post<DiaryDetail>('/entries', newDiaryData);
       console.log('日记创建成功, Diary created successfully.');
       await get().fetchAllDiaries(true);
-      set({ loading: false });
       return response.data;
     } catch (err: any) {
       console.error('创建日记失败, Create diary failed:', err);
-      set({ loading: false, error: '创建日记失败' });
       throw err;
     }
   },
@@ -242,17 +238,24 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   // D. 更新
   updateDiary: async (id, data) => {
     try {
-      set({ loading: true, error: null });
       console.log(`[Store] 准备更新日记，ID: ${id}`, data);
-      const response = await api.put(`/entries/${id}`, data);
-      console.log('[Store] 日记更新成功:', response.data);
-      // 更新成功后，刷新日记列表以显示最新数据
-      await get().fetchAllDiaries(true); // 或者只更新列表中的单个条目以提高性能
-      set({ loading: false });
-      return response.data;
+      const response = await api.put<DiaryDetail>(`/entries/${id}`, data);
+      const updatedDiary = response.data;
+      console.log('[Store] 日记更新成功:', updatedDiary);
+
+      set(state => ({
+        allDiaries: state.allDiaries.map(diary =>
+          diary.id === id ? { ...diary, ...updatedDiary } : diary
+        ),
+        diaries: state.diaries.map(diary =>
+          diary.id === id ? { ...diary, ...updatedDiary } : diary
+        ),
+        currentDiary: state.currentDiary?.id === id ? updatedDiary : state.currentDiary,
+      }));
+
+      return updatedDiary;
     } catch (error: any) {
       console.error(`[Store] 更新日记失败，ID: ${id}`, error);
-      set({ loading: false, error: error.message });
       throw error;
     }
   },

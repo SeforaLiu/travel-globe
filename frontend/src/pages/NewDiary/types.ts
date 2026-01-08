@@ -79,9 +79,9 @@ export type SubmitData = {
   title: string;
   type: 'visited' | 'wishlist';
   location: string;
-  coordinates: { lat: number; lng: number } | null;
-  dateStart: string;
-  dateEnd: string;
+  coordinates: { lat: number; lng: number };
+  dateStart: string | null;
+  dateEnd: string | null;
   transportation: string;
   content: string;
   photos: Array<{

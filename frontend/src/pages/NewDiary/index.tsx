@@ -1,16 +1,16 @@
 // frontend/src/pages/NewDiary/index.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useSearchParams, useNavigate } from 'react-router-dom'; // 引入 useSearchParams
-import { toast } from 'sonner';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
+import {useTranslation} from 'react-i18next';
+import {useSearchParams, useNavigate} from 'react-router-dom'; // 引入 useSearchParams
+import {toast} from 'sonner';
 import DesktopLayout from './layouts/DesktopLayout';
 import MobileLayout from './layouts/MobileLayout';
-import { useFormData } from './hooks/useFormData';
-import { usePhotoDragSort } from './hooks/usePhotoDragSort';
-import { useCloudinaryUpload } from './hooks/useCloudinaryUpload';
-import { useDiarySubmission } from '@/hooks/useDiarySubmission'; // 引入新的 Hook
-import { useTravelStore } from '@/store/useTravelStore'; // 引入 Store
-import { Props, LocationResult, FormData as FormDataT } from './types';
+import {useFormData} from './hooks/useFormData';
+import {usePhotoDragSort} from './hooks/usePhotoDragSort';
+import {useCloudinaryUpload} from './hooks/useCloudinaryUpload';
+import {useDiarySubmission} from '@/hooks/useDiarySubmission'; // 引入新的 Hook
+import {useTravelStore} from '@/store/useTravelStore'; // 引入 Store
+import {Props, LocationResult, FormData as FormDataT} from './types';
 import UploadFailedDialog from './components/UploadFailedDialog';
 import Loading from "../../components/Loading";
 
@@ -26,8 +26,8 @@ const INITIAL_FORM_DATA: FormDataT = {
   photos: [], // 关键修复：确保 photos 是一个空数组
 };
 
-export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSubmit' | 'loading'>) {
-  const { t } = useTranslation();
+export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubmit' | 'loading'>) {
+  const {t} = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const diaryId = searchParams.get('id'); // 获取 URL 中的 id
@@ -35,7 +35,8 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
   // --- 内部状态和 Hooks ---
   const currentDiary = useTravelStore(state => state.currentDiary)
   const clearCurrentDiary = useTravelStore(state => state.clearCurrentDiary)
-  const { submitDiary, isSubmitting } = useDiarySubmission();
+  const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail)
+  const {submitDiary, isSubmitting} = useDiarySubmission();
   const {
     formData,
     setFormData, // 需要 setFormData 来初始化表单
@@ -45,7 +46,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
     sortPhotos,
     updatePhotoStatusByFile
   } = useFormData(INITIAL_FORM_DATA); // 初始为空
-  const { uploadPhotos, resetCache } = useCloudinaryUpload();
+  const {uploadPhotos, resetCache} = useCloudinaryUpload();
 
   const [isPageLoading, setIsPageLoading] = useState(!!diaryId);
   const [showMapPreview, setShowMapPreview] = useState(false);
@@ -61,16 +62,27 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
     formDataRef.current = formData;
   }, [formData]);
 
-  // 将两个 useEffect 合并，逻辑更清晰，并修复无限循环问题
   useEffect(() => {
     const loadAndSetDiaryData = async () => {
       if (diaryId) {
         console.log(`[Edit Mode] 开始加载日记数据, ID: ${diaryId}`);
         setIsPageLoading(true);
         try {
-          const diaryDetail =  currentDiary
+          // --- 核心修复逻辑 ---
+          // 1. 优先从 store 中获取 currentDiary
+          let diaryDetail = currentDiary;
+          console.log('进入编辑页面 -- diaryDetail',diaryDetail)
+          // // 2. 如果 store 中没有数据（或者 id 不匹配），则通过 API 获取
+          if (!diaryDetail || diaryDetail.id !== Number(diaryId)) {
+            console.log(`[Edit Mode] Store 中无数据或 ID 不匹配，从 API 获取详情...`);
+            diaryDetail = await fetchDiaryDetail(Number(diaryId));
+          }
+          // --- 修复结束 ---
+          // 增加一个防御性检查，如果获取后仍然没有数据，则直接报错退出
+          if (!diaryDetail) {
+            throw new Error(`无法获取 ID 为 ${diaryId} 的日记详情。`);
+          }
           console.log('[Edit Mode] 获取数据成功, 开始填充表单:', diaryDetail);
-
           // 数据转换：将后端数据格式转换为前端 FormData 格式
           const transformedData: Partial<FormDataT> = {
             title: diaryDetail.title,
@@ -80,7 +92,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
             dateStart: diaryDetail.date_start ? diaryDetail.date_start.split('T')[0] : '',
             dateEnd: diaryDetail.date_end ? diaryDetail.date_end.split('T')[0] : '',
             transportation: diaryDetail.transportation || '',
-            content: diaryDetail.content || null,
+            content: diaryDetail.content || '', // 修复：content 为 null 时，编辑器可能会报错，给个空字符串
             photos: diaryDetail.photos.map(photo => ({
               file: null,
               url: photo.url,
@@ -99,13 +111,11 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
               }
             }))
           };
-
           setFormData(transformedData as FormDataT);
           setShowMapPreview(!!transformedData.coordinates);
         } catch (error) {
           console.error(`[Edit Mode] 加载日记 ${diaryId} 失败:`, error);
           toast.error(t('diary.loadFailed') || '加载日记详情失败');
-          navigate('/'); // 加载失败可以考虑跳转回首页或列表页
         } finally {
           setIsPageLoading(false);
         }
@@ -117,21 +127,22 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
       }
     };
     loadAndSetDiaryData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diaryId, setFormData]);
+    // 修复：添加所有依赖项，避免 stale closure 问题，并移除 eslint-disable
+  }, [diaryId, setFormData, fetchDiaryDetail, currentDiary, navigate, t]);
 
-    useEffect(() => {
-      return () => {
-        // 当组件卸载时（用户离开此页面），清空 store 中的当前日记
-        // 这样可以防止数据污染，例如从编辑页返回新建页时看到旧数据
-        clearCurrentDiary();
-        resetCache();
-        console.log('NewDiary component unmounted, clearing current diary.');
-      };
-    }, [clearCurrentDiary, resetCache]);
+
+  useEffect(() => {
+    return () => {
+      // 当组件卸载时（用户离开此页面），清空 store 中的当前日记
+      // 这样可以防止数据污染，例如从编辑页返回新建页时看到旧数据
+      clearCurrentDiary();
+      resetCache();
+      console.log('NewDiary component unmounted, clearing current diary.');
+    };
+  }, [clearCurrentDiary, resetCache]);
 
 // 修改：处理失败图片重试的函数（增加加载状态）
-  const handleRetryFailedPhotos = useCallback((failedPhotos: Array<{file: File; error?: string}>) => {
+  const handleRetryFailedPhotos = useCallback((failedPhotos: Array<{ file: File; error?: string }>) => {
     console.log('用户选择重试失败的图片');
     setIsRetryingFailedPhotos(true);
 
@@ -147,7 +158,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
       });
 
       // 显示重试成功的 toast
-      toast.success(t('photos.retryStarted', { count: failedPhotos.length }) || `正在重试 ${failedPhotos.length} 张图片`);
+      toast.success(t('photos.retryStarted', {count: failedPhotos.length}) || `正在重试 ${failedPhotos.length} 张图片`);
     } catch (error) {
       console.error('重置失败图片状态时出错:', error);
       toast.error(t('photos.retryFailed') || '重试失败，请稍后重试');
@@ -167,7 +178,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
   }, []);
 
   // 修改：显示失败图片对话框（简化逻辑）
-  const showFailedPhotosDialogModal = useCallback((failedPhotos: Array<{file: File; error?: string}>) => {
+  const showFailedPhotosDialogModal = useCallback((failedPhotos: Array<{ file: File; error?: string }>) => {
     setFailedPhotosList(failedPhotos);
     setShowFailedPhotosDialog(true);
     setIsWaitingForUserAction(true);
@@ -196,9 +207,95 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
     setIsWaitingForUserAction(false);
   }, [handleSkipFailedPhotos]);
 
-  // --- 提交逻辑 ---
-  const proceedWithSubmit = useCallback((currentFormData: any, successPhotos: any[]) => {
-    // 准备提交的数据
+// 辅助函数 1: 表单校验
+  const validateForm = useCallback((data: FormDataT) => {
+    const {title, location, coordinates, type} = data;
+    if (!title.trim() || !location.trim() || !coordinates || !type) {
+      console.error('❌ 表单校验失败:', {title, location, coordinates, type});
+      toast.error(t('validation.fillRequiredFields'));
+      return false;
+    }
+    return true;
+  }, [t]);
+
+  // 辅助函数 2: 检查进行中的进程
+  const checkForOngoingProcesses = useCallback(() => {
+    if (isUploading) {
+      toast.info(t('uploadingInProgress') || '正在上传中，请稍候...');
+      return true;
+    }
+    if (isRetryingFailedPhotos) {
+      toast.info(t('photos.retryInProgress') || '正在重试上传失败图片，请稍候...');
+      return true;
+    }
+    return false;
+  }, [isUploading, isRetryingFailedPhotos, t]);
+
+  // 辅助函数 3: 处理用户选择重试的动作
+  // 返回 true 表示已处理重试，主流程应中断
+  const handleUserRetryAction = useCallback((e: React.FormEvent) => {
+    if (userAction === 'retry') {
+      console.log('用户选择重试，重新触发提交...');
+      setUserAction(null); // 重置操作
+      setTimeout(() => handleSubmit(e), 500); // 延迟后重新调用主函数
+      return true;
+    }
+    return false;
+  }, [userAction]); // 注意：这里不能依赖 handleSubmit，否则会循环依赖
+
+  // 辅助函数 4: 检查并处理上传失败的图片
+  // 返回 true 表示弹出了对话框，主流程应中断
+  const handleFailedPhotos = useCallback((photos: FormDataT['photos']) => {
+    // 只关心那些新上传失败的图片 (有 file 对象)
+    const failedUploads = photos.filter(p => p.status === 'error' && p.file);
+    if (failedUploads.length > 0) {
+      console.log('发现失败的图片:', failedUploads.map(p => p.file?.name));
+      showFailedPhotosDialogModal(
+        failedUploads.map(p => ({file: p.file!, error: p.error}))
+      );
+      return true; // 中断流程，等待用户选择
+    }
+    return false;
+  }, [showFailedPhotosDialogModal]);
+
+  // 辅助函数 5: 上传所有待处理的图片
+  // 返回 true 表示成功或无需上传，返回 false 表示上传过程中出现严重错误
+  const uploadPendingPhotos = useCallback(async (photos: FormDataT['photos']) => {
+    const photosToUpload = photos.filter(p => p.status === 'pending' && p.file);
+    if (photosToUpload.length === 0) {
+      console.log('没有需要上传的新图片。');
+      return true; // 无需上传，视为成功
+    }
+    console.log(`需要上传的图片数量: ${photosToUpload.length}`);
+    setIsUploading(true);
+    try {
+      await uploadPhotos(
+        photosToUpload.map(p => ({file: p.file!, url: p.url, status: p.status})),
+        (index, status, result, error) => {
+          const targetFile = photosToUpload[index].file;
+          updatePhotoStatusByFile(targetFile, status, result, error);
+        }
+      );
+      console.log('图片上传流程完成。');
+      return true;
+    } catch (error) {
+      console.error('上传过程中出现严重错误:', error);
+      toast.error(t('uploadFailed') || '图片上传失败，请检查网络连接后重试');
+      return false; // 上传失败
+    } finally {
+      setIsUploading(false);
+    }
+  }, [setIsUploading, t, updatePhotoStatusByFile, uploadPhotos]);
+
+  // 辅助函数 6 (原 proceedWithSubmit): 最终提交数据
+  const finalizeAndSubmit = useCallback((finalFormData: FormDataT) => {
+    // 过滤出所有成功的照片（包括已存在的和新上传的）
+    const successPhotos = finalFormData.photos.filter(p => p.status === 'success' && p.cloudinary);
+    console.log('上传结果统计:', {
+      总图片数: finalFormData.photos.length,
+      成功数: successPhotos.length,
+      失败数: finalFormData.photos.length - successPhotos.length,
+    });
     const photosToSubmit = successPhotos.map(photo => ({
       url: photo.cloudinary!.url,
       public_id: photo.cloudinary!.publicId,
@@ -210,176 +307,49 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
       original_filename: photo.cloudinary!.originalFilename,
       created_at: photo.cloudinary!.created_at
     }));
-
-    const submitData = {
-      ...currentFormData,
-      photos: photosToSubmit
-    };
-
-    // 最终提交，传入 diaryId (如果存在)
+    const submitData = {...finalFormData, photos: photosToSubmit};
+    console.log('调用 submitDiary，将控制权交给 hook...');
     submitDiary(submitData, diaryId ? Number(diaryId) : undefined);
-
   }, [submitDiary, diaryId]);
 
+
+  // --- 主提交函数 (指挥官) ---
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // 防止重复提交
-    if (isUploading) {
-      console.log('正在上传中，请稍候...');
-      toast.info(t('uploadingInProgress') || '正在上传中，请稍候...');
-      return;
-    }
-
-    // 检查是否有正在重试的操作
-    if (isRetryingFailedPhotos) {
-      console.log('正在重试失败图片，请稍候...');
-      toast.info(t('photos.retryInProgress') || '正在重试上传失败图片，请稍候...');
-      return;
-    }
-
-    console.log('开始提交，当前照片状态:', formDataRef.current.photos.map(p => ({
-      fileName: p.file.name,
-      status: p.status,
-      error: p.error
-    })));
-
-    // 第一步：检查是否有失败的图片
-    const failedPhotos = formDataRef.current.photos.filter(p => p.status === 'error');
-
-    if (failedPhotos.length > 0 && !isWaitingForUserAction && userAction === null) {
-      console.log('发现失败的图片:', failedPhotos.map(p => p.file.name));
-
-      // 显示失败图片对话框
-      showFailedPhotosDialogModal(failedPhotos.map(p => ({
-        file: p.file,
-        error: p.error
-      })));
-
-      // 等待用户做出选择
-      return;
-    }
-
-    // 如果用户选择了重试，我们需要重新执行提交逻辑
-    if (userAction === 'retry') {
-      console.log('用户选择重试，等待重试完成...');
-      setUserAction(null); // 重置用户操作
-      // 这里我们可以延迟一点时间，让重试状态生效
-      setTimeout(() => {
-        // 重新触发提交，但使用队列的方式避免重复
-        handleSubmit(e);
-      }, 800); // 增加延迟时间，确保重试状态更新完成
-      return;
-    }
-
-    // 第二步：检查并上传所有待处理的图片
-    const photosToUpload = formDataRef.current.photos.filter(photo =>
-      photo.status === 'pending'
-    );
-
-    console.log('需要上传的图片数量:', photosToUpload.length, {
-      pending: photosToUpload.length,
-      error: formDataRef.current.photos.filter(p => p.status === 'error').length
-    });
-
-    if (photosToUpload.length > 0) {
-      try {
-        setIsUploading(true);
-        console.log('开始上传图片...');
-
-        const uploadResults = await uploadPhotos(
-          photosToUpload.map(p => ({
-            file: p.file,
-            url: p.url,
-            status: p.status
-          })),
-          (index, status, result, error) => {
-            const targetFile = photosToUpload[index].file;
-
-            console.log('上传回调 - 最终状态:', {
-              index,
-              fileName: targetFile.name,
-              status,
-              hasResult: !!result,
-              error: error || '无错误'
-            });
-
-            // 更新照片状态
-            updatePhotoStatusByFile(
-              targetFile,
-              status,
-              status === 'success' ? result : undefined,
-              error
-            );
-          }
-        );
-
-        console.log('图片上传完成，成功数量:', uploadResults.length);
-      } catch (error) {
-        console.error('上传过程中出现错误:', error);
-        toast.error(
-          t('uploadFailed') || '图片上传失败，请检查网络连接后重试'
-        );
-        setIsUploading(false);
-        return;
-      } finally {
-        setIsUploading(false);
-      }
-    }
-
-    // 第三步：等待状态完全更新（增加等待时间）
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // 第四步：检查上传结果并准备提交
     const currentFormData = formDataRef.current;
-
-    // 检查是否有仍在处理中的图片
-    const unfinishedPhotos = currentFormData.photos.filter(p =>
-      p.status === 'pending' || p.status === 'uploading'
-    );
-
-    if (unfinishedPhotos.length > 0) {
-      console.error('仍有图片未完成上传，无法提交');
-      toast.error(
-        t('photos.stillUploading') || '仍有图片在上传中，请稍候再提交'
-      );
+    // 步骤 1: 前置检查
+    if (!validateForm(currentFormData)) return;
+    if (checkForOngoingProcesses()) return;
+    // 步骤 2: 处理用户交互（重试/跳过）
+    // 如果用户选择了重试，则重新开始整个流程
+    if (handleUserRetryAction(e)) return;
+    // 步骤 3: 检查首次提交时已存在的失败图片
+    // 如果用户还未对失败图片做决定，则弹窗并中断
+    if (userAction === null && handleFailedPhotos(currentFormData.photos)) {
       return;
     }
-
-    // 检查上传结果
-    const successPhotos = currentFormData.photos.filter(p => p.status === 'success' && p.cloudinary);
-    const newFailedPhotos = currentFormData.photos.filter(p => p.status === 'error');
-
-    console.log('上传结果统计:', {
-      总图片数: currentFormData.photos.length,
-      成功数: successPhotos.length,
-      失败数: newFailedPhotos.length
-    });
-
-    // 如果有新的失败图片，显示通知
-    if (newFailedPhotos.length > 0 && userAction !== 'skip') {
-      // 显示询问用户是否继续的对话框
-      showFailedPhotosDialogModal(newFailedPhotos.map(p => ({
-        file: p.file,
-        error: p.error
-      })));
+    // 步骤 4: 上传新图片
+    const uploadOk = await uploadPendingPhotos(currentFormData.photos);
+    if (!uploadOk) return; // 如果上传过程出错，则中断
+    // 步骤 5: 等待状态更新，并进行上传后的最终检查
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const updatedFormData = formDataRef.current;
+    // 检查是否有图片在上传后失败了
+    // 如果用户没有选择“跳过”，则再次弹窗并中断
+    if (userAction !== 'skip' && handleFailedPhotos(updatedFormData.photos)) {
       return;
     }
-
-    // 如果没有新的失败图片，或者用户选择跳过，直接提交
-    proceedWithSubmit(currentFormData, successPhotos);
+    // 步骤 6: 所有检查通过，正式提交
+    console.log('所有检查通过，准备提交最终数据。');
+    finalizeAndSubmit(updatedFormData);
   }, [
-    isUploading,
-    isRetryingFailedPhotos,
-    uploadPhotos,
-    updatePhotoStatusByFile,
-    t,
+    validateForm,
+    checkForOngoingProcesses,
+    handleUserRetryAction,
     userAction,
-    isWaitingForUserAction,
-    handleRetryFailedPhotos,
-    handleSkipFailedPhotos,
-    showFailedPhotosDialogModal,
-    proceedWithSubmit
+    handleFailedPhotos,
+    uploadPendingPhotos,
+    finalizeAndSubmit
   ]);
 
   const handleLocationSelect = (place: LocationResult) => {
@@ -394,7 +364,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
         : (place.geometry.location.lng as number);
 
       updateField('location', addressText);
-      updateField('coordinates', { lat, lng });
+      updateField('coordinates', {lat, lng});
       setShowMapPreview(true);
     }
   };
@@ -411,7 +381,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
   };
 
   const handleInputFocus = () => {
-    if(!isMobile){
+    if (!isMobile) {
       setShowMapPreview(false);
     }
   };
@@ -466,7 +436,7 @@ export default function NewDiary({ isMobile, dark, onClose, }: Omit<Props, 'onSu
   // --- 渲染逻辑 ---
   const renderContent = () => {
     // 增加页面加载状态
-    if (isUploading || isPageLoading) return <Loading dark={dark} />;
+    if (isUploading || isPageLoading) return <Loading dark={dark}/>;
 
     return isMobile ? (
       <MobileLayout {...commonProps} />
