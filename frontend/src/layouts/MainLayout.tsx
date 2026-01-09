@@ -10,9 +10,10 @@ import { useTravelStore } from '@/store/useTravelStore';
 interface Props {
   dark: boolean;
   setDark: (dark: boolean) => void;
+  handleClickLogout:()=>void
 }
 
-export const MainLayout: React.FC<Props> = ({ dark, setDark }) => {
+export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout }) => {
   const { isLoggedIn } = useTravelStore();
   const {
     isMobile,
@@ -63,6 +64,7 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark }) => {
             toggleSidebar={() => setShowSidebar(false)}
             hideMobileButtons={() => setShowLeftRightButtonsMobile(false)}
             isLoggedIn={isLoggedIn}
+            handleClickLogout={handleClickLogout}
           />
         </div>
       )}

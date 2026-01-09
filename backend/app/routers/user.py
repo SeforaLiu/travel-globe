@@ -110,7 +110,7 @@ def login_user(response: Response, user_data: UserLogin, session: Session = Depe
 @router.post("/logout")
 def logout_user(response: Response):
     # 清除Cookie
-    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("access_token", path="/api")
     return {"message": "Logged out successfully"}
 
 # 新增：检查用户登录状态的接口

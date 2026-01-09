@@ -1,23 +1,25 @@
 // src/App.tsx
-import React, { useState, useEffect, useCallback } from 'react'; // 引入 useCallback
+import React, {useState, useEffect, useCallback} from 'react'; // 引入 useCallback
 import {Routes, Route, useNavigate, useLocation} from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { useTravelStore } from '@/store/useTravelStore';
-import { useDiarySubmission } from '@/hooks/useDiarySubmission';
-import { MainLayout } from '@/layouts/MainLayout';
+import {toast, Toaster} from 'sonner';
+import {useTravelStore} from '@/store/useTravelStore';
+import {useDiarySubmission} from '@/hooks/useDiarySubmission';
+import {MainLayout} from '@/layouts/MainLayout';
 import Loading from '@/components/Loading';
-import { NewDiaryCloseDialog } from '@/components/NewDiaryCloseDialog';
+import {NewDiaryCloseDialog} from '@/components/NewDiaryCloseDialog';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import NewDiary from '@/pages/NewDiary';
 import DiaryView from '@/pages/DiaryView';
-import { DiaryManager } from '@/components/DiaryManager';
+import {DiaryManager} from '@/components/DiaryManager';
+import {LogoutDialog} from "@/components/LogoutDialog";
 
 export default function App() {
   const location = useLocation();
   const [showNewDiaryCloseDialog, setShowNewDiaryCloseDialog] = useState(false);
   const [shouldFetchDiaryDetail, setShouldFetchDiaryDetail] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   const navigate = useNavigate();
   const loading = useTravelStore(state => state.loading);
@@ -25,12 +27,29 @@ export default function App() {
   const setDarkMode = useTravelStore(state => state.setDarkMode);
   const setIsMobile = useTravelStore(state => state.setIsMobile);
   const isMobile = useTravelStore(state => state.isMobile);
+  const logout = useTravelStore(state => state.logout);
 
-  const { submitDiary, isSubmitting } = useDiarySubmission();
+  const {submitDiary, isSubmitting} = useDiarySubmission();
 
   const handleNewDiaryClose = useCallback(() => {
     setShowNewDiaryCloseDialog(true);
-  }, []); // 空依赖数组意味着这个函数永远不会被重新创建
+  }, []);
+
+  const handleClickLogout = useCallback(() => {
+    setShowLogoutDialog(true)
+  }, [])
+
+
+  const handleConfirmLogout = async () => {
+    setShowLogoutDialog(false);
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Network error");
+    }
+  };
 
   // 主题切换
   useEffect(() => {
@@ -50,7 +69,7 @@ export default function App() {
 
   // 加载状态保护
   if (loading) {
-    return <Loading dark={darkMode} />;
+    return <Loading dark={darkMode}/>;
   }
 
   return (
@@ -58,16 +77,16 @@ export default function App() {
       <Toaster
         position="top-center"
         theme={darkMode ? 'dark' : 'light'}
-        toastOptions={{ duration: 3000 }}
+        toastOptions={{duration: 3000}}
         richColors
         visibleToasts={3}
       />
 
       <Routes>
-        <Route element={<MainLayout dark={darkMode} setDark={setDarkMode} />}>
-          <Route path="/" element={<Home dark={darkMode} isMobile={isMobile} />} />
-          <Route path="/login" element={<Login dark={darkMode} isMobile={isMobile} />} />
-          <Route path="/register" element={<Register dark={darkMode} isMobile={isMobile} />} />
+        <Route element={<MainLayout dark={darkMode} setDark={setDarkMode} handleClickLogout={handleClickLogout}/>}>
+          <Route path="/" element={<Home dark={darkMode} isMobile={isMobile}/>}/>
+          <Route path="/login" element={<Login dark={darkMode} isMobile={isMobile}/>}/>
+          <Route path="/register" element={<Register dark={darkMode} isMobile={isMobile}/>}/>
 
           {/* 创建新日记的路由 */}
           <Route
@@ -96,8 +115,8 @@ export default function App() {
             }
           />
 
-          <Route path="/diary/:id" element={<DiaryView dark={darkMode} isMobile={isMobile} shouldFetchDiaryDetail={shouldFetchDiaryDetail}/>} />
-          <Route path="/diary-manage" element={<DiaryManager />} />
+          <Route path="/diary/:id" element={<DiaryView dark={darkMode} isMobile={isMobile}/>}/>
+          <Route path="/diary-manage" element={<DiaryManager/>}/>
         </Route>
       </Routes>
 
@@ -110,9 +129,19 @@ export default function App() {
             setShowNewDiaryCloseDialog(false);
             navigate(-1);
             // TODO: 清理 localStorage 缓存
-            if(location.pathname ==='/diary/edit') setShouldFetchDiaryDetail(true)
+            if (location.pathname === '/diary/edit') setShouldFetchDiaryDetail(true)
           }}
           onCancel={() => setShowNewDiaryCloseDialog(false)}
+        />
+      )}
+
+      {/* 退出登录之前的确认框 */}
+      {showLogoutDialog && (
+        <LogoutDialog
+          dark={darkMode}
+          isMobile={isMobile}
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setShowLogoutDialog(false)}
         />
       )}
     </>

@@ -10,13 +10,13 @@ interface Props {
   onCancel: () => void;
 }
 
-export const NewDiaryCloseDialog: React.FC<Props> = ({ dark, isMobile, onConfirm, onCancel }) => {
+export const LogoutDialog: React.FC<Props> = ({ dark, isMobile, onConfirm, onCancel }) => {
   const { t } = useTranslation();
 
   return (
     <GenericDialog
       dark={dark}
-      title={t('sure to leave?')}
+      title={t('sure to logout?')}
       iconVariant="error"
       showCancelButton={false}
       cancelButtonLabel={t('common.cancel')}
@@ -37,7 +37,6 @@ export const NewDiaryCloseDialog: React.FC<Props> = ({ dark, isMobile, onConfirm
       t={t}
       isMobile={isMobile}
     >
-      {t('input will be clear')}
     </GenericDialog>
   );
 };

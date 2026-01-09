@@ -18,18 +18,6 @@ const api = axios.create({
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach(prom => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
-    });
-
-    failedQueue = [];
-};
-
 // 请求拦截器
 api.interceptors.request.use(
     (config) => {

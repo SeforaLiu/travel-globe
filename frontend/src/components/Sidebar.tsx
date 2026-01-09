@@ -1,7 +1,9 @@
-import React, {useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {useNavigate} from 'react-router-dom';
 import {useTravelStore} from "@/store/useTravelStore";
+import {NewDiaryCloseDialog} from "@/components/NewDiaryCloseDialog";
+import {LogoutDialog} from "@/components/LogoutDialog";
 
 type Props = {
   dark: boolean;
@@ -10,23 +12,24 @@ type Props = {
   toggleSidebar: () => void;
   hideMobileButtons: () => void;
   isLoggedIn: boolean;
+  handleClickLogout:()=>void;
 };
 
 // 定义侧边栏的背景色
 const sidebarDayBg = '#c5d6f0';
 const sidebarNightBg = '#1A1A33';
 
-export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMobileButtons, isLoggedIn}: Props) {
+export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMobileButtons, isLoggedIn,handleClickLogout}: Props) {
   const {t, i18n} = useTranslation()
-  const user = useTravelStore((state) => state.user);
   const navigate = useNavigate();
 
+  const user = useTravelStore((state) => state.user);
   const loading = useTravelStore((state) => state.loading);
-  const  guideTotal= useTravelStore((state) => state.guideTotal);
-  const  diaryTotal= useTravelStore((state) => state.diaryTotal);
-  const  placeTotal= useTravelStore((state) => state.placeTotal);
-  const  total= useTravelStore((state) => state.total);
-  const  allDiaries= useTravelStore((state) => state.allDiaries);
+  const guideTotal = useTravelStore((state) => state.guideTotal);
+  const diaryTotal = useTravelStore((state) => state.diaryTotal);
+  const placeTotal = useTravelStore((state) => state.placeTotal);
+  const total = useTravelStore((state) => state.total);
+  const allDiaries = useTravelStore((state) => state.allDiaries);
 
   const handleAddDiary = () => {
     navigate(isLoggedIn ? '/new-diary' : '/login');
@@ -72,15 +75,29 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
 
       {/* User */}
       <div className="flex items-center gap-3">
-        <img src="/avatar/avatar.png"
-             alt="avatar"
-             className="rounded-full w-12"
+        <img
+          src="/avatar/avatar.png"
+          alt="avatar"
+          className="rounded-full w-12 h-12 object-cover"
         />
-        <div>
-          <div className="font-semibold">{user?.username? user?.username : t('unlogged visitor') }</div>
-          <div className="text-xs opacity-60">
-            {t('AddTypeVisited')}: {placeTotal}
+        <div className="flex flex-1 items-center justify-between gap-4 min-w-0">
+
+          <div className="min-w-0">
+            <div className="font-semibold break-words">
+              {user?.username ? user?.username : t('unlogged visitor')}
+            </div>
+            <div className="text-xs opacity-60">
+              {t('AddTypeVisited')}: {placeTotal}
+            </div>
           </div>
+
+          {isLoggedIn? <div className="flex-shrink-0">
+            <button
+              className="bg-gray-400 text-white rounded px-1 py-1"
+              onClick={handleClickLogout}
+            >logout</button>
+          </div> : null}
+
         </div>
       </div>
 
@@ -97,7 +114,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
           }`}
           onClick={handleAddDiary}
         >
-          {!isLoggedIn? t('login to create journal'): t('addGuide')}
+          {!isLoggedIn ? t('login to create journal') : t('addGuide')}
         </button>
       </div>
 
@@ -107,9 +124,9 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
           <div className="px-2 py-1 rounded bg-opacity-20 bg-blue-500">
             {t('diary')}: {diaryTotal}
           </div>
-           <div className="px-2 py-1 rounded bg-opacity-20 bg-guide">
-              {t('guide')}: {guideTotal}
-            </div>
+          <div className="px-2 py-1 rounded bg-opacity-20 bg-guide">
+            {t('guide')}: {guideTotal}
+          </div>
         </div>
       )}
 
@@ -154,7 +171,7 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
                       if (isMobile) toggleSidebar()
                     }}
                   >
-                    {item.title}{item.date_start?` - ${item.date_end}` : ''}
+                    {item.title}{item.date_start ? ` - ${item.date_end}` : ''}
                   </li>
                 ))}
               </ul>
@@ -172,6 +189,8 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
           {`<`}
         </button>
       )}
+
+
     </div>
   )
 }

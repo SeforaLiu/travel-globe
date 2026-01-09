@@ -287,5 +287,14 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     }
   },
 
-  logout: () => set({ user: null, isLoggedIn: false, diaries: [] })
+  logout: async () => {
+    set({ loading: true });
+    try {
+      const res = await api.post('/auth/logout');
+      set({ loading: false, user: null, isLoggedIn: false, diaries: [], allDiaries:[], currentDiary:null });
+    } catch (err: any) {
+      set({ loading: false });
+      throw err;
+    }
+  },
 }));
