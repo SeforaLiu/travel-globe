@@ -5,6 +5,7 @@ import MapPreview from "../../../components/MapPreview";
 import LocationSearch from "../../../components/LocationSearch";
 import { useTravelStore } from '@/store/useTravelStore';
 import LocationSectionSkeleton from "@/components/LocationSectionSkeleton";
+import i18n from "i18next";
 
 type Props = {
   location: string;
@@ -41,10 +42,17 @@ const LocationSection: React.FC<Props> = ({
 
   // --- 新增逻辑：组件挂载时触发 API 加载 ---
   useEffect(() => {
+    console.log('现在选择的语言',i18n.language)
+    let lang =''
+    if(i18n.language==='zh') {
+      lang='zh-CN'
+    }else{
+      lang = i18n.language
+    }
     // 调用 action 来加载 Google Maps API。
     // store 内部会处理重复加载的问题，所以可以放心调用。
-    loadGoogleMaps();
-  }, [loadGoogleMaps]); // 依赖项数组确保此 effect 仅在组件挂载时运行一次
+    loadGoogleMaps(lang);
+  }, [loadGoogleMaps, i18n.language]); // 依赖项数组确保此 effect 仅在组件挂载时运行一次
 
   const handleChange = (value: string) => {
     onLocationChange(value);

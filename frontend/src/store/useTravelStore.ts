@@ -34,6 +34,7 @@ interface TravelState {
   isGoogleMapsLoading: boolean; // 新增：标记 API 是否正在加载
   isGoogleMapsLoaded: boolean;  // 新增：标记 API 是否已成功加载
   googleMapsError: string | null; // 新增：记录加载错误
+  googleMapsApiLang: string | null;
 
   // --- 动作 (Actions) ---
   // A. 获取分页列表
@@ -60,7 +61,7 @@ interface TravelState {
   logout: () => void;
 
   // Google Maps Action
-  loadGoogleMaps: () => Promise<void>; // 新增：加载 Google Maps API 的 Action
+  loadGoogleMaps: (lang: string) => Promise<void>; // 新增：加载 Google Maps API 的 Action
 }
 
 export const useTravelStore = create<TravelState>((set, get) => ({
@@ -85,30 +86,27 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   isGoogleMapsLoading: false,
   isGoogleMapsLoaded: false,
   googleMapsError: null,
+  googleMapsApiLang: null,
 
   // --- 动作实现 ---
 
-  // 新增：加载 Google Maps API 的实现
-  loadGoogleMaps: () => {
+  // 加载 Google Maps API 的实现
+  loadGoogleMaps: (lang) => {
     return new Promise((resolve, reject) => {
-      // 核心：防止重复加载的逻辑
       // 1. 如果已经加载成功，直接成功返回
-      if (get().isGoogleMapsLoaded) {
-        console.log('Google Maps API 已加载，跳过。');
+      if (get().isGoogleMapsLoaded && get().googleMapsApiLang === lang) {
+        console.log('这个语言的 Google Maps API 已加载，跳过。');
         return resolve();
       }
       // 2. 如果正在加载中，也直接返回一个等待中的 Promise (这里我们简单返回，让调用者等待状态变化)
-      // 实践中，可以设计更复杂的逻辑，如返回一个正在进行中的 Promise
       if (get().isGoogleMapsLoading) {
         console.log('Google Maps API 正在加载中，请等待...');
-        // 这是一个简化的处理，高级用法可以订阅加载完成事件
-        // 但对于大多数场景，组件会根据 isGoogleMapsLoaded 状态重新渲染，所以这样就够了
         return resolve();
       }
       // 3. 最终检查 window 对象，作为双重保险
       // @ts-ignore
-      if (window.google && window.google.maps) {
-        console.log('Google Maps API 已存在于 window 对象，直接标记为已加载。');
+      if (window.google && window.google.maps && get().googleMapsApiLang === lang) {
+        console.log('这个语言的 Google Maps API 已存在于 window 对象，直接标记为已加载。');
         set({ isGoogleMapsLoaded: true });
         return resolve();
       }
@@ -118,20 +116,22 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       set({ isGoogleMapsLoading: true, googleMapsError: null });
 
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places&language=${lang}`;
       script.async = true;
       script.defer = true;
+      script.id = 'google-maps-script';
 
       script.onload = () => {
         console.log('✅ Google Maps API 加载完毕');
-        set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: true });
+        set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: true, googleMapsApiLang: lang });
         resolve();
       };
 
       script.onerror = () => {
         const errorMsg = '❌ 加载 Google Maps API 失败';
         console.error(errorMsg);
-        set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: false, googleMapsError: errorMsg });
+        set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: false, googleMapsError: errorMsg, googleMapsApiLang: null });
+        script.remove();
         reject(new Error(errorMsg));
       };
 
