@@ -266,11 +266,14 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     try {
       await api.delete(`/entries/${id}`);
       console.log(`日记 ${id} 删除成功, Diary ${id} deleted successfully.`);
-      await get().fetchAllDiaries(true);
-      set({
-        diaries: get().diaries.filter(d => d.id !== id),
+
+      set(state => ({
+        allDiaries: state.allDiaries.filter(d => d.id !== id),
+        diaries: state.diaries.filter(d => d.id !== id),
+        currentDiary: state.currentDiary?.id === id ? null : state.currentDiary,
         loading: false
-      });
+      }));
+
     } catch (err: any) {
       set({ loading: false });
       throw err;

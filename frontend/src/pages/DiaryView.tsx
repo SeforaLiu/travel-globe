@@ -1,26 +1,30 @@
 // frontend/src/pages/DiaryView.tsx
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useTravelStore } from "@/store/useTravelStore";
+import React, {useEffect, useState, useRef} from 'react';
+import {useParams, useNavigate} from 'react-router-dom';
+import {useTranslation} from 'react-i18next';
+import {useTravelStore} from "@/store/useTravelStore";
 import Loading from '@/components/Loading';
+import GenericDialog, {ButtonVariant} from "@/components/GenericDialog";
+import {toast} from "sonner";
 
 const ENTRY_TYPE = {
   VISITED: 'visited',
   WISHLIST: 'wishlist',
 };
 
-const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMobile }) => {
-  const { t, i18n } = useTranslation();
-  const { id } = useParams<{ id: string }>();
+const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMobile}) => {
+  const {t, i18n} = useTranslation();
+  const {id} = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail);
   const currentDiary = useTravelStore(state => state.currentDiary);
+  const deleteDiary = useTravelStore(state => state.deleteDiary);
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
 
   const fetchingIdRef = useRef<number | null>(null);
 
@@ -77,7 +81,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
   // --- 渲染逻辑 ---
   const renderContent = () => {
     if (status === 'loading' || status === 'idle') {
-      return <Loading dark={dark} />;
+      return <Loading dark={dark}/>;
     }
 
     if (status === 'error') {
@@ -95,8 +99,10 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
       if (!dateStr) return '';
       try {
         const date = new Date(dateStr);
-        return new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
-      } catch (e) { return dateStr; }
+        return new Intl.DateTimeFormat(i18n.language, {year: 'numeric', month: 'long', day: 'numeric'}).format(date);
+      } catch (e) {
+        return dateStr;
+      }
     };
 
     const renderDateRange = () => {
@@ -110,31 +116,51 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
     };
 
     const handleEditClick = () => navigate(`/diary/edit?id=${id}`);
-    const handleDeleteClick = () => console.log('点击删除按钮');
+    const handleDeleteClick = () => setShowDeleteDialog(true)
     const handleBackClick = () => navigate('/');
 
+    const handleConfirmDelete = async () => {
+      try {
+        await deleteDiary(Number(id))
+        toast.success(t('delete successful'))
+        navigate('/')
+      } catch (error) {
+        console.error("delete failed:", error);
+        toast.error(t('Network error'))
+      }
+
+      setShowDeleteDialog(false)
+    }
+
     return (
-      (currentDiary? <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      (currentDiary ? <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <div className={`max-w-3xl mx-auto p-6 ${isMobile ? 'px-4' : ''}`}>
           <div className="flex justify-end gap-2 mb-4">
-            <button onClick={handleBackClick} className="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">{t('common.back')}</button>
-            <button onClick={handleEditClick} className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500">{t('common.edit')}</button>
-            <button onClick={handleDeleteClick} className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500">{t('common.delete')}</button>
+            <button onClick={handleBackClick}
+                    className="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">{t('common.back')}</button>
+            <button onClick={handleEditClick}
+                    className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500">{t('common.edit')}</button>
+            <button onClick={handleDeleteClick}
+                    className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500">{t('common.delete')}</button>
           </div>
           <div className="mb-8">
             <div className="flex items-center mb-2">
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium text-white ${isVisited ? 'bg-diary' : 'bg-guide'}`}>{isVisited ? t('AddTypeVisited') : t('AddTypeWishList')}</span>
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium text-white ${isVisited ? 'bg-diary' : 'bg-guide'}`}>{isVisited ? t('AddTypeVisited') : t('AddTypeWishList')}</span>
             </div>
             <h1 className="text-3xl font-bold text-center">{currentDiary.title}</h1>
           </div>
           <div className="rounded-xl p-6 mb-8 bg-white shadow-sm dark:bg-gray-800">
             <div className="space-y-4">
               <div className="flex flex-wrap justify-between items-center">
-                <div className="flex-1 min-w-[200px] mb-4 md:mb-0"><p className="text-lg">{currentDiary.location_name}</p></div>
-                <div className="flex-1 min-w-[200px] mb-4 md:mb-0 md:text-center"><p className="text-lg">{currentDiary.transportation}</p></div>
+                <div className="flex-1 min-w-[200px] mb-4 md:mb-0"><p
+                  className="text-lg">{currentDiary.location_name}</p></div>
+                <div className="flex-1 min-w-[200px] mb-4 md:mb-0 md:text-center"><p
+                  className="text-lg">{currentDiary.transportation}</p></div>
                 <div className="flex-1 min-w-[200px] md:text-right"><p className="text-lg">{renderDateRange()}</p></div>
               </div>
-              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700"><p className="text-lg whitespace-pre-line">{currentDiary.content}</p></div>
+              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700"><p
+                className="text-lg whitespace-pre-line">{currentDiary.content}</p></div>
             </div>
           </div>
           {photos.length > 0 && (
@@ -142,14 +168,42 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
               <div className={`grid gap-4 ${photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {photos.map((photo, index) => (
                   <div key={photo.id || index} className="rounded-lg overflow-hidden">
-                    <img src={photo.url} alt={`Photo ${index + 1}`} className="w-full h-auto object-cover" loading="lazy" />
+                    <img src={photo.url} alt={`Photo ${index + 1}`} className="w-full h-auto object-cover"
+                         loading="lazy"/>
                   </div>
                 ))}
               </div>
             </div>
           )}
         </div>
-      </div> : '不存在diary!')
+
+        {showDeleteDialog && <GenericDialog
+          dark={dark}
+          title={t('sure to delete?')}
+          iconVariant="error"
+          showCancelButton={false}
+          cancelButtonLabel={t('common.cancel')}
+          primaryButton={{
+            label: t('common.confirm'),
+            onClick: handleConfirmDelete,
+            variant: 'danger' as ButtonVariant,
+            dataTestId: 'confirm-button',
+          }}
+          secondaryButton={{
+            label: t('common.cancel'),
+            onClick: () => {
+              setShowDeleteDialog(false)
+            },
+            variant: 'secondary' as ButtonVariant,
+            dataTestId: 'cancel-button',
+          }}
+          fullScreenOnMobile={true}
+          maxWidth="md"
+          t={t}
+          isMobile={isMobile}
+        >
+        </GenericDialog>}
+      </div> : <div>{t('No diaries yet')}</div>)
 
     );
   };

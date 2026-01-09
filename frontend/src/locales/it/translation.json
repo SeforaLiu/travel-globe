@@ -67,11 +67,13 @@
   "Your journey starts here": "Il tuo viaggio comincia qui!",
   "Click + to add your first journey": "Clicca + per il primo viaggio!",
   "submit successful": "Operazione riuscita",
-  "submit error please try again": "Ops! Invio fallito. Prova di nuovo!",
+  "submit error please try again": "Invio fallito. Prova di nuovo!",
   "Preparing your travel experience": "Preparando la tua esperienza di viaggio...",
   "sure to leave?": "Uscire ora?",
+  "sure to delete?": "Sicura/o di voler eliminare? L'azione è irreversibile!",
+  "delete successful": "Operazione riuscita",
   "input will be clear": "I dati non salvati saranno persi.",
-  "cannot find this diary": "Ops! Questo diario non è stato trovato",
+  "cannot find this diary": "Questo diario non è stato trovato",
   "validation": {
     "fillRequiredFields": "Si prega di inserire il titolo, selezionare la località e il tipo di diario"
   }

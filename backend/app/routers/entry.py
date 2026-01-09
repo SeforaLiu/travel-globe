@@ -229,9 +229,8 @@ async def get_or_create_location(coords: dict, location_name: str, session: Sess
   return None
 
 
-# ==================== API 端点 ====================
-# [修改] 需求 1: 新增日记接口
-@router.post("", response_model=EntryDetailResponse, status_code=status.HTTP_201_CREATED) # [修改] 使用新的响应模型，并返回 201 Created
+#  需求 1: 新增日记接口
+@router.post("", response_model=EntryDetailResponse, status_code=status.HTTP_201_CREATED) #  使用新的响应模型，并返回 201 Created
 async def create_entry(
     entry_data: EntryCreate,
     session: Session = Depends(get_session),
@@ -250,7 +249,6 @@ async def create_entry(
     location_obj = await get_or_create_location(entry_data.coordinates, entry_data.location_name, session)
 
     # 使用 exclude 剔除前端传来但我们不需要直接存入 Entry 的字段
-    # `content` 字段因为我们已经在模型中添加，所以会自动被包含
     entry_dict = entry_data.model_dump(exclude={"photos"})
     entry_dict.update({
       "user_id": user_id,
@@ -285,7 +283,8 @@ async def create_entry(
       status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
       detail="创建日记失败，服务器内部错误"
     )
-# [修改] 需求 2: 获取日记列表接口
+  
+# 需求 2: 获取日记列表接口
 @router.get("", response_model=DiaryListResponse)
 def get_diaries(
     page: int = Query(1, ge=1),
@@ -316,8 +315,7 @@ def get_diaries(
     offset = (page - 1) * page_size
     entries = session.exec(base_query.order_by(order_by).offset(offset).limit(page_size)).all()
     total_pages = (total_entries + page_size - 1) // page_size if page_size > 0 else 1
-  # [修改] 使用 DiaryListItem 模型来验证和序列化每一项
-  # 这一步是关键，它确保了返回给前端的数据结构是正确的
+
   items = [DiaryListItem.model_validate(entry) for entry in entries]
   return DiaryListResponse(
     items=items,
@@ -329,8 +327,9 @@ def get_diaries(
     guide_total=stats["guide_total"],
     place_total=stats["place_total"]
   )
-# [修改] 需求 3: 获取日记详情接口
-@router.get("/{entry_id}", response_model=EntryDetailResponse) # [修改] 使用新的响应模型
+
+#  需求 3: 获取日记详情接口
+@router.get("/{entry_id}", response_model=EntryDetailResponse) #  使用新的响应模型
 def get_diary_detail(
     entry_id: int,
     session: Session = Depends(get_session),
@@ -486,108 +485,3 @@ def get_user_stats_summary(
     place_total=stats["place_total"],
     total_entries=stats["total_entries"]
   )
-
-
-# ==================== 缓存管理接口（仅用于调试） ====================
-@router.get("/debug/cache-info", response_model=CacheInfoResponse, include_in_schema=False)
-def get_cache_info():
-  """获取缓存信息（仅用于调试）"""
-  # 统计缓存中的用户信息
-  user_stats = {}
-  current_time = datetime.now()
-
-  for key in stats_cache:
-    if key.startswith("user_stats_"):
-      user_id = key.replace("user_stats_", "")
-      stats_data, cache_time = stats_cache[key]
-      user_stats[user_id] = {
-        "cached_at": cache_time.isoformat(),
-        "age_minutes": (current_time - cache_time).total_seconds() / 60,
-        "stats": stats_data
-      }
-
-  cache_info = {
-    "stats_cache_size": len(stats_cache),
-    "location_cache_size": len(location_cache),
-    "stats_cache_ttl_minutes": STATS_CACHE_TTL_MINUTES,
-    "user_stats": user_stats
-  }
-
-  return cache_info
-
-
-@router.post("/debug/clear-cache", include_in_schema=False)
-def clear_cache(
-    cache_type: str = Query("all", description="缓存类型: all, stats, location"),
-    user_id: Optional[int] = Query(None, description="要清除缓存的用户ID")
-):
-  """清除缓存（仅用于调试）"""
-  cleared = []
-
-  if cache_type in ["all", "stats"]:
-    if user_id:
-      cache_key = f"user_stats_{user_id}"
-      if cache_key in stats_cache:
-        del stats_cache[cache_key]
-        cleared.append(cache_key)
-    else:
-      stats_cache.clear()
-      cleared.append("stats_cache")
-
-  if cache_type in ["all", "location"]:
-    location_cache.clear()
-    cleared.append("location_cache")
-
-  logger.debug(f"缓存清理完成: {cleared}")
-  return {"message": f"缓存已清理: {cleared}"}
-
-
-# ==================== 向后兼容接口 ====================
-@router.get("/legacy", response_model=List[Entry], include_in_schema=False)
-def read_entries_legacy(
-    session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user)
-):
-  """旧版接口，已废弃，仅用于向后兼容"""
-  logger.warning("使用了已废弃的接口 /api/entries/legacy")
-  entries = session.exec(
-    select(Entry)
-    .where(Entry.user_id == current_user["user_id"])
-    .order_by(Entry.created_time.desc())  # 改为按创建时间排序
-  ).all()
-  return entries
-
-
-# ==================== 获取最近创建的日记 ====================
-# ✅ FIXED: 移除路径参数 {limit}，改为纯查询参数
-# @router.get("/recent", response_model=List[DiarySummary])
-# def get_recent_diaries(
-#     limit: int = Query(5, ge=1, le=20, description="获取最近N篇日记"),
-#     entry_type: Optional[str] = Query(None, description="日记类型: visited, wishlist"),
-#     session: Session = Depends(get_session),
-#     current_user: dict = Depends(get_current_user)
-# ):
-#   """
-#   获取用户最近创建的日记
-#
-#   - 可以指定日记类型筛选
-#   - 默认返回最近5篇 visited 日记
-#   """
-#   user_id = current_user["user_id"]
-#   logger.info(f"用户 {user_id} 获取最近日记: limit={limit}, entry_type={entry_type}")
-#
-#   # 构建查询
-#   query = select(Entry).where(Entry.user_id == user_id)
-#
-#   if entry_type:
-#     query = query.where(Entry.entry_type == entry_type)
-#
-#   # 按创建时间倒序，获取最近创建的
-#   entries = session.exec(
-#     query.order_by(Entry.created_time.desc()).limit(limit)
-#   ).all()
-#
-#   items = [DiarySummary.model_validate(entry) for entry in entries]
-#
-#   logger.info(f"返回用户 {user_id} 的最近 {len(items)} 篇日记")
-#   return items
