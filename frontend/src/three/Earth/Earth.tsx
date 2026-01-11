@@ -10,8 +10,8 @@ import { Instances, Instance, Html } from '@react-three/drei';
 
 import { ClusterPoint } from './ClusterPoint';
 import { Diary, GroupedPoint } from './types';
+import { BreathingInstance } from './BreathingInstance';
 
-// ... latLonToCartesian 保持不变 ...
 function latLonToCartesian(lat: number, lon: number, radius = 2) {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
@@ -138,7 +138,7 @@ export default function Earth({ dark, isMobile }: Props) {
 
   return (
     <group>
-      {!isMobile && <Perf position="top-left" />}
+      {/*{!isMobile && <Perf position="top-left" />}*/}
       <group ref={earthGroupRef} scale={1.5} rotation={[0.36, Math.PI, 0]}>
 
         {/* 地球 Mesh */}
@@ -155,28 +155,28 @@ export default function Earth({ dark, isMobile }: Props) {
         <Instances range={1000}>
           <sphereGeometry args={[1, 16, 16]} />
           <meshStandardMaterial />
-
           {groupedPoints.map((point) => {
-            // 如果该点被展开了，隐藏 Instance
             if (expandedClusterKey === point.key) return null;
-
             const isCluster = point.diaries.length > 1;
-            const isVisited = point.diaries[0].entry_type === 'visited'
-            const singlePointColor = isVisited ? 'orange' : 'yellowgreen'
-            // 判断高亮：桌面端看 Hover，移动端看 Selected
+            const isVisited = point.diaries[0].entry_type === 'visited';
+            const singlePointColor = isVisited ? '#ffb900' : '#7c86ff';
+
+            // 逻辑修正：isHighlighted 决定了是否停止呼吸
             const isHighlighted = isMobile
               ? selectedPointKey === point.key
               : hoveredPointKey === point.key;
-
-            let color = isCluster ? '#b486e3' : singlePointColor;
-            if (isHighlighted) color = '#ff4444';
-
+            // 基础颜色：如果是高亮，直接给红色，否则给普通颜色
+            // BreathingInstance 内部会处理“未高亮时的呼吸变色”
+            let baseColor = isCluster ? '#8200db' : singlePointColor;
+            if (isHighlighted) baseColor = '#ff2056';
             return (
-              <Instance
+              <BreathingInstance
                 key={point.key}
                 position={point.position}
-                scale={isCluster ? visualPointSize * 1.2 : visualPointSize}
-                color={color}
+                // 这里的 scale 是基础大小
+                baseScale={isCluster ? visualPointSize * 1.2 : visualPointSize}
+                baseColor={baseColor}
+                isHighlighted={isHighlighted}
                 onClick={(e) => handlePointClick(e, point)}
                 onPointerEnter={(e) => handlePointerEnter(e, point.key)}
                 onPointerLeave={handlePointerLeave}

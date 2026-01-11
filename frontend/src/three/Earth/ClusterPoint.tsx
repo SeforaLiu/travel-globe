@@ -1,22 +1,15 @@
 // src/three/Earth/ClusterPoint.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber'; // 1. 引入 useFrame
 import { GroupedPoint, Diary } from './types';
 import { useSpring, a, Interpolation } from '@react-spring/three';
 
 // ===================== 1. 共享资源 (静态提取) =====================
-// 将几何体和材质提取出来，所有组件共用一份内存
-// 半径设为 1，方便后续通过 scale 属性控制大小
 const sharedGeometry = new THREE.SphereGeometry(1, 16, 16);
 
-// 基础材质
-const clusterMaterial = new THREE.MeshStandardMaterial({
-  color: '#ff4444',
-  emissive: '#ff4444',
-  emissiveIntensity: 0.8,
-});
-
+// 子节点材质 (展开后的小点)
 const spiderItemMaterial = new THREE.MeshStandardMaterial({
   color: '#ff8800',
   emissive: '#ff8800',
@@ -60,7 +53,6 @@ const SpiderfiedItem = React.memo(function SpiderfiedItem({ diary, position, ear
 
   return (
     <AnimatedGroup position={position} scale={scale}>
-      {/* 使用共享几何体和材质，通过 scale 控制大小 (0.02) */}
       <mesh
         geometry={sharedGeometry}
         material={spiderItemMaterial}
@@ -104,6 +96,57 @@ export const ClusterPoint = React.memo(function ClusterPoint({
                                                                onClusterClick,
                                                              }: Props) {
   const shouldShowLabel = isMobile ? true : isHovered && !isExpanded;
+
+  // ===================== 2. 呼吸效果逻辑 (新增) =====================
+  const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  // 生成随机偏移量，避免所有点同步呼吸，看起来更自然
+  const randomOffset = useMemo(() => Math.random() * 100, []);
+
+  // 基础颜色定义
+  const baseColor = new THREE.Color('#ff4444');
+  const targetColor = new THREE.Color();
+
+  useFrame((state) => {
+    if (!meshRef.current || !materialRef.current) return;
+
+    // 停止呼吸的条件：已展开 OR (被Hover 且 不是移动端)
+    // 移动端没有 Hover 状态，所以主要看 isExpanded
+    const shouldStopBreathing = isExpanded || (!isMobile && isHovered);
+
+    if (shouldStopBreathing) {
+      // 恢复到标准高亮状态
+      // 1.2 是基础放大倍数
+      meshRef.current.scale.setScalar(visualPointSize * 1.2);
+
+      // 恢复高亮颜色/强度
+      materialRef.current.emissiveIntensity = 0.8;
+      materialRef.current.color.set(baseColor);
+      return;
+    }
+
+    // === 执行呼吸动画 ===
+    const time = state.clock.elapsedTime;
+    // 构造 0 到 1 的正弦波，频率为 3
+    const breatheFactor = (Math.sin((time * 3) + randomOffset) + 1) / 2;
+
+    // 1. 缩放: 在 1.0 ~ 1.3 倍之间波动
+    const currentScale = (visualPointSize * 1.2) * (1 + breatheFactor * 0.3);
+    meshRef.current.scale.setScalar(currentScale);
+
+    // 2. 颜色/亮度:
+    // 变大(breatheFactor -> 1) -> 颜色变浅/亮 (emissiveIntensity 变大, 混入白色)
+    // 变小(breatheFactor -> 0) -> 颜色变深 (emissiveIntensity 变小, 恢复原色)
+
+    // 动态调整发光强度 (0.2 ~ 0.8)
+    materialRef.current.emissiveIntensity = 0.2 + (breatheFactor * 0.6);
+
+    // 动态调整颜色 (混入白色使颜色变浅)
+    targetColor.copy(baseColor).lerp(new THREE.Color('#ffffff'), breatheFactor * 0.3);
+    materialRef.current.color.copy(targetColor);
+  });
+  // ===============================================================
 
   const spiderfiedPositions = useMemo(() => {
     const positions: THREE.Vector3[] = [];
@@ -168,12 +211,6 @@ export const ClusterPoint = React.memo(function ClusterPoint({
     });
   }
 
-  // 动态计算发光强度，避免创建新材质
-  // 注意：如果想完全避免材质切换，可以使用 InstancedMesh (见 Earth.tsx 优化)
-  // 这里为了保持 ClusterPoint 的独立性，我们使用 props 控制
-  const emissiveIntensity = !isMobile && isHovered ? 0.8 : 0;
-  const emissiveColor = !isMobile && isHovered ? '#ff4444' : '#ffffff';
-
   return (
     <group>
       <group
@@ -187,22 +224,23 @@ export const ClusterPoint = React.memo(function ClusterPoint({
           onClick={() => onClusterClick(point.key)}
           geometry={sharedGeometry}
           material={hitBoxMaterial}
-          scale={hitBoxSize} // 使用 scale 控制大小
+          scale={hitBoxSize}
         />
 
-        {/* 可视化 Mesh */}
+        {/* 可视化 Mesh (中心点) */}
         <mesh
+          ref={meshRef} // 绑定 Mesh Ref
           geometry={sharedGeometry}
+          // scale 由 useFrame 控制，这里给初始值
           scale={visualPointSize * 1.2}
           onClick={() => onClusterClick(point.key)}
         >
-          {/* 这里我们仍然需要独立的 Material 来处理 hover 状态的颜色变化
-               如果想进一步优化，需要将 hover 状态提升到 Earth.tsx 并使用 Instancing
-           */}
+          {/* 绑定 Material Ref，以便在 useFrame 中修改颜色和发光 */}
           <meshStandardMaterial
+            ref={materialRef}
             color="#ff4444"
-            emissive={emissiveColor}
-            emissiveIntensity={emissiveIntensity}
+            emissive="#ff4444"
+            emissiveIntensity={0.8} // 初始值
           />
         </mesh>
 
