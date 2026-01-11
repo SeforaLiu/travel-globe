@@ -223,6 +223,8 @@ class DiaryListResponse(SQLModel):
     diary_total: int
     guide_total: int
     place_total: int
+    keyword: Optional[str] = None
+    entry_type: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str

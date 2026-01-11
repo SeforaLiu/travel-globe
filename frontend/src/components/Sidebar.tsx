@@ -2,8 +2,6 @@ import React, {useEffect, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {useNavigate} from 'react-router-dom';
 import {useTravelStore} from "@/store/useTravelStore";
-import {NewDiaryCloseDialog} from "@/components/NewDiaryCloseDialog";
-import {LogoutDialog} from "@/components/LogoutDialog";
 
 type Props = {
   dark: boolean;
@@ -12,24 +10,37 @@ type Props = {
   toggleSidebar: () => void;
   hideMobileButtons: () => void;
   isLoggedIn: boolean;
-  handleClickLogout:()=>void;
+  handleClickLogout: () => void;
 };
 
 // 定义侧边栏的背景色
 const sidebarDayBg = '#c5d6f0';
 const sidebarNightBg = '#1A1A33';
 
-export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMobileButtons, isLoggedIn,handleClickLogout}: Props) {
+export default function Sidebar({
+                                  dark,
+                                  setDark,
+                                  isMobile,
+                                  toggleSidebar,
+                                  hideMobileButtons,
+                                  isLoggedIn,
+                                  handleClickLogout
+                                }: Props) {
   const {t, i18n} = useTranslation()
   const navigate = useNavigate();
 
+  const searchKeyword = useTravelStore((state) => state.searchKeyword);
+  const setSearchKeyword = useTravelStore((state) => state.setSearchKeyword);
   const user = useTravelStore((state) => state.user);
   const loading = useTravelStore((state) => state.loading);
   const guideTotal = useTravelStore((state) => state.guideTotal);
   const diaryTotal = useTravelStore((state) => state.diaryTotal);
   const placeTotal = useTravelStore((state) => state.placeTotal);
   const total = useTravelStore((state) => state.total);
+  const fetchAllDiaries = useTravelStore((state) => state.fetchAllDiaries);
   const allDiaries = useTravelStore((state) => state.allDiaries);
+  const activeTab = useTravelStore((state) => state.activeTab);
+  const setActiveTab = useTravelStore((state) => state.setActiveTab);
 
   const handleAddDiary = () => {
     navigate(isLoggedIn ? '/new-diary' : '/login');
@@ -44,7 +55,29 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
   const textColor = dark ? 'text-white' : 'text-gray-800';
 
-  // 展开时的内容
+  const handleClickTab = async (tab) => {
+    setActiveTab(tab)
+    try {
+      await fetchAllDiaries(true, searchKeyword, tab)
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const handleSearchKeyWord = async () => {
+    try {
+      await fetchAllDiaries(true, searchKeyword, activeTab || undefined)
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearchKeyWord();
+    }
+  };
+
   return (
     <div
       className={`p-4 space-y-4 h-full flex flex-col ${textColor} scrollbar-custom`}
@@ -91,18 +124,63 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
             </div>
           </div>
 
-          {isLoggedIn? <div className="flex-shrink-0">
+          {isLoggedIn ? <div className="flex-shrink-0">
             <button
               className="bg-gray-400 text-white rounded px-1 py-1"
               onClick={handleClickLogout}
-            >logout</button>
+            >
+              {t('logout')}
+            </button>
           </div> : null}
 
         </div>
       </div>
 
+      <hr/>
+
       {/* Search */}
-      <input className="w-full border rounded p-2 " placeholder="🔍"/>
+      <div className="flex">
+        <input
+          className="w-full border rounded p-2 "
+          placeholder={t('common.search')}
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <button
+          className="text-wrap ml-2 bg-transparent border border-black dark:border-white  text-white rounded px-1 py-1"
+          onClick={handleSearchKeyWord}
+        >
+          🔍
+        </button>
+      </div>
+
+      {/* Tabs */}
+      {isLoggedIn && total > 0 && (
+        <div className="cursor-pointer flex gap-4 font-semibold">
+          <div
+            className={`px-2 py-1 rounded bg-opacity-20  bg-blue-500 dark:bg-blue-400 hover:bg-blue-300 ${activeTab === 'visited' ? 'text-red-700' : 'text-gray-600'}`}
+            onClick={() => handleClickTab('visited')}
+          >
+            {/*日记的总数*/}
+            {t('diary')}: {diaryTotal}
+          </div>
+          <div
+            className={`px-2 py-1 rounded bg-opacity-20 bg-purple-600 dark:bg-purple-400 hover:bg-purple-300 ${activeTab === 'wishlist' ? 'text-red-700' : 'text-gray-600'}`}
+            onClick={() => handleClickTab('wishlist')}
+          >
+            {/*攻略的总数*/}
+            {t('guide')}: {guideTotal}
+          </div>
+          {activeTab ? <div
+            className="text-red-700 text-sm pt-2"
+            onClick={() => handleClickTab('')}
+          >
+            {t('common.reset')}
+          </div> : null
+          }
+        </div>
+      )}
 
       {/* Add buttons */}
       <div className="flex w-full">
@@ -117,18 +195,6 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
           {!isLoggedIn ? t('login to create journal') : t('addGuide')}
         </button>
       </div>
-
-      {/* Tabs */}
-      {isLoggedIn && total > 0 && (
-        <div className="cursor-pointer flex gap-4 font-semibold">
-          <div className="px-2 py-1 rounded bg-opacity-20 bg-blue-500">
-            {t('diary')}: {diaryTotal}
-          </div>
-          <div className="px-2 py-1 rounded bg-opacity-20 bg-guide">
-            {t('guide')}: {guideTotal}
-          </div>
-        </div>
-      )}
 
       {/* List area */}
       <div className="flex-1 overflow-auto text-sm opacity-80">
@@ -161,20 +227,20 @@ export default function Sidebar({dark, setDark, isMobile, toggleSidebar, hideMob
 
             {/* 显示日记列表 */}
             {!loading && allDiaries.length > 0 && (
-              <ul className="space-y-2">
-                {allDiaries.map(item => (
-                  <li
-                    key={item.id}
-                    className="p-2 border rounded cursor-pointer hover:bg-opacity-20 hover:bg-blue-500 transition-colors"
-                    onClick={() => {
-                      navigate(`/diary/${item.id}`)
-                      if (isMobile) toggleSidebar()
-                    }}
-                  >
-                    {item.title}{item.date_start ? ` - ${item.date_end}` : ''}
-                  </li>
-                ))}
-              </ul>
+                <ul className="space-y-2">
+                  {allDiaries.map(item => (
+                    <li
+                      key={item.id}
+                      className="p-2 border rounded cursor-pointer hover:bg-opacity-20 hover:bg-blue-500 transition-colors"
+                      onClick={() => {
+                        navigate(`/diary/${item.id}`)
+                        if (isMobile) toggleSidebar()
+                      }}
+                    >
+                      {item.title}{item.date_start ? ` - ${item.date_end}` : ''}
+                    </li>
+                  ))}
+                </ul>
             )}
           </>
         )}

@@ -13,6 +13,7 @@ export interface DiarySummary {
 }
 
 export interface DiaryListResponse {
+  keyword: string | null | undefined;
   items: DiarySummary[];
   total: number;
   page: number;

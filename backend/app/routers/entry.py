@@ -1,6 +1,6 @@
 # backend/app/routers/entry.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, or_, desc, col
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 import logging
@@ -293,39 +293,107 @@ def get_diaries(
     force_refresh_stats: bool = Query(False),
     sort_by: str = Query("created_time", enum=["created_time", "date_start"]),
     sort_order: str = Query("desc", enum=["asc", "desc"]),
+    # 筛选参数
+    keyword: Optional[str] = Query(None, description="搜索关键词(标题或内容)"),
+    entry_type: Optional[str] = Query(None, enum=["visited", "wishlist"], description="日记类型筛选"),
     session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user)
 ):
   """
   获取当前用户的日记列表。
-  - 返回的 `items` 数组中只包含指定的精简字段。
+  支持分页、排序、类型筛选和关键词搜索。
   """
   user_id = current_user["user_id"]
-  logger.info(f"用户 {user_id} 请求日记列表: page={page}, page_size={page_size}")
+  logger.info(f"用户 {user_id} 请求日记列表: page={page}, keyword={keyword}, type={entry_type}")
+  # 1. 获取基础统计信息 (默认使用全局缓存)
+  # 这里包含了全局的 place_total，根据需求，这个值即使在搜索时也不变
   stats = get_user_stats(user_id, session, force_refresh=force_refresh_stats)
-  total_entries = stats["total_entries"]
+  # [新增逻辑] 如果有 keyword，重新计算 diary_total 和 guide_total
+  if keyword:
+    logger.debug(f"检测到搜索关键词 '{keyword}'，正在重新计算筛选后的统计信息...")
+    search_term = f"%{keyword}%"
+    search_condition = or_(
+      col(Entry.title).ilike(search_term),
+      col(Entry.content).ilike(search_term)
+    )
+    # 1.1 计算与 keyword 相关的 visited 总数 (diary_total)
+    filtered_diary_total = session.exec(
+      select(func.count(Entry.id))
+      .where(Entry.user_id == user_id)
+      .where(Entry.entry_type == "visited")
+      .where(search_condition)
+    ).one() or 0
+    # 1.2 计算与 keyword 相关的 wishlist 总数 (guide_total)
+    filtered_guide_total = session.exec(
+      select(func.count(Entry.id))
+      .where(Entry.user_id == user_id)
+      .where(Entry.entry_type == "wishlist")
+      .where(search_condition)
+    ).one() or 0
+    # 覆盖 stats 字典中的值
+    # 注意：place_total 保持原样 (stats["place_total"])
+    stats = {
+      "diary_total": filtered_diary_total,
+      "guide_total": filtered_guide_total,
+      "place_total": stats["place_total"], # 保持不变
+      "total_entries": stats["total_entries"]
+    }
+  # 2. 构建基础查询 (用于获取列表数据)
   base_query = select(Entry).where(Entry.user_id == user_id)
-  sort_column = Entry.date_start if sort_by == "date_start" else Entry.created_time
-  order_by = sort_column.asc() if sort_order.lower() == "asc" else sort_column.desc()
+  # 3. 应用类型筛选
+  if entry_type:
+    base_query = base_query.where(Entry.entry_type == entry_type)
+  # 4. 应用关键词搜索
+  if keyword:
+    search_term = f"%{keyword}%"
+    base_query = base_query.where(
+      or_(
+        col(Entry.title).ilike(search_term),
+        col(Entry.content).ilike(search_term)
+      )
+    )
+  # 5. 计算筛选后的列表总条数 (用于分页)
+  if keyword or entry_type:
+    count_query = select(func.count()).select_from(base_query.subquery())
+    total_entries = session.exec(count_query).one()
+  else:
+    total_entries = stats["total_entries"]
+  # 6. 应用排序
+  if keyword:
+    # 相关度排序：标题匹配优先
+    search_term = f"%{keyword}%"
+    base_query = base_query.order_by(
+      desc(col(Entry.title).ilike(search_term)),
+      Entry.created_time.desc()
+    )
+  else:
+    # 常规排序
+    sort_column = Entry.date_start if sort_by == "date_start" else Entry.created_time
+    order_by = sort_column.asc() if sort_order.lower() == "asc" else sort_column.desc()
+    base_query = base_query.order_by(order_by)
+  # 7. 应用分页
   if get_all:
-    entries = session.exec(base_query.order_by(order_by)).all()
+    entries = session.exec(base_query).all()
     page_size = total_entries if total_entries > 0 else 1
     total_pages = 1
   else:
     offset = (page - 1) * page_size
-    entries = session.exec(base_query.order_by(order_by).offset(offset).limit(page_size)).all()
+    entries = session.exec(base_query.offset(offset).limit(page_size)).all()
     total_pages = (total_entries + page_size - 1) // page_size if page_size > 0 else 1
-
   items = [DiaryListItem.model_validate(entry) for entry in entries]
+  # 返回响应
   return DiaryListResponse(
     items=items,
     total=total_entries,
     page=page,
     page_size=page_size,
     total_pages=total_pages,
+    # 使用处理后的 stats 数据
     diary_total=stats["diary_total"],
     guide_total=stats["guide_total"],
-    place_total=stats["place_total"]
+    place_total=stats["place_total"],
+    keyword=keyword,
+    entry_type=entry_type
   )
 
 #  需求 3: 获取日记详情接口

@@ -6,7 +6,9 @@
     "delete": "elimina",
     "close": "chiude",
     "submit": "applica",
-    "confirm": "conferma"
+    "confirm": "conferma",
+    "search": "cerca",
+    "reset": "reimposta"
   },
   "title": "Mappa dei Viaggi",
   "mood": "Mood",
@@ -36,7 +38,7 @@
   "Login successful!": "Accesso riuscito!",
   "sure to logout?": "Esci ora?",
   "No diaries yet": "Ancora nessun diario",
-  "Click the button above to create your first diary": "Clicca il pulsante sopra per creare il primo diario",
+  "Click the button above to create your first diary": "Clicca il pulsante sopra per creare diario",
   "Username already registered": "Nome utente già registrato",
   "addDiary": "+ Diario",
   "addGuide": "+ Guida/Diario",

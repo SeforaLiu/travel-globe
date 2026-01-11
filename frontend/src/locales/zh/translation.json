@@ -6,7 +6,9 @@
     "delete": "删除",
     "close": "关闭",
     "submit": "提交",
-    "confirm": "确定"
+    "confirm": "确定",
+    "search": "搜索",
+    "reset": "重置"
   },
   "title": "旅行地球",
   "mood": "心情球",
@@ -37,7 +39,7 @@
   "Login successful!": "登录成功",
   "sure to logout?": "确定要退出吗?",
   "No diaries yet": "还没有日记呢",
-  "Click the button above to create your first diary": "点击上方按钮创建第一篇日记吧",
+  "Click the button above to create your first diary": "点击上方按钮创建日记吧",
   "addDiary": "+ 日记",
   "addGuide": "+ 攻略/日记",
   "addNewDiaryOrGuide": "新增日记/攻略",

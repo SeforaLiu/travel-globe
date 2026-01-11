@@ -40,7 +40,7 @@ interface TravelState {
   // A. 获取分页列表
   fetchDiaries: (page?: number, pageSize?: number) => Promise<DiaryListResponse>;
   // B. 获取全部日记 (常用于 3D 地球打点)
-  fetchAllDiaries: (force?: boolean) => Promise<void>;
+  fetchAllDiaries: (force?: boolean, keyword?:string, type?:'visited'|'wishlist') => Promise<void>;
   // 创建日记 Action
   createDiary: (data: Omit<DiaryDetail, 'id' | 'created_time' | 'updated_at' | 'location_id' | 'user_id'>) => Promise<DiaryDetail>;
   // C. 获取详情
@@ -50,6 +50,11 @@ interface TravelState {
   clearCurrentDiary: () => void;
   // E. 删除日记
   deleteDiary: (id: number) => Promise<void>;
+
+  searchKeyword: string;
+  setSearchKeyword: (keyword: string) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 
   // UI 控制 Actions
   setIsMobile: (isMobile: boolean) => void;
@@ -87,6 +92,11 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   isGoogleMapsLoaded: false,
   googleMapsError: null,
   googleMapsApiLang: null,
+
+  searchKeyword: '',
+  setSearchKeyword: (keyword) => set({ searchKeyword: keyword }),
+  activeTab:'',
+  setActiveTab: (tab) => set({ activeTab: tab }),
 
   // --- 动作实现 ---
 
@@ -179,7 +189,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   },
 
 // B. 获取全部 (用于地图展示)
-  fetchAllDiaries: async (force = false) => {
+  fetchAllDiaries: async (force = false, keyword,type) => {
     // 1. 【修改保护逻辑】如果已经初始化过 且 不是强制刷新，则直接返回
     if (get().allDiariesInitialized && !force) {
       console.log('fetchAllDiaries: Already initialized and not forced, skipping fetch.');
@@ -188,7 +198,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await api.get<DiaryListResponse>('/entries', {
-        params: { get_all: true }
+        params: {get_all: true, keyword: keyword ? keyword : null, entry_type: type}
       });
       set({
         allDiaries: response.data.items,
@@ -197,8 +207,11 @@ export const useTravelStore = create<TravelState>((set, get) => ({
         guideTotal:response.data.guide_total,
         placeTotal:response.data.place_total,
         total: response.data.total,
-        allDiariesInitialized: true // 无论如何，执行后都应标记为已初始化
+        allDiariesInitialized: true
       });
+      if(keyword && !type){
+        console.log('只有关键词没有类型')
+      }
     } catch (err: any) {
       console.error('获取全部日记失败 fetchAllDiaries failed:', err);
       set({
