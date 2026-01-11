@@ -9,6 +9,7 @@ export interface Diary {
   };
   location_name:string;
   created_time: string;
+  entry_type: string;
 }
 
 export interface GroupedPoint {

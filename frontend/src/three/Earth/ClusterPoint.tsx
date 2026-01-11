@@ -5,6 +5,30 @@ import * as THREE from 'three';
 import { GroupedPoint, Diary } from './types';
 import { useSpring, a, Interpolation } from '@react-spring/three';
 
+// ===================== 1. 共享资源 (静态提取) =====================
+// 将几何体和材质提取出来，所有组件共用一份内存
+// 半径设为 1，方便后续通过 scale 属性控制大小
+const sharedGeometry = new THREE.SphereGeometry(1, 16, 16);
+
+// 基础材质
+const clusterMaterial = new THREE.MeshStandardMaterial({
+  color: '#ff4444',
+  emissive: '#ff4444',
+  emissiveIntensity: 0.8,
+});
+
+const spiderItemMaterial = new THREE.MeshStandardMaterial({
+  color: '#ff8800',
+  emissive: '#ff8800',
+  emissiveIntensity: 0.6,
+});
+
+// 不可见的点击热区材质
+const hitBoxMaterial = new THREE.MeshBasicMaterial({
+  transparent: true,
+  opacity: 0,
+});
+
 type Props = {
   point: GroupedPoint;
   isExpanded: boolean;
@@ -20,7 +44,6 @@ type Props = {
 };
 
 const AnimatedLine = a(Line);
-
 const AnimatedGroup = a.group as React.FC<any>;
 
 type SpiderfiedItemProps = {
@@ -30,17 +53,20 @@ type SpiderfiedItemProps = {
   handleClick: (e: any, pathId: number) => void;
 };
 
-// 单个散开的日记点 (此组件无需修改)
-function SpiderfiedItem({ diary, position, earthMeshRef, handleClick }: SpiderfiedItemProps) {
+// 使用 React.memo 避免不必要的重渲染
+const SpiderfiedItem = React.memo(function SpiderfiedItem({ diary, position, earthMeshRef, handleClick }: SpiderfiedItemProps) {
   const [isLabelHovered, setIsLabelHovered] = useState(false);
   const { scale } = useSpring({ scale: isLabelHovered ? 1.2 : 1 });
 
   return (
     <AnimatedGroup position={position} scale={scale}>
-      <mesh onClick={(e) => handleClick(e, diary.id)}>
-        <sphereGeometry args={[0.02, 16, 16]} />
-        <meshStandardMaterial color="#ff8800" emissive="#ff8800" emissiveIntensity={0.6} />
-      </mesh>
+      {/* 使用共享几何体和材质，通过 scale 控制大小 (0.02) */}
+      <mesh
+        geometry={sharedGeometry}
+        material={spiderItemMaterial}
+        scale={0.02}
+        onClick={(e) => handleClick(e, diary.id)}
+      />
       <Html
         position={[0, 0.05, 0]}
         distanceFactor={8}
@@ -62,21 +88,21 @@ function SpiderfiedItem({ diary, position, earthMeshRef, handleClick }: Spiderfi
       </Html>
     </AnimatedGroup>
   );
-}
+});
 
-export function ClusterPoint({
-                               point,
-                               isExpanded,
-                               isMobile,
-                               isHovered,
-                               visualPointSize,
-                               hitBoxSize,
-                               earthMeshRef,
-                               handleClick,
-                               handlePointerEnter,
-                               handlePointerLeave,
-                               onClusterClick,
-                             }: Props) {
+export const ClusterPoint = React.memo(function ClusterPoint({
+                                                               point,
+                                                               isExpanded,
+                                                               isMobile,
+                                                               isHovered,
+                                                               visualPointSize,
+                                                               hitBoxSize,
+                                                               earthMeshRef,
+                                                               handleClick,
+                                                               handlePointerEnter,
+                                                               handlePointerLeave,
+                                                               onClusterClick,
+                                                             }: Props) {
   const shouldShowLabel = isMobile ? true : isHovered && !isExpanded;
 
   const spiderfiedPositions = useMemo(() => {
@@ -110,23 +136,13 @@ export function ClusterPoint({
     config: { tension: 200, friction: 20 },
   });
 
-  // ===================== 核心修改点 =====================
-  // 1. 为什么这样修改:
-  //    - 修复 Bug: 原始代码的 `isExpanded && ...` 写法虽然标准，但 Bug 的存在说明它在当前场景下没有生效。
-  //      我们将条件判断逻辑提前，用一个变量 `spiderfiedContent` 来存储结果。
-  //      如果 `isExpanded` 为 false，`spiderfiedContent` 就是 `null`，确保绝对不会渲染任何子项。
-  //      这使得渲染逻辑更加明确和健壮，彻底杜绝了子项在收起状态下被错误渲染的可能性。
-  //    - 性能优化: 当集群收起时 (`isExpanded` 为 false)，我们不再执行 `map` 循环和内部所有的动画计算。
-  //      在原始代码中，即使 `isExpanded` 为 false，`map` 函数和内部的 `t.to(...)` 仍然会被创建，只是最终结果被 `&&` 丢弃，造成了不必要的计算开销。
   let spiderfiedContent = null;
   if (isExpanded) {
     spiderfiedContent = spiderfiedPositions.map((spiderPos, index) => {
       const diary = point.diaries[index];
-
       const animatedPosition = t.to(val =>
         new THREE.Vector3().lerpVectors(point.position, spiderPos, val)
       );
-
       const animatedPoints = t.to(val => {
         const interpolatedPos = new THREE.Vector3().lerpVectors(point.position, spiderPos, val);
         return [point.position, interpolatedPos];
@@ -151,30 +167,42 @@ export function ClusterPoint({
       );
     });
   }
-  // ===================== 修改结束 =====================
+
+  // 动态计算发光强度，避免创建新材质
+  // 注意：如果想完全避免材质切换，可以使用 InstancedMesh (见 Earth.tsx 优化)
+  // 这里为了保持 ClusterPoint 的独立性，我们使用 props 控制
+  const emissiveIntensity = !isMobile && isHovered ? 0.8 : 0;
+  const emissiveColor = !isMobile && isHovered ? '#ff4444' : '#ffffff';
 
   return (
     <group>
-      {/* 集群中心点 */}
       <group
         position={point.position.toArray()}
         onPointerEnter={() => !isExpanded && handlePointerEnter(point.key)}
         onPointerLeave={() => !isExpanded && handlePointerLeave()}
       >
+        {/* 热区 Mesh */}
         <mesh
           visible={false}
           onClick={() => onClusterClick(point.key)}
-        >
-          <sphereGeometry args={[hitBoxSize, 8, 8]} />
-          <meshBasicMaterial transparent opacity={0} />
-        </mesh>
+          geometry={sharedGeometry}
+          material={hitBoxMaterial}
+          scale={hitBoxSize} // 使用 scale 控制大小
+        />
 
-        <mesh>
-          <sphereGeometry args={[visualPointSize * 1.2, 16, 16]} />
+        {/* 可视化 Mesh */}
+        <mesh
+          geometry={sharedGeometry}
+          scale={visualPointSize * 1.2}
+          onClick={() => onClusterClick(point.key)}
+        >
+          {/* 这里我们仍然需要独立的 Material 来处理 hover 状态的颜色变化
+               如果想进一步优化，需要将 hover 状态提升到 Earth.tsx 并使用 Instancing
+           */}
           <meshStandardMaterial
             color="#ff4444"
-            emissive={!isMobile && isHovered ? '#ff4444' : '#ffffff'}
-            emissiveIntensity={!isMobile && isHovered ? 0.8 : 0}
+            emissive={emissiveColor}
+            emissiveIntensity={emissiveIntensity}
           />
         </mesh>
 
@@ -199,8 +227,7 @@ export function ClusterPoint({
         )}
       </group>
 
-      {/* 蜘蛛化展开的点和线 (现在使用变量) */}
       {spiderfiedContent}
     </group>
   );
-}
+});
