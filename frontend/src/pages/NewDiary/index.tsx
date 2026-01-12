@@ -1,18 +1,21 @@
 // frontend/src/pages/NewDiary/index.tsx
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
-import {useSearchParams, useNavigate} from 'react-router-dom'; // 引入 useSearchParams
+import {useSearchParams, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 import DesktopLayout from './layouts/DesktopLayout';
 import MobileLayout from './layouts/MobileLayout';
 import {useFormData} from './hooks/useFormData';
 import {usePhotoDragSort} from './hooks/usePhotoDragSort';
 import {useCloudinaryUpload} from './hooks/useCloudinaryUpload';
-import {useDiarySubmission} from '@/hooks/useDiarySubmission'; // 引入新的 Hook
-import {useTravelStore} from '@/store/useTravelStore'; // 引入 Store
+import {useDiarySubmission} from '@/hooks/useDiarySubmission';
+import {useTravelStore} from '@/store/useTravelStore';
 import {Props, LocationResult, FormData as FormDataT} from './types';
 import UploadFailedDialog from './components/UploadFailedDialog';
 import Loading from "../../components/Loading";
+import {generateDiaryDraft} from '@/services/ai'; // 导入 API
+import AIDiaryDialog from './components/AIDiaryDialog'; // 导入 Dialog
+import {Sparkles} from 'lucide-react';
 
 const INITIAL_FORM_DATA: FormDataT = {
   title: '',
@@ -30,7 +33,7 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
   const {t} = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const diaryId = searchParams.get('id'); // 获取 URL 中的 id
+  const diaryId = searchParams.get('id');
 
   // --- 内部状态和 Hooks ---
   const currentDiary = useTravelStore(state => state.currentDiary)
@@ -56,6 +59,7 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
   const [isRetryingFailedPhotos, setIsRetryingFailedPhotos] = useState(false);
   const [userAction, setUserAction] = useState<'retry' | 'skip' | null>(null);
   const [isWaitingForUserAction, setIsWaitingForUserAction] = useState(false);
+  const [showAIDialog, setShowAIDialog] = useState(false);
 
   const formDataRef = useRef(formData);
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
           // --- 核心修复逻辑 ---
           // 1. 优先从 store 中获取 currentDiary
           let diaryDetail = currentDiary;
-          console.log('进入编辑页面 -- diaryDetail',diaryDetail)
+          console.log('进入编辑页面 -- diaryDetail', diaryDetail)
           // // 2. 如果 store 中没有数据（或者 id 不匹配），则通过 API 获取
           if (!diaryDetail || diaryDetail.id !== Number(diaryId)) {
             console.log(`[Edit Mode] Store 中无数据或 ID 不匹配，从 API 获取详情...`);
@@ -431,6 +435,7 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
     isUploading,
     loading: isSubmitting, // 传递 isSubmitting 状态给 Footer
     isEditMode: !!diaryId, // 新增一个 prop 告诉子组件是编辑模式
+    onOpenAI: () => setShowAIDialog(true),
   };
 
   // --- 渲染逻辑 ---
@@ -445,9 +450,50 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
     );
   };
 
+  // 新增：处理 AI 生成逻辑
+  const handleAIGenerate = async (prompt: string) => {
+    try {
+      const data = await generateDiaryDraft(prompt);
+      console.log('AI 生成的数据:', data);
+
+      const newFormData: FormDataT = {
+        ...formData,
+        title: data.title,
+        location: data.location,
+        coordinates: data.coordinates,
+        dateStart: data.dateStart,
+        dateEnd: data.dateEnd,
+        transportation: data.transportation,
+        content: data.content,
+        type: 'visited',
+      };
+
+      setFormData(newFormData);
+
+      // 如果有坐标，显示地图预览
+      if (data.coordinates) {
+        setShowMapPreview(true);
+      }
+
+      toast.success(t('ai.AI diary generated successfully'));
+    } catch (error) {
+      console.error('AI Generation Failed:', error);
+      toast.error(t('ai.Generation failed'));
+      throw error;
+    }
+  };
+
   return (
     <>
       {renderContent()}
+
+      {/* 新增：AI Dialog */}
+      <AIDiaryDialog
+        isOpen={showAIDialog}
+        onClose={() => setShowAIDialog(false)}
+        onGenerate={handleAIGenerate}
+        dark={dark}/>
+
 
       {/* 失败图片对话框 - 使用条件渲染 */}
       {showFailedPhotosDialog && (

@@ -2,8 +2,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
-from app.services.ai_service import get_travel_advice
 import logging
+from app.services.ai_service import get_travel_advice, generate_diary_draft
 
 # 获取 logger
 logger = logging.getLogger(__name__)
@@ -35,3 +35,21 @@ async def chat_with_ai(request: ChatRequest):
   except Exception as e:
     logger.error(f"路由层处理 AI 请求失败: {str(e)}", exc_info=True)
     raise HTTPException(status_code=500, detail="AI Service Error")
+
+
+class GenerateDiaryRequest(BaseModel):
+  prompt: str
+@router.post("/generate-diary")
+async def generate_diary(request: GenerateDiaryRequest):
+  logger.info(f"收到生成日记请求: {request.prompt[:50]}...")
+
+  try:
+    data = await generate_diary_draft(request.prompt)
+
+    if data is None:
+      raise HTTPException(status_code=500, detail="Failed to generate valid JSON from AI")
+
+    return data
+  except Exception as e:
+    logger.error(f"生成日记路由错误: {str(e)}", exc_info=True)
+    raise HTTPException(status_code=500, detail=str(e))

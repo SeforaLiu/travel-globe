@@ -65,6 +65,28 @@ SYSTEM_INSTRUCTION = """
 
 """
 
+
+DIARY_GENERATION_SYSTEM_INSTRUCTION = """
+你是一个专业的旅行日记生成助手。
+你的任务是根据用户的简短描述，生成一篇结构化的旅行日记草稿。
+必须严格遵守以下规则：
+1. **输出格式**：必须且只能返回标准的 JSON 格式字符串，不要包含 markdown 标记（如 ```json ... ```）。
+2. **语言**：根据用户输入的语言生成对应语言的内容（如果用户输入中文/英语/意大利语，就生成中文/英语/意大利语）。
+3. **地理位置**：
+   - `location` 字段必须是 Google Maps 上能找到的标准地名（如果用户输入中文/英语/意大利语，location也是尽量中文/英语/意大利语）。
+   - `coordinates` 必须包含 `lat` (纬度) 和 `lng` (经度)，且必须是该地点的真实中心坐标，精确到小数点后4位。
+4. **JSON 结构**：
+   {
+     "title": "吸引人的日记标题",
+     "dateStart": "YYYY-MM-DD (如果用户未指定日期，请使用 Prompt 中提供的'参考日期'，如果未提供参考日期则默认为今天)",
+     "dateEnd": "YYYY-MM-DD (同上)",
+     "location": "中国广东省广州市",
+     "coordinates": {"lat": 23.1290, "lng": 113.2643 },
+     "transportation": "交通方式描述 (简洁即可, 10个字以内)",
+     "content": "日记正文，包含行程亮点、感受等，分段落，大概250字左右，可以加入适当的emoji"
+   }
+"""
+
 # 你可以在这里添加其他与AI服务相关的常量，例如：
 DEFAULT_MODEL_NAME = "gemini-2.5-flash"
 # MAX_RETRIES = 3

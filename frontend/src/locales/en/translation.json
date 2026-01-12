@@ -8,7 +8,8 @@
     "submit": "submit",
     "confirm": "confirm",
     "search": "search",
-    "reset": "reset"
+    "reset": "reset",
+    "loading": "loading"
   },
   "title": "Travel Globe",
   "mood": "Mood",
@@ -85,6 +86,14 @@
     "placeholder": "my next trip will be...",
     "error": "AI connection temporarily unavailable",
     "mini window": "compact window view",
-    "full window": "full window view"
+    "full window": "full window view",
+    "diary generator name": "AI Travel Diary Generator (Beta)",
+    "describe your travel plans": "describe your travel plans / record your journey",
+    "diary example":"Example: Spent 3 days in Guangzhou, enjoyed dim sum, the BBQ pork buns were delicious...",
+    "overwrite warning": "Warning! AI-generated draft will overwrite your existing content!",
+    "more details tip": "Tip: More details (days, locations, interests/activities) make the diary more accurate",
+    "Generate Draft Diary": "generate draft diary",
+    "AI diary generated successfully": "AI diary generated successfully! You can continue editing",
+    "Generation failed": "generation failed, please try again later"
   }
 }

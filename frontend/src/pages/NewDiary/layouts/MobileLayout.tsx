@@ -7,6 +7,7 @@ import ContentSection from '../sections/ContentSection';
 import PhotoUploadSection from '../sections/PhotoUploadSection';
 import FooterSection from '../sections/FooterSection';
 import {FormData} from '../types';
+import {Sparkles} from "lucide-react";
 
 type Props = {
   dark: boolean;
@@ -32,7 +33,8 @@ type Props = {
   handleTouchEnd: () => void;
   isUploading: boolean;
   loading?:boolean;
-  isEditMode?:boolean
+  isEditMode?:boolean;
+  onOpenAI?: () => void;
 };
 
 const MobileLayout: React.FC<Props> = ({
@@ -58,14 +60,22 @@ const MobileLayout: React.FC<Props> = ({
                                          showMapPreview,
                                          isUploading,
                                          loading,
-                                         isEditMode
+                                         isEditMode,
+                                         onOpenAI
                                        }) => {
   return (
     <div className={`fixed inset-0 z-50 ${dark ? 'bg-gray-900' : 'bg-white'}`}>
       <div className={`flex flex-col h-full w-full ${dark ? 'bg-gray-900' : 'bg-white'}`}>
         <div
           className={`flex justify-between items-center p-4 ${dark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${dark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">新增日记/攻略</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold ...">新增日记/攻略</h2>
+            {onOpenAI && !isEditMode && (
+              <button onClick={onOpenAI} className="...">
+                <Sparkles size={16} className="text-blue-500"/>
+              </button>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"

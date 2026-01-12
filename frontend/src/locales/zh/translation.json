@@ -8,7 +8,8 @@
     "submit": "提交",
     "confirm": "确定",
     "search": "搜索",
-    "reset": "重置"
+    "reset": "重置",
+    "loading": "加载中"
   },
   "title": "旅行地球",
   "mood": "心情球",
@@ -85,6 +86,14 @@
     "placeholder": "和小蜜蜂聊聊你的旅行吧...",
     "error": "AI 暂时无法连接",
     "mini window": "恢复小窗",
-    "full window": "大窗模式"
+    "full window": "大窗模式",
+    "diary generator name": "AI 生成旅行日记 (Beta)",
+    "describe your travel plans": "描述你的旅行计划 / 记录你的旅程 ...",
+    "diary example":"例如：在广州玩了3天，早茶喝了，叉烧包美味...",
+    "overwrite warning": "请注意! AI生成的草稿将会覆盖你已经输入的内容!",
+    "more details tip": "提示：描述越详细（包含天数、地点、兴趣/活动），生成的日记越准确",
+    "Generate Draft Diary": "生成日记草稿",
+    "AI diary generated successfully": "AI 日记生成成功！你可以继续修改内容",
+    "Generation failed": "生成失败，请稍后重试"
   }
 }

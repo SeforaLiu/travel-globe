@@ -3,7 +3,10 @@ import os
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import logging
-from app.constants.ai_constants import SYSTEM_INSTRUCTION, DEFAULT_MODEL_NAME
+from app.constants.ai_constants import SYSTEM_INSTRUCTION, DEFAULT_MODEL_NAME, DIARY_GENERATION_SYSTEM_INSTRUCTION
+import json
+import re
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -76,3 +79,43 @@ async def get_travel_advice(frontend_messages: list):
       return "抱歉，连接 AI 服务器超时，请检查网络设置。"
 
     return f"抱歉，AI 暂时有点累，请稍后再试。(Error: {str(e)[:50]}...)"
+
+
+async def generate_diary_draft(user_prompt: str):
+  """
+  根据用户描述生成日记草稿 JSON
+  """
+  if not GOOGLE_API_KEY:
+    return None
+  try:
+    # 使用专门的 System Instruction 初始化模型
+    model = genai.GenerativeModel(
+      model_name=DEFAULT_MODEL_NAME,
+      system_instruction=DIARY_GENERATION_SYSTEM_INSTRUCTION
+    )
+    # [新增] 获取当前日期
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    # [修改] 提示词增强，将当前日期注入到 Prompt 中
+    # 告诉 AI："今天是 {today_str}，如果用户没说日期，就用这个。"
+    full_prompt = (
+      f"参考日期(Today's Date): {today_str}。\n"
+      f"请根据以下描述生成旅行日记 JSON：\n{user_prompt}"
+    )
+
+    logger.info(f"发送给AI的Prompt包含日期: {today_str}") # [建议] 添加日志方便调试
+    response = await model.generate_content_async(full_prompt)
+    text = response.text
+
+    # ... (后面的清理和解析代码保持不变) ...
+    text = re.sub(r'^```json\s*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^```\s*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'\s*```$', '', text, flags=re.MULTILINE)
+    try:
+      data = json.loads(text)
+      return data
+    except json.JSONDecodeError:
+      logger.error(f"AI 返回了非法的 JSON: {text}")
+      return None
+  except Exception as e:
+    logger.error(f"生成日记失败: {str(e)}", exc_info=True)
+    raise e

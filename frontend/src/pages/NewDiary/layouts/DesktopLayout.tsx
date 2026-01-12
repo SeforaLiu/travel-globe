@@ -34,6 +34,7 @@ type Props = {
   isUploading:boolean;
   loading:boolean;
   isEditMode: boolean;
+  onOpenAI?: () => void;
 };
 
 const DesktopLayout: React.FC<Props> = ({
@@ -59,12 +60,13 @@ const DesktopLayout: React.FC<Props> = ({
                                           showMapPreview,
                                           isUploading,
                                           loading,
-                                          isEditMode
+                                          isEditMode,
+                                          onOpenAI
                                         }) => {
   return (
     <div className={`ml-10 mr-8 h-full p-6 overflow-hidden ${dark ? "bg-black" : "bg-white"}`}>
       <div className={`max-w-full mx-auto ${dark ? "bg-gray-900" : "bg-white"} rounded-xl shadow-lg overflow-hidden`}>
-        <HeaderSection dark={dark} onClose={onClose}  isEditMode={isEditMode}/>
+        <HeaderSection dark={dark} onClose={onClose}  isEditMode={isEditMode} onOpenAI={onOpenAI}/>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto
         scrollbar-custom" style={{maxHeight: 'calc(100vh - 120px)'}}>

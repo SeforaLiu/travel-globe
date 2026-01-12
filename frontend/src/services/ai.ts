@@ -7,12 +7,28 @@ export interface ChatMessage {
   // _system:string
 }
 
+export interface AIDiaryResponse {
+  title: string;
+  dateStart: string;
+  dateEnd: string;
+  location: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  transportation: string;
+  content: string;
+}
+
 export const sendChatMessage = async (messages: ChatMessage[]) => {
-  // 2. 使用 api.post
-  // api.ts 的 baseURL 是 '/api'
-  // ai.py 的路由是 prefix='/ai' + '/chat'
-  // 最终请求 URL 会自动拼接为: /api/ai/chat
   const response = await api.post('/ai/chat', { messages }, {
+    timeout: 60000
+  });
+  return response.data;
+};
+
+export const generateDiaryDraft  = async (prompt: string):Promise<AIDiaryResponse> => {
+  const response = await api.post('/ai/generate-diary', { prompt }, {
     timeout: 60000
   });
   return response.data;

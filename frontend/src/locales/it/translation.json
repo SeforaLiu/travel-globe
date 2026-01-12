@@ -8,7 +8,8 @@
     "submit": "applica",
     "confirm": "conferma",
     "search": "cerca",
-    "reset": "reimposta"
+    "reset": "reimposta",
+    "loading": "loading"
   },
   "title": "Mappa dei Viaggi",
   "mood": "Mood",
@@ -85,6 +86,14 @@
     "placeholder": "il prossimo viaggio sarebbe...",
     "error": "Connessione AI temporaneamente non disponibile",
     "mini window": "finestra compatta",
-    "full window": "finestra espansa"
+    "full window": "finestra espansa",
+    "diary generator name": "Generatore di diari AI (Beta)",
+    "describe your travel plans": "Descrivi i tuoi piani di viaggio o scrivi il tuo percorso ...",
+    "diary example":"Esempio: 3 giorni a Guangzhou, preso dim sum, i panini al maiale erano deliziosi...",
+    "overwrite warning": "Attenzione! La bozza generata dall'AI sovrascriverà il contenuto esistente!",
+    "more details tip": "suggerimento: Più dettagli (giorni, luoghi, interessi/attività) rendono il diario più preciso",
+    "Generate Draft Diary": "genera bozza di diario",
+    "AI diary generated successfully": "Diario AI generato con successo! Puoi continuare a modificare",
+    "Generation failed": "Generazione fallita, riprova più tardi"
   }
 }
