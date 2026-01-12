@@ -78,5 +78,13 @@
   "cannot find this diary": "找不到相关内容",
   "validation": {
     "fillRequiredFields": "请填写标题、并选择地点、是否去过"
+  },
+  "ai": {
+    "name": "AI 助手小蜜蜂",
+    "helloMsg": "你好! 我是你的旅游伙伴小蜜蜂, 想去哪里玩呀? 😊",
+    "placeholder": "和小蜜蜂聊聊你的旅行吧...",
+    "error": "AI 暂时无法连接",
+    "mini window": "恢复小窗",
+    "full window": "大窗模式"
   }
 }

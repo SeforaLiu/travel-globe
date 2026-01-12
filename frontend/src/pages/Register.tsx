@@ -1,9 +1,10 @@
 // frontend/src/pages/Register.tsx
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useNavigate} from 'react-router-dom';
 import api from '../services/api';
 import {toast, Toaster} from 'sonner';
+import {useTravelStore} from "@/store/useTravelStore";
 
 type Props = {
   dark: boolean;
@@ -18,6 +19,12 @@ const Register: React.FC<Props> = ({dark, isMobile}) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isLoggedIn = useTravelStore(state => state.isLoggedIn);
+
+  useEffect(() => {
+    if(isLoggedIn) navigate('/')
+  }, []);
 
   const validateForm = () => {
     if (username.length < 6) {

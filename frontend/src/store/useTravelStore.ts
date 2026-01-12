@@ -29,6 +29,7 @@ interface TravelState {
   // --- UI 状态 ---
   isMobile: boolean;
   darkMode: boolean;
+  showLeftRightButtonsMobile:boolean;
 
   // --- Google Maps API 状态 ---
   isGoogleMapsLoading: boolean; // 新增：标记 API 是否正在加载
@@ -60,6 +61,7 @@ interface TravelState {
   setIsMobile: (isMobile: boolean) => void;
   toggleDarkMode: () => void;
   setDarkMode: (isDark: boolean) => void;
+  setShowLeftRightButtonsMobile: (show: boolean) => void;
 
   // 用户相关
   checkAuth: () => Promise<void>;
@@ -84,6 +86,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   user: null,
   isMobile: false,
   darkMode: false,
+  showLeftRightButtonsMobile: false,
   initialized:false,
   allDiariesInitialized:false,
 
@@ -97,6 +100,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   setSearchKeyword: (keyword) => set({ searchKeyword: keyword }),
   activeTab:'',
   setActiveTab: (tab) => set({ activeTab: tab }),
+  setShowLeftRightButtonsMobile:(show) => set({showLeftRightButtonsMobile:show}),
 
   // --- 动作实现 ---
 

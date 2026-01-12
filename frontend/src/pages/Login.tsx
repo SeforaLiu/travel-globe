@@ -1,5 +1,5 @@
 // frontend/src/pages/Login.tsx
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useNavigate} from 'react-router-dom';
 import api from '../services/api';
@@ -19,6 +19,11 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const checkAuth = useTravelStore(state => state.checkAuth);
+  const isLoggedIn = useTravelStore(state => state.isLoggedIn);
+
+  useEffect(() => {
+    if(isLoggedIn) navigate('/')
+  }, []);
 
   const validateForm = () => {
     if (username.length < 6) {

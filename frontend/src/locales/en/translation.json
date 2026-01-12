@@ -78,5 +78,13 @@
   "cannot find this diary": "cannot find this diary",
   "validation": {
     "fillRequiredFields": "Please fill in the title, and select a location and diary type"
+  },
+  "ai": {
+    "name": "AI Assistant Little Bee",
+    "helloMsg": "Hi there! I'm your travel friend Little Bee, where would you like to go? 😊",
+    "placeholder": "my next trip will be...",
+    "error": "AI connection temporarily unavailable",
+    "mini window": "compact window view",
+    "full window": "full window view"
   }
 }

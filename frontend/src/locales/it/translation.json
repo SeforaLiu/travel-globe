@@ -78,5 +78,13 @@
   "cannot find this diary": "Questo diario non è stato trovato",
   "validation": {
     "fillRequiredFields": "Si prega di inserire il titolo, selezionare la località e il tipo di diario"
+  },
+  "ai": {
+    "name": "AI Assistente Ape Viaggiatrice",
+    "helloMsg": "Salve! Sono la tua amica ape viaggiatrice, dove ti piacerebbe andare? 😊",
+    "placeholder": "il prossimo viaggio sarebbe...",
+    "error": "Connessione AI temporaneamente non disponibile",
+    "mini window": "finestra compatta",
+    "full window": "finestra espansa"
   }
 }

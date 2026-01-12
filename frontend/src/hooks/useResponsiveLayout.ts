@@ -1,13 +1,14 @@
 // src/hooks/useResponsiveLayout.ts
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import {useTravelStore} from "@/store/useTravelStore";
 
 export const useResponsiveLayout = () => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
-  const [showLeftRightButtonsMobile, setShowLeftRightButtonsMobile] = useState(true);
+  const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -39,7 +40,5 @@ export const useResponsiveLayout = () => {
     setShowSidebar,
     showRightPanel,
     setShowRightPanel,
-    showLeftRightButtonsMobile,
-    setShowLeftRightButtonsMobile,
   };
 };

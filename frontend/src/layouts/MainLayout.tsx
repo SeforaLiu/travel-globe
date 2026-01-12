@@ -14,15 +14,16 @@ interface Props {
 }
 
 export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout }) => {
+  const showLeftRightButtonsMobile = useTravelStore(state => state.showLeftRightButtonsMobile)
+  const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
+
   const { isLoggedIn } = useTravelStore();
   const {
     isMobile,
     showSidebar,
     setShowSidebar,
     showRightPanel,
-    setShowRightPanel,
-    showLeftRightButtonsMobile,
-    setShowLeftRightButtonsMobile,
+    setShowRightPanel
   } = useResponsiveLayout();
 
   const sidebarDayBg = '#c5d6f0';
@@ -79,15 +80,15 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout })
       </div>
 
       {/* 右侧面板 */}
-      {(showRightPanel || !isMobile) && (
-        <div
-          className={`${
-            isMobile ? 'absolute inset-y-0 right-0 z-40 w-64' : 'w-[10%] flex-shrink-0'
-          } bg-amber-50 dark:bg-gray-900 transition-all duration-300`}
-        >
-          <RightPanel />
-        </div>
-      )}
+      {/*{(showRightPanel || !isMobile) && (*/}
+      {/*  <div*/}
+      {/*    className={`${*/}
+      {/*      isMobile ? 'absolute inset-y-0 right-0 z-40 w-64' : 'w-[10%] flex-shrink-0'*/}
+      {/*    } bg-amber-50 dark:bg-gray-900 transition-all duration-300`}*/}
+      {/*  >*/}
+      {/*    <RightPanel />*/}
+      {/*  </div>*/}
+      {/*)}*/}
 
       {/* 移动端遮罩层 */}
       {isMobile && (showSidebar || showRightPanel) && (
