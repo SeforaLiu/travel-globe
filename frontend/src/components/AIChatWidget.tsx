@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import {sendChatMessage, ChatMessage} from '@/services/ai';
 import {useTranslation} from 'react-i18next';
 import {useTravelStore} from "@/store/useTravelStore";
-import {useLocation} from "react-router-dom";
+import {useResponsiveLayout} from "@/hooks/useResponsiveLayout";
 
 interface AIChatWidgetProps {
   isMobile: boolean;
@@ -15,9 +15,10 @@ interface AIChatWidgetProps {
 
 export const AIChatWidget: React.FC<AIChatWidgetProps> = ({isMobile, dark}) => {
   const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
+  const showSidebar = useTravelStore(state => state.showSidebar)
+
 
   const {t, ready} = useTranslation();
-  const location = useLocation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -234,6 +235,8 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({isMobile, dark}) => {
     }
 
     setIsOpen(true);
+    setShowLeftRightButtonsMobile(false)
+
   };
 
   // --- 渲染：悬浮按钮 ---
@@ -329,7 +332,9 @@ export const AIChatWidget: React.FC<AIChatWidgetProps> = ({isMobile, dark}) => {
               setWinPos({x: 0, y: 0});
               setIsExpanded(false);
               setMessages([]);
-              if (location.pathname === '/') setShowLeftRightButtonsMobile(true)
+              if(!showSidebar){
+              setShowLeftRightButtonsMobile(true)
+              }
             }}
             className="p-1 hover:bg-white/20 rounded-full transition"
           >

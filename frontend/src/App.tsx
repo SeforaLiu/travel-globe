@@ -14,7 +14,6 @@ import NewDiary from '@/pages/NewDiary';
 import DiaryView from '@/pages/DiaryView';
 import {DiaryManager} from '@/components/DiaryManager';
 import {LogoutDialog} from "@/components/LogoutDialog";
-import {AIChatWidget} from "@/components/AIChatWidget";
 
 export default function App() {
   const location = useLocation();
@@ -82,8 +81,6 @@ export default function App() {
         richColors
         visibleToasts={3}
       />
-
-      {location.pathname === '/' ? <AIChatWidget isMobile={isMobile} dark={darkMode} /> : null}
 
       <Routes>
         <Route element={<MainLayout dark={darkMode} setDark={setDarkMode} handleClickLogout={handleClickLogout}/>}>

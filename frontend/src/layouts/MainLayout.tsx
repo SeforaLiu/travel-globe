@@ -6,6 +6,7 @@ import RightPanel from '@/components/RightPanel';
 import { MobileToggleButtons } from '@/components/MobileToggleButtons';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useTravelStore } from '@/store/useTravelStore';
+import {AIChatWidget} from "@/components/AIChatWidget";
 
 interface Props {
   dark: boolean;
@@ -22,8 +23,6 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout })
     isMobile,
     showSidebar,
     setShowSidebar,
-    showRightPanel,
-    setShowRightPanel
   } = useResponsiveLayout();
 
   const sidebarDayBg = '#c5d6f0';
@@ -33,6 +32,8 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout })
 
   return (
     <div className="h-screen flex relative">
+      {location.pathname === '/' ? <AIChatWidget isMobile={isMobile} dark={dark} /> : null}
+
       {/* 移动端切换按钮 */}
       {isMobile && showLeftRightButtonsMobile && (
         <MobileToggleButtons
@@ -40,10 +41,10 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout })
             setShowSidebar(true);
             setShowLeftRightButtonsMobile(false);
           }}
-          onShowRightPanel={() => {
-            setShowRightPanel(true);
-            setShowLeftRightButtonsMobile(false);
-          }}
+          // onShowRightPanel={() => {
+          //   setShowRightPanel(true);
+          //   setShowLeftRightButtonsMobile(false);
+          // }}
         />
       )}
 
@@ -91,12 +92,11 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark,handleClickLogout })
       {/*)}*/}
 
       {/* 移动端遮罩层 */}
-      {isMobile && (showSidebar || showRightPanel) && (
+      {isMobile && (showSidebar) && (
         <div
           className="absolute inset-0 bg-black bg-opacity-50 z-30"
           onClick={() => {
             setShowSidebar(false);
-            setShowRightPanel(false);
             setShowLeftRightButtonsMobile(true);
           }}
         />

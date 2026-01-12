@@ -5,10 +5,10 @@ import { useTravelStore } from '@/store/useTravelStore';
 
 interface Props {
   onShowSidebar: () => void;
-  onShowRightPanel: () => void;
+  // onShowRightPanel: () => void;
 }
 
-export const MobileToggleButtons: React.FC<Props> = ({ onShowSidebar, onShowRightPanel }) => {
+export const MobileToggleButtons: React.FC<Props> = ({ onShowSidebar }) => {
   const location = useLocation();
   const isLoggedIn = useTravelStore((state) => state.isLoggedIn);
 
@@ -26,12 +26,12 @@ export const MobileToggleButtons: React.FC<Props> = ({ onShowSidebar, onShowRigh
         ☰
       </button>
 
-      <button
-        onClick={onShowRightPanel}
-        className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"
-      >
-        ✈️
-      </button>
+      {/*<button*/}
+      {/*  onClick={onShowRightPanel}*/}
+      {/*  className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border"*/}
+      {/*>*/}
+      {/*  ✈️*/}
+      {/*</button>*/}
     </>
   );
 };
