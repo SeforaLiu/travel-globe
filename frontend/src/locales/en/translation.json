@@ -94,6 +94,13 @@
     "more details tip": "Tip: More details (days, locations, interests/activities) make the diary more accurate",
     "Generate Draft Diary": "generate draft diary",
     "AI diary generated successfully": "AI diary generated successfully! You can continue editing",
-    "Generation failed": "generation failed, please try again later"
+    "Generation failed": "generation failed, please try again later",
+    "add mood": "add new mood",
+    "Share Travel Mood": "Record mood",
+    "add photos": "Add photo",
+    "send mood": "send travel mood",
+    "Failed to send mood": "Sending failed please try later",
+    "Mood sent successfully": "Your mood has been sent to the Mood Sphere!",
+    "Describe your mood now...": "What's on your mind?"
   }
 }

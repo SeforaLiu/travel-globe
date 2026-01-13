@@ -94,6 +94,13 @@
     "more details tip": "suggerimento: Più dettagli (giorni, luoghi, interessi/attività) rendono il diario più preciso",
     "Generate Draft Diary": "genera bozza di diario",
     "AI diary generated successfully": "Diario AI generato con successo! Puoi continuare a modificare",
-    "Generation failed": "Generazione fallita, riprova più tardi"
+    "Generation failed": "Generazione fallita, riprova più tardi",
+    "add mood": "aggiungi nuovo mood",
+    "Share Travel Mood": "condividi mood del viaggio",
+    "add photos": "aggiungi foto",
+    "send mood": "invia mood",
+    "Failed to send mood": "Invio fallito, riprova più tardi",
+    "Mood sent successfully": "Il tuo mood è stato inviato alla Sfera Mood!",
+    "Describe your mood now...": "Cosa hai in mente?"
   }
 }

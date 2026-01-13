@@ -32,6 +32,16 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
     }
   };
 
+  // 处理删除照片的逻辑
+  const handleRemovePhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    // 如果需要重置 input，防止选择同一张图片不触发 onChange
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async () => {
     if (!content.trim()) {
       toast.error(t('Content is required'));
@@ -62,17 +72,22 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
         ...photoData
       });
 
-      toast.success(t('Mood sent successfully'));
+      toast.success(t('ai.Mood sent successfully'));
       setContent('');
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      handleRemovePhoto();
       onClose();
     } catch (error) {
-      toast.error(t('Failed to send mood'));
+      toast.error(t('ai.Failed to send mood'));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleBack = ()=>{
+    setContent('');
+    handleRemovePhoto();
+    onClose();
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -82,9 +97,9 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-            {t('Share Travel Mood')}
+            {t('ai.Share Travel Mood')}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full">
+          <button onClick={handleBack} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full">
             <X size={20} />
           </button>
         </div>
@@ -94,65 +109,80 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           maxLength={120}
-          placeholder={t('Describe your mood now...')}
+          placeholder={t('ai.Describe your mood now...')}
           className={`w-full h-32 p-3 rounded-xl resize-none mb-2 focus:ring-2 focus:ring-pink-500 outline-none ${
             dark ? 'bg-gray-800 placeholder-gray-500' : 'bg-gray-100 placeholder-gray-400'
           }`}
         />
-        <div className="text-right text-xs text-gray-500 mb-4">
+
+        {/* Character Count */}
+        <div className="text-right text-xs text-gray-500 mb-3">
           {content.length}/120
         </div>
 
-        {/* Photo Preview */}
-        {previewUrl && (
-          <div className="relative mb-4 rounded-xl overflow-hidden h-32 w-full group">
-            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+        {/*
+           Requirement 1 & 2:
+           Add Photo Button - 单独一行，且只有在没有预览图时显示 (!previewUrl)
+        */}
+        {!previewUrl && (
+          <div className="mb-4">
             <button
-              onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
-              className="absolute top-2 right-2 bg-black/50 p-1 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors w-full justify-center border border-dashed ${
+                dark
+                  ? 'border-gray-700 hover:bg-gray-800 text-gray-300'
+                  : 'border-gray-300 hover:bg-gray-50 text-gray-600'
+              }`}
             >
-              <X size={14} />
+              <ImageIcon size={18} />
+              <span>{t('ai.add photos')}</span>
             </button>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-              dark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
-            }`}
-          >
-            <ImageIcon size={18} />
-            <span>{selectedFile ? t('Change Photo') : t('Add Photo')}</span>
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileSelect}
-          />
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleFileSelect}
+        />
 
-          <div className="flex gap-2">
+        {/* Photo Preview - 显示照片和删除按钮 */}
+        {previewUrl && (
+          <div className="relative mb-6 rounded-xl overflow-hidden w-full group border border-gray-200 dark:border-gray-700">
+            {/* 限制最大高度，防止弹窗过长 */}
+            <img src={previewUrl} alt="Preview" className="w-full max-h-64 object-cover" />
             <button
-              onClick={onClose}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                dark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-              }`}
+              onClick={handleRemovePhoto}
+              className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 p-1.5 rounded-full text-white transition-colors"
             >
-              {t('Cancel')}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !content.trim()}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-violet-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
-              {t('Send Mood')}
+              <X size={16} />
             </button>
           </div>
+        )}
+
+        {/*
+           Actions - Cancel 和 Send 在最下面，一左一右 (justify-between)
+        */}
+        <div className="flex justify-between items-center mt-2">
+          <button
+            onClick={handleBack}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              dark ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            {t('common.cancel')}
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !content.trim()}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-violet-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-pink-500/20"
+          >
+            {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+            {t('ai.send mood')}
+          </button>
         </div>
       </div>
     </div>

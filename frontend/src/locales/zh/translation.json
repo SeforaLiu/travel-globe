@@ -94,6 +94,13 @@
     "more details tip": "提示：描述越详细（包含天数、地点、兴趣/活动），生成的日记越准确",
     "Generate Draft Diary": "生成日记草稿",
     "AI diary generated successfully": "AI 日记生成成功！你可以继续修改内容",
-    "Generation failed": "生成失败，请稍后重试"
+    "Generation failed": "生成失败，请稍后重试",
+    "add mood": "添加新的心情",
+    "Share Travel Mood": "分享旅行心情",
+    "add photos": "添加照片",
+    "send mood": "发送心情",
+    "Failed to send mood": "发送心情失败请稍后再试",
+    "Mood sent successfully": "心情已经发送到心情球上啦",
+    "Describe your mood now...": "说说现在有什么想法..."
   }
 }
