@@ -3,7 +3,7 @@ import os
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import logging
-from app.constants.ai_constants import SYSTEM_INSTRUCTION, DEFAULT_MODEL_NAME, DIARY_GENERATION_SYSTEM_INSTRUCTION
+from app.constants.ai_constants import SYSTEM_INSTRUCTION, DEFAULT_MODEL_NAME, DIARY_GENERATION_SYSTEM_INSTRUCTION, MOOD_ANALYSIS_SYSTEM_INSTRUCTION
 import json
 import re
 from datetime import datetime
@@ -119,3 +119,32 @@ async def generate_diary_draft(user_prompt: str):
   except Exception as e:
     logger.error(f"生成日记失败: {str(e)}", exc_info=True)
     raise e
+
+async def analyze_mood_text(text: str):
+  """
+  分析心情文本，返回情感向量
+  """
+  if not GOOGLE_API_KEY:
+    # 默认中性
+    return {"mood_vector": 0.5, "mood_reason": "AI服务未配置"}
+
+  try:
+    model = genai.GenerativeModel(
+      model_name=DEFAULT_MODEL_NAME,
+      system_instruction=MOOD_ANALYSIS_SYSTEM_INSTRUCTION
+    )
+
+    response = await model.generate_content_async(text)
+    result_text = response.text
+
+    # 清理 JSON
+    result_text = re.sub(r'^```json\s*', '', result_text, flags=re.MULTILINE)
+    result_text = re.sub(r'^```\s*', '', result_text, flags=re.MULTILINE)
+    result_text = re.sub(r'\s*```$', '', result_text, flags=re.MULTILINE)
+
+    data = json.loads(result_text)
+    return data
+  except Exception as e:
+    logger.error(f"Mood Analysis Failed: {e}")
+    # 降级处理
+    return {"mood_vector": 0.5, "mood_reason": "分析失败"}

@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import api from '../services/api';
 import { DiarySummary, DiaryListResponse, DiaryDetail } from '@/types/diary';
+import { Mood, MoodCreatePayload } from '@/types/mood'
 
 // @ts-ignore
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
@@ -33,10 +34,15 @@ interface TravelState {
   showSidebar:boolean;
 
   // --- Google Maps API 状态 ---
-  isGoogleMapsLoading: boolean; // 新增：标记 API 是否正在加载
-  isGoogleMapsLoaded: boolean;  // 新增：标记 API 是否已成功加载
-  googleMapsError: string | null; // 新增：记录加载错误
+  isGoogleMapsLoading: boolean;
+  isGoogleMapsLoaded: boolean;
+  googleMapsError: string | null;
   googleMapsApiLang: string | null;
+
+  // --- 心情球 ----
+  moods: Mood[]; 
+  fetchMoods: () => Promise<void>; 
+  createMood: (data: MoodCreatePayload) => Promise<void>; 
 
   // --- 动作 (Actions) ---
   // A. 获取分页列表
@@ -48,7 +54,7 @@ interface TravelState {
   // C. 获取详情
   fetchDiaryDetail: (id: number) => Promise<DiaryDetail>;
   // D. 更新日记 (包含局部状态更新)
-  updateDiary: (id: number, data: any) => Promise<any>; // 新增
+  updateDiary: (id: number, data: any) => Promise<any>; 
   clearCurrentDiary: () => void;
   // E. 删除日记
   deleteDiary: (id: number) => Promise<void>;
@@ -70,7 +76,7 @@ interface TravelState {
   logout: () => void;
 
   // Google Maps Action
-  loadGoogleMaps: (lang: string) => Promise<void>; // 新增：加载 Google Maps API 的 Action
+  loadGoogleMaps: (lang: string) => Promise<void>;
 }
 
 export const useTravelStore = create<TravelState>((set, get) => ({
@@ -106,7 +112,27 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   setShowLeftRightButtonsMobile:(show) => set({showLeftRightButtonsMobile:show}),
   setShowSidebar:(show) => set({showSidebar:show}),
 
-  // --- 动作实现 ---
+  moods: [],
+
+  fetchMoods: async () => {
+    try {
+      const res = await api.get<Mood[]>('/moods');
+      set({ moods: res.data });
+    } catch (err) {
+      console.error("Fetch moods failed", err);
+    }
+  },
+
+  createMood: async (data) => {
+    try {
+      await api.post('/moods', data);
+      // 创建成功后刷新列表
+      await get().fetchMoods();
+    } catch (err) {
+      console.error("Create mood failed", err);
+      throw err;
+    }
+  },
 
   // 加载 Google Maps API 的实现
   loadGoogleMaps: (lang) => {

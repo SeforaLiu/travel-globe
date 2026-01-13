@@ -58,7 +58,6 @@ class PhotoBase(SQLModel):
     bytes: int = Field(default=0)
     original_filename: Optional[str] = None
     created_at: Optional[datetime] = None
-    # [新增] 添加验证器，使模型更健壮
     # 这个验证器确保在验证数据时，如果 bytes 字段为 None，则自动替换为 0
     # 这可以防止前端在更新时未提供 bytes 字段而导致的验证失败
     @field_validator('bytes', mode='before')
@@ -105,7 +104,7 @@ class PhotoDetail(PhotoBase):
 # ==================== 日记相关模型 ====================
 class EntryBase(SQLModel):
     title: str
-    # [新增] 按照需求，添加 content 字段用于存储日记正文
+    # 添加 content 字段用于存储日记正文
     content: Optional[str] = Field(default=None, sa_column=Column(Text))
     location_name: str
     date_start: Optional[date] = None
@@ -149,7 +148,7 @@ class Entry(EntryBase, table=True):
 
     # 关系
     user: "User" = Relationship(back_populates="entries")
-    # [修改] 完善 Entry -> Photo 的关系，并设置级联删除
+    # 完善 Entry -> Photo 的关系，并设置级联删除
     photos: List["Photo"] = Relationship(
         back_populates="entry",
         sa_relationship_kwargs={
@@ -175,9 +174,7 @@ class EntryUpdate(BaseModel):
     location_id: Optional[int] = None
     photos: Optional[List[PhotoCreate]] = None
 
-# --- 以下是为满足新需求定义的新模型 ---
-
-# [新增] 需求 1 & 3: 新增和详情接口的响应模型
+# 新增和详情接口的响应模型
 class EntryDetailResponse(SQLModel):
     """用于日记详情页的响应模型"""
     id: int
@@ -196,7 +193,7 @@ class EntryDetailResponse(SQLModel):
 
     model_config = {"from_attributes": True}
 
-# [新增] 需求 2: 日记列表接口的单项模型
+# 日记列表接口的单项模型
 class DiaryListItem(SQLModel):
     """用于日记列表的响应模型（精简字段）"""
     id: int
@@ -213,9 +210,9 @@ class DiaryListItem(SQLModel):
 
     model_config = {"from_attributes": True}
 
-# [修改] 需求 2: 日记列表的整体响应模型
+# 需求 2: 日记列表的整体响应模型
 class DiaryListResponse(SQLModel):
-    items: List[DiaryListItem] # [修改] 使用新的精简模型
+    items: List[DiaryListItem]
     total: int
     page: int
     page_size: int
@@ -234,3 +231,27 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
     user_id: Optional[int] = None
+
+# ==================== 心情 (Mood) 相关模型 ====================
+class MoodBase(SQLModel):
+    content: str = Field(max_length=120)
+    photo_url: Optional[str] = None
+    photo_public_id: Optional[str] = None
+class Mood(MoodBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    # AI 分析结果
+    mood_vector: float = Field(default=0.5, description="0.0(消极) - 1.0(积极)")
+    mood_reason: Optional[str] = None
+    user: "User" = Relationship()
+class MoodCreate(MoodBase):
+    pass
+class MoodResponse(MoodBase):
+    id: int
+    created_at: datetime
+    mood_vector: float
+    mood_reason: Optional[str]
+
+    model_config = {"from_attributes": True}

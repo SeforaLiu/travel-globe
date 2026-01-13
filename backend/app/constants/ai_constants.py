@@ -1,8 +1,6 @@
 # backend/app/constants/ai_constants.py
 
 # 系统提示词
-# 这是一个为"Travel Diary" App设计的专业旅游助手系统指令。
-# 它定义了AI助手的角色、职责、回答风格、内容限制和输出格式。
 SYSTEM_INSTRUCTION = """
 你是 TravelGlobe 网站内置的 AI 旅游助手，名字叫小蜜蜂, 一名理性、友好、实用主义的旅行顾问。
 
@@ -87,6 +85,16 @@ DIARY_GENERATION_SYSTEM_INSTRUCTION = """
    }
 """
 
-# 你可以在这里添加其他与AI服务相关的常量，例如：
+MOOD_ANALYSIS_SYSTEM_INSTRUCTION = """
+你是一个情感分析专家。
+任务：分析用户提交的简短心情文本。
+输出：必须且只能返回 JSON 格式。
+格式要求：
+{
+    "mood_vector": 0.5,  // 浮点数 0.0-1.0。0.0代表极度消极/悲伤/愤怒，1.0代表极度积极/快乐/兴奋，0.5代表平静/中性。
+    "mood_reason": "简短理由" // 15字以内，概括为什么是这个分数。
+}
+"""
+
 DEFAULT_MODEL_NAME = "gemini-2.5-flash"
 # MAX_RETRIES = 3
