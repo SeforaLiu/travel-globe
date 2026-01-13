@@ -3,10 +3,10 @@ import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, PresentationControls } from '@react-three/drei'
 import { useTranslation } from 'react-i18next'
-import { Plus, Globe, Smile } from 'lucide-react' // 新增 Globe 和 Smile 图标
-import { MoodSphere } from '../three/MoodSphere'
+import { Plus, Globe, Smile } from 'lucide-react'
+import { MoodSphere } from '@/three/MoodSphere'
 import Earth from '@/three/Earth/Earth'
-import { SkyGradientBackground } from "../three/SkyGradientBackground"
+import { SkyGradientBackground } from "@/three/SkyGradientBackground"
 import MoodDialog from "@/components/MoodDialog";
 
 type Props = {
@@ -28,7 +28,7 @@ export default function Home({ dark, isMobile }: Props) {
         flex
         flex-col
         items-center
-        top-6  /* 稍微增加顶部距离，更透气 */
+        top-6
         inset-x-0
         pointer-events-none
       ">
