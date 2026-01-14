@@ -16,6 +16,7 @@ type Props = {
   hideMobileButtons: () => void;
   isLoggedIn: boolean;
   handleClickLogout: () => void;
+  handleShowSidebar:() => void;
 };
 
 // 稍微调整背景色，使其在暗黑模式下更有质感
@@ -29,7 +30,8 @@ export default function Sidebar({
                                   toggleSidebar,
                                   hideMobileButtons,
                                   isLoggedIn,
-                                  handleClickLogout
+                                  handleClickLogout,
+                                  handleShowSidebar
                                 }: Props) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate();
@@ -65,6 +67,7 @@ export default function Sidebar({
     setActiveTab(tab)
     try {
       await fetchAllDiaries(true, searchKeyword, tab)
+      if(isMobile) handleShowSidebar()
     } catch (err) {
       console.error(err);
     }
@@ -73,6 +76,7 @@ export default function Sidebar({
   const handleSearchKeyWord = async () => {
     try {
       await fetchAllDiaries(true, searchKeyword, activeTab || undefined)
+      if(isMobile) handleShowSidebar()
     } catch (err) {
       console.error(err);
     }

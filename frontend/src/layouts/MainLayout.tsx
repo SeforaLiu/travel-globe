@@ -67,6 +67,10 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
           hideMobileButtons={() => setShowLeftRightButtonsMobile(false)}
           isLoggedIn={isLoggedIn}
           handleClickLogout={handleClickLogout}
+          handleShowSidebar={()=>{
+            setShowSidebar(true);
+            setShowLeftRightButtonsMobile(false);
+          }}
         />
       </div>
 
