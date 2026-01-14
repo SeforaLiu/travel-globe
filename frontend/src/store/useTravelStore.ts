@@ -42,7 +42,7 @@ interface TravelState {
 
   // --- 心情球 ----
   moods: Mood[]; 
-  fetchMoods: () => Promise<void>; 
+  fetchMoods: (force?: boolean) => Promise<void>;
   createMood: (data: MoodCreatePayload) => Promise<void>; 
 
   // --- 动作 (Actions) ---
@@ -133,7 +133,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     try {
       await api.post('/moods', data);
       // 创建成功后刷新列表
-      await get().fetchMoods();
+      await get().fetchMoods(true);
     } catch (err) {
       console.error("Create mood failed", err);
       throw err;

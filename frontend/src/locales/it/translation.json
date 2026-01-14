@@ -101,6 +101,7 @@
     "send mood": "invia mood",
     "Failed to send mood": "Invio fallito, riprova più tardi",
     "Mood sent successfully": "Il tuo mood è stato inviato alla Sfera Mood!",
-    "Describe your mood now...": "Cosa hai in mente?"
+    "Describe your mood now...": "Cosa hai in mente?",
+    "Mood Memory": "Mood"
   }
 }

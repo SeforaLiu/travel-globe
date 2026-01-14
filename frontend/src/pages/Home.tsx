@@ -139,7 +139,7 @@ export default function Home({ dark, isMobile }: Props) {
           azimuth={[-Infinity, Infinity]}
           config={{ mass: 1, tension: 170, friction: 26 }}
         >
-          {moodMode ? <MoodSphere /> : <Earth dark={dark} isMobile={isMobile} />}
+          {moodMode ? <MoodSphere dark={dark} isMobile={isMobile}/> : <Earth dark={dark} isMobile={isMobile} />}
         </PresentationControls>
       </Canvas>
 

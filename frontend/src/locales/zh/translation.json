@@ -101,6 +101,7 @@
     "send mood": "发送心情",
     "Failed to send mood": "发送心情失败请稍后再试",
     "Mood sent successfully": "心情已经发送到心情球上啦",
-    "Describe your mood now...": "说说现在有什么想法..."
+    "Describe your mood now...": "说说现在有什么想法...",
+    "Mood Memory": "心情"
   }
 }
