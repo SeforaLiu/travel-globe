@@ -1,7 +1,7 @@
 // frontend/src/pages/Home.tsx
 import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PresentationControls } from '@react-three/drei'
+import { OrbitControls, PresentationControls  } from '@react-three/drei'
 import { useTranslation } from 'react-i18next'
 import { Plus, Globe, Smile } from 'lucide-react'
 import { MoodSphere } from '@/three/MoodSphere'
@@ -115,8 +115,11 @@ export default function Home({ dark, isMobile }: Props) {
         dpr={[1, 2]}
       >
         <SkyGradientBackground dark={dark} />
-        <ambientLight intensity={1.6} />
-        <directionalLight position={[5, 5, 5]} intensity={1.2} />
+
+        <ambientLight
+          intensity={3}
+          color='#ffffff'
+        />
 
         <OrbitControls
           enableZoom={true}

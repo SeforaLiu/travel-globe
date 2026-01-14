@@ -140,6 +140,7 @@ export default function Earth({ dark, isMobile }: Props) {
     <group>
       {/*{!isMobile && <Perf position="top-left" />}*/}
       <group ref={earthGroupRef} scale={1.5} rotation={[0.36, Math.PI, 0]}>
+        <directionalLight position={[5, 5, 5]} intensity={1.2} />
 
         {/* 地球 Mesh */}
         <mesh ref={earthMeshRef} geometry={new THREE.SphereGeometry(2, 64, 64)} onClick={handleEarthClick}>

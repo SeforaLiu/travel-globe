@@ -79,8 +79,6 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
         <Outlet />
       </div>
 
-      {/* 右侧面板 (代码保持注释状态) */}
-      {/* ... */}
 
       {/* 移动端遮罩层 */}
       {isMobile && showSidebar && (
