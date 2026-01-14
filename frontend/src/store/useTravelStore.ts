@@ -22,6 +22,7 @@ interface TravelState {
   placeTotal: number;
   initialized: boolean;
   allDiariesInitialized: boolean;
+  moodsInitialized: boolean;
 
   // --- 用户状态 ---
   isLoggedIn: boolean;
@@ -98,6 +99,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   showSidebar:false,
   initialized:false,
   allDiariesInitialized:false,
+  moodsInitialized:false,
 
   // --- Google Maps API 初始状态 ---
   isGoogleMapsLoading: false,
@@ -114,10 +116,14 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   moods: [],
 
-  fetchMoods: async () => {
+  fetchMoods: async (force=false) => {
+    if (get().moodsInitialized && !force) {
+      console.log('fetchMoods: Already initialized and not forced, skipping fetch.');
+      return;
+    }
     try {
       const res = await api.get<Mood[]>('/moods');
-      set({ moods: res.data });
+      set({ moods: res.data, moodsInitialized: true });
     } catch (err) {
       console.error("Fetch moods failed", err);
     }

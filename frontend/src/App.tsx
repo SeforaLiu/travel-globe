@@ -127,9 +127,12 @@ export default function App() {
           isMobile={isMobile}
           onConfirm={() => {
             setShowNewDiaryCloseDialog(false);
-            navigate(-1);
-            // TODO: 清理 localStorage 缓存
-            if (location.pathname === '/diary/edit') setShouldFetchDiaryDetail(true)
+            if (location.pathname === '/diary/edit'){
+              setShouldFetchDiaryDetail(true)
+              navigate(-1);
+            }else{
+              navigate('/');
+            }
           }}
           onCancel={() => setShowNewDiaryCloseDialog(false)}
         />

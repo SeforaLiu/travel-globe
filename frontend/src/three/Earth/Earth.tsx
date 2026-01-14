@@ -4,7 +4,6 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TextureLoader } from 'three/src/loaders/TextureLoader';
 import { useNavigate } from 'react-router-dom';
-import { Perf } from 'r3f-perf';
 import { useTravelStore } from '@/store/useTravelStore';
 import { Instances, Instance, Html } from '@react-three/drei';
 

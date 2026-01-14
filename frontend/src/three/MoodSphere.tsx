@@ -1,24 +1,12 @@
 import React, { useMemo, useRef, useEffect } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useTravelStore } from '@/store/useTravelStore';
-import { Environment, useTexture } from '@react-three/drei';
 import DiscoBall from "@/three/DiscoBall";
-import {Perf} from "r3f-perf";
 
-// ==========================================
-// CONFIG: 在这里调整粒子和迪斯科球的参数
-// ==========================================
 const CONFIG = {
   // 心情粒子现在会围绕迪斯科球，所以半径要比迪斯科球大
   moodSphereRadius: 1.9,
-
-  // --- 迪斯科球 ---
-  discoBall: {
-    radius: 1.8,              // 迪斯科球的半径
-    metalness: 1.0,           // 金属度 (1.0 = 纯金属)
-    roughness: 0.1,           // 粗糙度 (0.0 = 完美镜面, 0.1 稍微模糊一点更真实)
-  },
 
   // --- 心情粒子 ---
   moodParticle: {
@@ -68,13 +56,12 @@ const seededRandom = (seed: number) => {
 export function MoodSphere() {
   const groupRef = useRef<THREE.Group>(null);
   const moodMeshRef = useRef<THREE.InstancedMesh>(null);
+  // const lightColor = '#a09cb4'
+  // const lightColor = '#a09cb4'
+  const lightColor = '#5136d5'
+  // const lightColor = '#e5b010'
 
   const moods = useTravelStore(state => state.moods);
-  const fetchMoods = useTravelStore(state => state.fetchMoods);
-
-  useEffect(() => {
-    fetchMoods();
-  }, [fetchMoods]);
 
   // 心情粒子的总数由 moods.length 决定
   const totalCount = moods.length;
@@ -101,7 +88,7 @@ export function MoodSphere() {
 
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.2; // 让整体旋转稍微快一点，更有动感
-      groupRef.current.rotation.x += delta * 0.05;
+      // groupRef.current.rotation.x += delta * 0.05;
     }
 
     if (moodMeshRef.current && moods.length > 0) {
@@ -151,8 +138,6 @@ export function MoodSphere() {
     }
   });
 
-  // 删除了原来用于计算基础粒子的 useEffect，因为它不再需要了。
-
   return (
     <group ref={groupRef} scale={1.5}>
       <rectAreaLight
@@ -161,7 +146,7 @@ export function MoodSphere() {
         intensity={1.7}
         position={[-0.5,2,2.7]}
         rotation={[-1.5,-0.8,-0.8]}
-        color='#a09cb4'
+        color={lightColor}
       />
       
       {/*

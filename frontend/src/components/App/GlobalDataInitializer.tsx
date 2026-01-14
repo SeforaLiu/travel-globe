@@ -14,6 +14,8 @@ export const GlobalDataInitializer = () => {
   const fetchAllDiaries = useTravelStore((state) => state.fetchAllDiaries);
   const isLoggedIn = useTravelStore((state) => state.isLoggedIn);
   const allDiariesInitialized = useTravelStore((state) => state.allDiariesInitialized);
+  const moodsInitialized = useTravelStore((state) => state.moodsInitialized);
+  const fetchMoods = useTravelStore((state) => state.fetchMoods);
 
   // 效果1: 应用首次加载时，检查用户认证状态
   useEffect(() => {
@@ -26,7 +28,10 @@ export const GlobalDataInitializer = () => {
     if (isLoggedIn && !allDiariesInitialized) {
       fetchAllDiaries();
     }
-  }, [isLoggedIn, allDiariesInitialized, fetchAllDiaries]); // 依赖登录状态和初始化标记
+    if(isLoggedIn && !moodsInitialized){
+      fetchMoods()
+    }
+  }, [isLoggedIn, allDiariesInitialized, fetchAllDiaries, fetchMoods,moodsInitialized ]); // 依赖登录状态和初始化标记
 
   return null; // 这个组件不产生任何可见的元素
 };
