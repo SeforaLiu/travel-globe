@@ -7,6 +7,7 @@ import {
   Moon, Sun, LogOut, Search, MapPin, BookOpen,
   Plus, ChevronLeft, Globe, Languages, X
 } from 'lucide-react';
+import {toast} from "sonner";
 
 type Props = {
   dark: boolean;
@@ -50,7 +51,12 @@ export default function Sidebar({
   const setActiveTab = useTravelStore((state) => state.setActiveTab);
 
   const handleAddDiary = () => {
-    navigate(isLoggedIn ? '/new-diary' : '/login');
+    if(isLoggedIn){
+      navigate('/new-diary')
+    }else{
+      toast.info(t('please login first'))
+      navigate('/login')
+    }
     if (isMobile) {
       toggleSidebar()
       hideMobileButtons()

@@ -2,12 +2,11 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar';
-// import RightPanel from '@/components/RightPanel'; // 注释掉未使用的导入
 import { MobileToggleButtons } from '@/components/MobileToggleButtons';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useTravelStore } from '@/store/useTravelStore';
 import { AIChatWidget } from "@/components/AIChatWidget";
-import { ChevronRight } from 'lucide-react'; // <<< 1. 引入新图标
+import { ChevronRight } from 'lucide-react';
 
 interface Props {
   dark: boolean;
@@ -18,19 +17,18 @@ interface Props {
 export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }) => {
   const showLeftRightButtonsMobile = useTravelStore(state => state.showLeftRightButtonsMobile)
   const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
+  const isLoggedIn = useTravelStore(state => state.isLoggedIn)
 
-  const { isLoggedIn } = useTravelStore();
   const {
     isMobile,
     showSidebar,
     setShowSidebar,
   } = useResponsiveLayout();
 
-  // <<< 2. 更新背景色变量，与新的 Sidebar.tsx 保持完全一致
+  // 更新背景色变量，与新的 Sidebar.tsx 保持完全一致
   const sidebarDayBg = '#eef2f6'; // 更柔和的浅蓝灰
   const sidebarNightBg = '#0f172a'; // 深蓝黑 (Slate-900)
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
-  // const textColor = dark ? 'text-white' : 'text-gray-800'; // 这个变量不再需要，因为颜色在组件内部定义
 
   return (
     <div className="h-screen flex relative bg-white dark:bg-slate-900 overflow-x-hidden">
@@ -83,7 +81,6 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
         <Outlet />
       </div>
 
-
       {/* 移动端遮罩层 */}
       {isMobile && showSidebar && (
         <div
@@ -95,7 +92,7 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
         />
       )}
 
-      {/* <<< 4. MODIFIED SECTION START: 桌面端打开侧边栏的“停靠栏” */}
+      {/* 桌面端打开侧边栏的“停靠栏” */}
       {!isMobile && !showSidebar && (
         <div
           className={`
@@ -128,7 +125,6 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
           </button>
         </div>
       )}
-      {/* <<< MODIFIED SECTION END >>> */}
     </div>
   );
 };

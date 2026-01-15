@@ -1,23 +1,39 @@
 // frontend/src/pages/Home.tsx
-import React, { useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PresentationControls  } from '@react-three/drei'
-import { useTranslation } from 'react-i18next'
-import { Plus, Globe, Smile } from 'lucide-react'
-import { MoodSphere } from '@/three/MoodSphere'
+import React, {useState} from 'react'
+import {Canvas} from '@react-three/fiber'
+import {OrbitControls, PresentationControls} from '@react-three/drei'
+import {useTranslation} from 'react-i18next'
+import {Plus, Globe, Smile} from 'lucide-react'
+import {MoodSphere} from '@/three/MoodSphere'
 import Earth from '@/three/Earth/Earth'
-import { SkyGradientBackground } from "@/three/SkyGradientBackground"
+import {SkyGradientBackground} from "@/three/SkyGradientBackground"
 import MoodDialog from "@/components/MoodDialog";
+import {useTravelStore} from "@/store/useTravelStore";
+import {useNavigate} from "react-router-dom";
+import {toast} from "sonner";
 
 type Props = {
   dark: boolean;
   isMobile: boolean;
 };
 
-export default function Home({ dark, isMobile }: Props) {
+export default function Home({dark, isMobile}: Props) {
   const [moodMode, setMoodMode] = useState(false)
   const [isMoodDialogOpen, setIsMoodDialogOpen] = useState(false)
-  const { t } = useTranslation()
+  const {t} = useTranslation()
+  const navigate = useNavigate()
+
+  const moods = useTravelStore(state => state.moods)
+  const isLoggedIn = useTravelStore(state => state.isLoggedIn)
+
+  function handleClickAddMood() {
+    if(!isLoggedIn){
+      toast.info(t('please login first'))
+      navigate('/login')
+    }else{
+      setIsMoodDialogOpen(true)
+    }
+  }
 
   return (
     <div className="h-full relative">
@@ -63,7 +79,7 @@ export default function Home({ dark, isMobile }: Props) {
             }
             `}
           >
-            <Globe size={18} className={!moodMode ? "text-blue-500" : "text-white"} />
+            <Globe size={18} className={!moodMode ? "text-blue-500" : "text-white"}/>
             {t('earth')}
           </button>
 
@@ -78,19 +94,19 @@ export default function Home({ dark, isMobile }: Props) {
             }
             `}
           >
-            <Smile size={18} className={moodMode ? "text-pink-500" : "text-white"} />
+            <Smile size={18} className={moodMode ? "text-pink-500" : "text-white"}/>
             {t('mood')}
           </button>
         </div>
 
         {/* +心情 按钮 (仅在 Mood 模式下显示) */}
-        <div className={`
+        {moodMode && (<div className={`
           pointer-events-auto 
-          transition-all duration-500 ease-in-out
-          ${moodMode ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}
+          transition-all duration-500 ease-in-out translate-y-0
+          ${!moods.length ? 'animate-subtle-pulse' : ''}
         `}>
           <button
-            onClick={() => setIsMoodDialogOpen(true)}
+            onClick={() => handleClickAddMood()}
             className="
               flex items-center gap-2 px-5 py-2.5
               bg-white/10 backdrop-blur-md
@@ -101,23 +117,24 @@ export default function Home({ dark, isMobile }: Props) {
               shadow-lg group
             "
           >
-            <div className="bg-gradient-to-r from-neutral-50 to-violet-600 rounded-full p-1 group-hover:rotate-90 transition-transform duration-500">
-              <Plus size={16} className="text-white" />
+            <div
+              className="bg-gradient-to-r from-neutral-50 to-violet-600 rounded-full p-1 group-hover:rotate-90 transition-transform duration-500">
+              <Plus size={16} className="text-white"/>
             </div>
             <span className="font-medium tracking-wide text-sm">{t('ai.add mood')}</span>
           </button>
-        </div>
+        </div>)}
       </div>
 
       {/* 3D 场景 (保持不变) */}
       <Canvas
-        camera={{ position: [0, 0, 6] }}
+        camera={{position: [0, 0, 6]}}
         dpr={[1, 2]}
       >
-        <SkyGradientBackground dark={dark} />
+        <SkyGradientBackground dark={dark}/>
 
         <ambientLight
-          intensity={3}
+          intensity={moodMode ? 3.2 : 2}
           color='#ffffff'
         />
 
@@ -137,9 +154,9 @@ export default function Home({ dark, isMobile }: Props) {
           global
           polar={[-Math.PI / 2, Math.PI / 2]}
           azimuth={[-Infinity, Infinity]}
-          config={{ mass: 1, tension: 170, friction: 26 }}
+          config={{mass: 1, tension: 170, friction: 26}}
         >
-          {moodMode ? <MoodSphere dark={dark} isMobile={isMobile}/> : <Earth dark={dark} isMobile={isMobile} />}
+          {moodMode ? <MoodSphere dark={dark} isMobile={isMobile}/> : <Earth dark={dark} isMobile={isMobile}/>}
         </PresentationControls>
       </Canvas>
 

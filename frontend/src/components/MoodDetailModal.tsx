@@ -1,3 +1,4 @@
+// MoodDetailModal.tsx
 import React from 'react';
 import { X, Calendar, Quote } from 'lucide-react';
 import {t} from "i18next";
@@ -51,6 +52,10 @@ export default function MoodDetailModal({ isOpen, onClose, data, dark }: Props) 
             ? 'bg-gray-900 text-white border border-gray-700'
             : 'bg-white text-gray-900 border border-gray-100'
         }`}
+        style={{
+          writingMode: 'horizontal-tb',
+          textOrientation: 'mixed',
+        }}
         onClick={(e) => e.stopPropagation()} // 阻止冒泡，防止点击卡片关闭
       >
         {/* Header: 标题与关闭按钮 */}
@@ -58,6 +63,7 @@ export default function MoodDetailModal({ isOpen, onClose, data, dark }: Props) 
           <div>
             <h2 className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
               {t('ai.Mood Memory')}
+              {/*记录心情*/}
             </h2>
             <div className={`flex items-center gap-1.5 text-xs mt-1 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
               <span>{formatDate(data.created_at)}</span>

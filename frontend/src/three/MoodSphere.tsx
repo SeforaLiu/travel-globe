@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
+// MoodSphere.tsx
+import React, {useMemo, useRef, useState, useEffect} from 'react';
+import {useFrame} from '@react-three/fiber';
 import * as THREE from 'three';
-import { Html } from '@react-three/drei';
-import { useTravelStore } from '@/store/useTravelStore';
+import {Html, Center, Text3D} from '@react-three/drei';
+import {useTravelStore} from '@/store/useTravelStore';
 import DiscoBall from "@/three/DiscoBall";
 import MoodDetailModal from '@/components/MoodDetailModal'; // 引入新组件
 
@@ -35,13 +36,14 @@ const CONFIG = {
     lightnessRange: 0.1,
   },
   colors: {
-    low: { h: 0.65, s: 0.9, l: 0.15 },
-    high: { h: 0.08, s: 1.0, l: 0.6 },
+    low: {h: 0.65, s: 0.9, l: 0.15},
+    high: {h: 0.08, s: 1.0, l: 0.6},
   }
 };
 
 // --- 辅助函数 ---
 const getFibonacciSpherePoints = (samples: number, radius: number) => {
+  // ... (代码无变化)
   const points = [];
   const phi = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < samples; i++) {
@@ -56,16 +58,18 @@ const getFibonacciSpherePoints = (samples: number, radius: number) => {
 };
 
 const seededRandom = (seed: number) => {
+  // ... (代码无变化)
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
 
-const truncateText = (text: string, limit: number = 15) => {
+const truncateText = (text: string, limit: number = 30) => {
+  // ... (代码无变化)
   if (!text) return '';
   return text.length > limit ? text.slice(0, limit) + '...' : text;
 };
 
-export function MoodSphere({ isMobile = false, dark }: Props) {
+export function MoodSphere({isMobile = false, dark}: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const moodMeshRef = useRef<THREE.InstancedMesh>(null);
   const lightColor = '#5136d5';
@@ -81,14 +85,18 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
   const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- 数据准备 ---
-  const { positions, randomIndices } = useMemo(() => {
+  const {positions, randomIndices} = useMemo(() => {
+    // 当 totalCount 为 0 时，避免 getFibonacciSpherePoints 报错
+    if (totalCount === 0) {
+      return { positions: [], randomIndices: [] };
+    }
     const points = getFibonacciSpherePoints(totalCount, CONFIG.moodSphereRadius);
-    const indices = Array.from({ length: totalCount }, (_, i) => i);
+    const indices = Array.from({length: totalCount}, (_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(seededRandom(i * 123.45) * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    return { positions: points, randomIndices: indices };
+    return {positions: points, randomIndices: indices};
   }, [totalCount]);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -96,10 +104,11 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
 
   // --- 动画循环 ---
   useFrame((state, delta) => {
+    // ... (代码无变化)
     const time = state.clock.getElapsedTime();
 
     if (groupRef.current && !isPausedRef.current) {
-      groupRef.current.rotation.y += delta * 0.2;
+      groupRef.current.rotation.y += delta * 0.02;
     }
 
     if (moodMeshRef.current && moods.length > 0) {
@@ -132,7 +141,7 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
         } else {
           const t = (mood.mood_vector - 0.5) * 2;
           h = THREE.MathUtils.lerp(CONFIG.colors.low.h, CONFIG.colors.high.h, t);
-          if(t > 0.5) h = CONFIG.colors.high.h;
+          if (t > 0.5) h = CONFIG.colors.high.h;
           s = THREE.MathUtils.lerp(CONFIG.colors.low.s, CONFIG.colors.high.s, t);
           l = THREE.MathUtils.lerp(CONFIG.colors.low.l, CONFIG.colors.high.l, t);
         }
@@ -235,17 +244,57 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
         color={lightColor}
       />
 
-      <DiscoBall scale={0.8} />
+      <DiscoBall scale={0.8}/>
 
-      {moods.length > 0 && (
+      {/*/!* --- 新增：空状态提示 --- *!/*/}
+      {/*{totalCount === 0 && (*/}
+      {/*  <Html*/}
+      {/*    position={[0, 2, 0]} // 定位在 DiscoBall 下方*/}
+      {/*    center*/}
+      {/*    zIndexRange={[10, 0]}*/}
+      {/*  >*/}
+      {/*    <div*/}
+      {/*      className={`*/}
+      {/*        w-64 text-center select-none*/}
+      {/*        text-sm md:text-base font-medium*/}
+      {/*        transition-colors duration-300*/}
+      {/*        animate-subtle-pulse*/}
+      {/*        ${dark ? 'text-red-300' : 'text-purple-600'}*/}
+      {/*      `}*/}
+      {/*      style={{ pointerEvents: 'none' }} // 确保不阻挡鼠标事件*/}
+      {/*    >*/}
+      {/*      开始创建心情，点亮你的 Disco Ball 吧！*/}
+      {/*    </div>*/}
+      {/*  </Html>*/}
+
+      {/*  // <Center>*/}
+      {/*  //   <Text3D*/}
+      {/*  //     font="./fonts/helvetiker_regular.typeface.json"*/}
+      {/*  //     size={0.65}*/}
+      {/*  //     height={0.2}*/}
+      {/*  //     curveSegments={12}*/}
+      {/*  //     bevelEnabled*/}
+      {/*  //     bevelThickness={0.02}*/}
+      {/*  //     bevelSize={0.02}*/}
+      {/*  //     bevelOffset={0}*/}
+      {/*  //     bevelSegments={5}*/}
+      {/*  //     position={[-2,-4.6,0]}*/}
+      {/*  //   >*/}
+      {/*  //     Hello Carol*/}
+      {/*  //   </Text3D>*/}
+      {/*  // </Center>*/}
+      {/*)}*/}
+
+      {/* 当有 moods 时才渲染 instancedMesh */}
+      {totalCount > 0 && (
         <instancedMesh
           ref={moodMeshRef}
-          args={[undefined, undefined, moods.length]}
+          args={[undefined, undefined, totalCount]}
           onPointerOver={handlePointerOver}
           onPointerOut={handlePointerOut}
           onClick={handleClick}
         >
-          <sphereGeometry args={[1, 16, 16]} />
+          <sphereGeometry args={[1, 16, 16]}/>
           <meshStandardMaterial
             roughness={CONFIG.moodParticle.roughness}
             emissiveIntensity={0.2}
@@ -260,7 +309,7 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
           center
           distanceFactor={10}
           zIndexRange={[30, 0]}
-          style={{ pointerEvents: 'none' }}
+          style={{pointerEvents: 'none'}}
         >
           <div
             className={`px-3 py-1.5 rounded-lg text-sm cursor-pointer border backdrop-blur-sm transition-colors whitespace-nowrap ${
@@ -268,7 +317,7 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
                 ? 'bg-black/80 text-white border-white/20 hover:bg-white/20'
                 : 'bg-white/90 text-gray-900 border-gray-200 hover:bg-white shadow-sm'
             }`}
-            style={{ pointerEvents: 'auto' }}
+            style={{pointerEvents: 'auto'}}
             onClick={handleLabelClick}
           >
             {truncateText(activeMoodData.content)}
@@ -277,9 +326,12 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
       )}
 
       {/* --- 2. Modal (详情对话框) --- */}
-      {/* 使用 Html fullscreen 将 React 组件渲染到 Canvas 之上 */}
       {showModal && activeMoodData && (
-        <Html fullscreen style={{ pointerEvents: 'none' }} zIndexRange={[200, 0]}>
+        <Html
+          fullscreen
+          transform={false}
+          style={{pointerEvents: 'none'}}
+          zIndexRange={[200, 0]}>
           <MoodDetailModal
             isOpen={showModal}
             onClose={handleCloseModal}
