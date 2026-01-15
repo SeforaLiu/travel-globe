@@ -1,4 +1,4 @@
-// DiscoBall.tsx
+// frontend/src/three/DiscoBall.tsx
 import React, {useMemo, useRef, useEffect} from 'react'
 import {useFrame} from '@react-three/fiber'
 import {Sphere, useEnvironment} from '@react-three/drei'
@@ -17,16 +17,22 @@ type DiscoBallProps = {
 }
 
 // --- 自定义材质组件 ---
-// 将材质逻辑分离，保持代码整洁
-const DiscoMaterial = ({ moodVector, colorLow, colorHigh }: { moodVector: number, colorLow: HSLColor, colorHigh: HSLColor }) => {
-  console.log('中位数:',moodVector)
+const DiscoMaterial = ({
+                         moodVector,
+                         colorLow,
+                         colorHigh,
+                         radius // 接收半径用于 Shader 计算
+                       }: {
+  moodVector: number,
+  colorLow: HSLColor,
+  colorHigh: HSLColor,
+  radius: number
+}) => {
   const materialRef = useRef<THREE.MeshStandardMaterial>(null!)
 
-  // 将 HSL 配置转换为 THREE.Color
   const cLow = useMemo(() => new THREE.Color().setHSL(colorLow.h, colorLow.s, Math.max(colorLow.l, 0.25)), [colorLow])
   const cHigh = useMemo(() => new THREE.Color().setHSL(colorHigh.h, colorHigh.s, colorHigh.l), [colorHigh])
 
-  // 初始化 Shader 的 Uniforms
   const uniforms = useRef({
     uTime: { value: 0 },
     uColorLow: { value: cLow },
@@ -34,47 +40,42 @@ const DiscoMaterial = ({ moodVector, colorLow, colorHigh }: { moodVector: number
     uMood: { value: moodVector }
   })
 
-  // 当 props 变化时更新 uniforms
   useEffect(() => {
     uniforms.current.uColorLow.value.copy(cLow)
     uniforms.current.uColorHigh.value.copy(cHigh)
-    // 使用 lerp 让心情变化时颜色过渡更平滑
-    // 这里直接赋值，shader 内部会处理混合
     uniforms.current.uMood.value = moodVector
   }, [cLow, cHigh, moodVector])
 
   useFrame((state) => {
     if (materialRef.current) {
-      // 更新时间，控制流动速度 (0.5 是速度系数)
       uniforms.current.uTime.value = state.clock.getElapsedTime() * 0.5
     }
   })
 
   // @ts-ignore
   const onBeforeCompile = (shader: THREE.Shader) => {
-    // 注入 uniforms
     shader.uniforms.uTime = uniforms.current.uTime
     shader.uniforms.uColorLow = uniforms.current.uColorLow
     shader.uniforms.uColorHigh = uniforms.current.uColorHigh
     shader.uniforms.uMood = uniforms.current.uMood
 
     // --- 1. Vertex Shader 修改 ---
-    // 我们需要获取每个 Instance (晶块) 在球体上的原始高度，用于生成渐变
     shader.vertexShader = `
-      varying float vYLevel; // 传递给 Fragment Shader 的高度变量
+      varying float vYLevel;
       ${shader.vertexShader}
     `.replace(
       '#include <begin_vertex>',
       `
       #include <begin_vertex>
       
-      // 计算 Instance 的中心位置 (在模型空间中)
-      // instanceMatrix 是 InstancedMesh 自动提供的
       vec4 instanceCenter = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
       
-      // 归一化高度: 将 y 从 [-radius, radius] 映射到 [0, 1]
-      // 假设半径约为 2 (根据 MoodSphere 配置)
-      vYLevel = instanceCenter.y * 0.5 + 0.5; 
+      // 修复：根据实际半径归一化 Y 轴
+      // y 范围是 [-radius, radius]
+      // (y / radius) 范围是 [-1, 1]
+      // * 0.5 + 0.5 范围变成 [0, 1]
+      float r = ${radius.toFixed(1)}; 
+      vYLevel = (instanceCenter.y / r) * 0.5 + 0.5; 
       `
     )
 
@@ -91,34 +92,19 @@ const DiscoMaterial = ({ moodVector, colorLow, colorHigh }: { moodVector: number
       `
       #include <color_fragment>
       
-      // --- 流动渐变逻辑 ---
+      // 调整波浪参数，使其更连贯
+      float wave = sin(vYLevel * 5.0 - uTime * 2.0) * 0.5 + 0.5;
       
-      // 1. 创建波浪: 使用 sin 函数结合高度和时间
-      // vYLevel * 3.0: 决定波浪的密度
-      // uTime: 决定波浪的移动
-      float wave = sin(vYLevel * 4.0 - uTime) * 0.5 + 0.5;
-      
-      // 2. 混合心情因子
-      // uMood (0~1) 决定了整体偏向哪种颜色
-      // 我们将波浪叠加在 Mood 之上
-      // mixFactor 越接近 0 越偏向 LowColor，越接近 1 越偏向 HighColor
-      
-      // 基础偏置：心情越好，整体越亮
       float bias = uMood; 
-      
-      // 混合：70% 由心情决定，30% 由波浪决定 (产生流动感但不喧宾夺主)
       float mixFactor = mix(bias, wave, 0.3);
       
-      // 3. 计算最终颜色
       vec3 gradientColor = mix(uColorLow, uColorHigh, clamp(mixFactor, 0.0, 1.0));
       
-      // 4. 应用颜色
-      // 保持原本的 diffuseColor (如果有贴图的话)，这里直接覆盖 RGB
+      // 应用颜色
       diffuseColor.rgb = gradientColor;
       `
     )
 
-    // 保存 shader 引用以便后续更新 uniforms (虽然这里用了引用传递，通常不需要这一步，但为了保险)
     materialRef.current.userData.shader = shader
   }
 
@@ -136,10 +122,10 @@ const DiscoMaterial = ({ moodVector, colorLow, colorHigh }: { moodVector: number
   return (
     <meshStandardMaterial
       ref={materialRef}
-      metalness={1.12} // 稍微降低一点金属度，让底色更明显
-      roughness={0.1}
+      metalness={2.0}
+      roughness={0.15} // 稍微增加一点粗糙度，让颜色更容易显现，同时保持金属感
       envMap={envMap}
-      envMapIntensity={1}
+      envMapIntensity={1.8} // 稍微增强环境光反射，弥补金属感
       onBeforeCompile={onBeforeCompile}
     />
   )
@@ -155,8 +141,8 @@ export default function DiscoBall({
                                   }: DiscoBallProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null!)
   const temp = new THREE.Object3D()
+  console.log('中位数', moodVector)
 
-  // ... (tiles 计算逻辑保持完全不变，直接复用之前的代码)
   const tiles = useMemo(() => {
     const result: {
       position: THREE.Vector3
@@ -194,6 +180,7 @@ export default function DiscoBall({
       const dPhi = tileSize / radius
       currentPhi += dPhi
     }
+    // 顶部和底部盖子
     const capScale = 1.2
     result.push({
       position: new THREE.Vector3(0, radius, 0),
@@ -210,9 +197,6 @@ export default function DiscoBall({
 
   useFrame(() => {
     if (!meshRef.current) return
-    // 只需要初始化一次矩阵，除非你想让晶块本身移动
-    // 如果 tiles 是静态的，其实可以在 useEffect 里做
-    // 但为了保险起见（防止 context 丢失），这里保留
     if (meshRef.current.instanceMatrix.needsUpdate) return;
 
     tiles.forEach((tile, i) => {
@@ -227,6 +211,7 @@ export default function DiscoBall({
 
   return (
     <group scale={scale}>
+      {/* 内部黑色球体，防止缝隙漏光 */}
       <Sphere args={[radius * 0.98, 32, 32]}>
         <meshBasicMaterial color="#000000"/>
       </Sphere>
@@ -237,11 +222,12 @@ export default function DiscoBall({
       >
         <boxGeometry args={[tileSize, tileSize, 0.05]}/>
 
-        {/* 使用我们自定义的材质组件 */}
+        {/* 传递 radius 给材质组件 */}
         <DiscoMaterial
           moodVector={moodVector}
           colorLow={colorLow}
           colorHigh={colorHigh}
+          radius={radius}
         />
 
       </instancedMesh>
