@@ -18,9 +18,9 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
   const showLeftRightButtonsMobile = useTravelStore(state => state.showLeftRightButtonsMobile)
   const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
   const isLoggedIn = useTravelStore(state => state.isLoggedIn)
+  const isMobile = useTravelStore(state => state.isMobile)
 
   const {
-    isMobile,
     showSidebar,
     setShowSidebar,
   } = useResponsiveLayout();

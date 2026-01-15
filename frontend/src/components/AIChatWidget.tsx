@@ -6,7 +6,6 @@ import ReactMarkdown from 'react-markdown';
 import {sendChatMessage, ChatMessage} from '@/services/ai';
 import {useTranslation} from 'react-i18next';
 import {useTravelStore} from "@/store/useTravelStore";
-import {useResponsiveLayout} from "@/hooks/useResponsiveLayout";
 
 interface AIChatWidgetProps {
   isMobile: boolean;
@@ -16,7 +15,6 @@ interface AIChatWidgetProps {
 export const AIChatWidget: React.FC<AIChatWidgetProps> = ({isMobile, dark}) => {
   const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
   const showSidebar = useTravelStore(state => state.showSidebar)
-
 
   const {t, ready} = useTranslation();
 

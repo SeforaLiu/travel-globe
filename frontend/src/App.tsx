@@ -59,13 +59,12 @@ export default function App() {
   useEffect(() => {
     const mobile = window.innerWidth < 768;
     setIsMobile(mobile);
-    // 修复：这里应该添加一个 resize 事件监听器，以便在窗口大小变化时更新 isMobile
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [setIsMobile]); // 依赖项应包含 setIsMobile
+  }, [setIsMobile]);
 
   // 加载状态保护
   if (loading) {
