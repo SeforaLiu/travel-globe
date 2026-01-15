@@ -1,13 +1,13 @@
 // MoodSphere.tsx
-import React, {useMemo, useRef, useState, useEffect} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {useFrame} from '@react-three/fiber';
 import * as THREE from 'three';
-import {Html, Center, Text3D} from '@react-three/drei';
+import {Html} from '@react-three/drei';
 import {useTravelStore} from '@/store/useTravelStore';
 import DiscoBall from "@/three/DiscoBall";
-import MoodDetailModal from '@/components/MoodDetailModal'; // 引入新组件
+import MoodDetailModal from '@/components/MoodDetailModal';
 
-// --- 类型定义 ---
+// ... (类型定义保持不变)
 type Mood = {
   id: number;
   content: string;
@@ -20,7 +20,7 @@ type Mood = {
 
 type Props = {
   isMobile?: boolean;
-  dark: boolean; // 新增 dark 属性
+  dark: boolean;
 };
 
 const CONFIG = {
@@ -41,9 +41,26 @@ const CONFIG = {
   }
 };
 
-// --- 辅助函数 ---
+// --- 新增：提取颜色计算逻辑 ---
+// 将 mood_vector 转换为 HSL 对象的逻辑提取出来
+const getHSLFromVector = (vector: number) => {
+  let h, s, l;
+  if (vector < 0.5) {
+    const t = vector * 2;
+    h = CONFIG.colors.low.h;
+    s = CONFIG.colors.low.s;
+    l = CONFIG.colors.low.l + t * 0.1;
+  } else {
+    const t = (vector - 0.5) * 2;
+    h = THREE.MathUtils.lerp(CONFIG.colors.low.h, CONFIG.colors.high.h, t);
+    if (t > 0.5) h = CONFIG.colors.high.h;
+    s = THREE.MathUtils.lerp(CONFIG.colors.low.s, CONFIG.colors.high.s, t);
+    l = THREE.MathUtils.lerp(CONFIG.colors.low.l, CONFIG.colors.high.l, t);
+  }
+  return { h, s, l };
+};
+
 const getFibonacciSpherePoints = (samples: number, radius: number) => {
-  // ... (代码无变化)
   const points = [];
   const phi = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < samples; i++) {
@@ -58,21 +75,19 @@ const getFibonacciSpherePoints = (samples: number, radius: number) => {
 };
 
 const seededRandom = (seed: number) => {
-  // ... (代码无变化)
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
 
 const truncateText = (text: string, limit: number = 30) => {
-  // ... (代码无变化)
   if (!text) return '';
   return text.length > limit ? text.slice(0, limit) + '...' : text;
 };
 
+
 export function MoodSphere({isMobile = false, dark}: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const moodMeshRef = useRef<THREE.InstancedMesh>(null);
-  const lightColor = '#5136d5';
 
   const moods = useTravelStore(state => state.moods) as Mood[];
   const totalCount = moods.length;
@@ -82,11 +97,10 @@ export function MoodSphere({isMobile = false, dark}: Props) {
   const [showModal, setShowModal] = useState(false);
 
   const isPausedRef = useRef(false);
-  const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resumeTimeoutRef = useRef<number | null>(null);
 
   // --- 数据准备 ---
   const {positions, randomIndices} = useMemo(() => {
-    // 当 totalCount 为 0 时，避免 getFibonacciSpherePoints 报错
     if (totalCount === 0) {
       return { positions: [], randomIndices: [] };
     }
@@ -99,16 +113,22 @@ export function MoodSphere({isMobile = false, dark}: Props) {
     return {positions: points, randomIndices: indices};
   }, [totalCount]);
 
+  // --- 计算平均 Mood Vector ---
+  const avgMoodVector = useMemo(() => {
+    if (totalCount === 0) return 0.5;
+    const total = moods.reduce((sum, m) => sum + m.mood_vector, 0);
+    return total / totalCount;
+  }, [moods, totalCount]);
+
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colorHelper = useMemo(() => new THREE.Color(), []);
 
   // --- 动画循环 ---
   useFrame((state, delta) => {
-    // ... (代码无变化)
     const time = state.clock.getElapsedTime();
 
     if (groupRef.current && !isPausedRef.current) {
-      groupRef.current.rotation.y += delta * 0.02;
+      groupRef.current.rotation.y += delta * 0.2;
     }
 
     if (moodMeshRef.current && moods.length > 0) {
@@ -132,19 +152,8 @@ export function MoodSphere({isMobile = false, dark}: Props) {
         dummy.updateMatrix();
         moodMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        let h, s, l;
-        if (mood.mood_vector < 0.5) {
-          const t = mood.mood_vector * 2;
-          h = CONFIG.colors.low.h;
-          s = CONFIG.colors.low.s;
-          l = CONFIG.colors.low.l + t * 0.1;
-        } else {
-          const t = (mood.mood_vector - 0.5) * 2;
-          h = THREE.MathUtils.lerp(CONFIG.colors.low.h, CONFIG.colors.high.h, t);
-          if (t > 0.5) h = CONFIG.colors.high.h;
-          s = THREE.MathUtils.lerp(CONFIG.colors.low.s, CONFIG.colors.high.s, t);
-          l = THREE.MathUtils.lerp(CONFIG.colors.low.l, CONFIG.colors.high.l, t);
-        }
+        // 使用提取出来的逻辑
+        const { h, s, l } = getHSLFromVector(mood.mood_vector);
 
         const breathingLightness = l + (breath * CONFIG.breathing.lightnessRange);
 
@@ -165,7 +174,7 @@ export function MoodSphere({isMobile = false, dark}: Props) {
     }
   });
 
-  // --- 交互处理 ---
+  // ... (交互处理函数保持不变: pauseRotation, resumeRotation, handlePointerOver, etc.)
   const pauseRotation = () => {
     if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     isPausedRef.current = true;
@@ -235,57 +244,14 @@ export function MoodSphere({isMobile = false, dark}: Props) {
 
   return (
     <group ref={groupRef} scale={1.5}>
-      <rectAreaLight
-        width={5}
-        height={4}
-        intensity={1.7}
-        position={[-0.5, 2, 2.7]}
-        rotation={[-1.5, -0.8, -0.8]}
-        color={lightColor}
+
+      <DiscoBall
+        scale={0.8}
+        moodVector={avgMoodVector}
+        colorLow={CONFIG.colors.low}   // {h, s, l}
+        colorHigh={CONFIG.colors.high} // {h, s, l}
       />
 
-      <DiscoBall scale={0.8}/>
-
-      {/*/!* --- 新增：空状态提示 --- *!/*/}
-      {/*{totalCount === 0 && (*/}
-      {/*  <Html*/}
-      {/*    position={[0, 2, 0]} // 定位在 DiscoBall 下方*/}
-      {/*    center*/}
-      {/*    zIndexRange={[10, 0]}*/}
-      {/*  >*/}
-      {/*    <div*/}
-      {/*      className={`*/}
-      {/*        w-64 text-center select-none*/}
-      {/*        text-sm md:text-base font-medium*/}
-      {/*        transition-colors duration-300*/}
-      {/*        animate-subtle-pulse*/}
-      {/*        ${dark ? 'text-red-300' : 'text-purple-600'}*/}
-      {/*      `}*/}
-      {/*      style={{ pointerEvents: 'none' }} // 确保不阻挡鼠标事件*/}
-      {/*    >*/}
-      {/*      开始创建心情，点亮你的 Disco Ball 吧！*/}
-      {/*    </div>*/}
-      {/*  </Html>*/}
-
-      {/*  // <Center>*/}
-      {/*  //   <Text3D*/}
-      {/*  //     font="./fonts/helvetiker_regular.typeface.json"*/}
-      {/*  //     size={0.65}*/}
-      {/*  //     height={0.2}*/}
-      {/*  //     curveSegments={12}*/}
-      {/*  //     bevelEnabled*/}
-      {/*  //     bevelThickness={0.02}*/}
-      {/*  //     bevelSize={0.02}*/}
-      {/*  //     bevelOffset={0}*/}
-      {/*  //     bevelSegments={5}*/}
-      {/*  //     position={[-2,-4.6,0]}*/}
-      {/*  //   >*/}
-      {/*  //     Hello Carol*/}
-      {/*  //   </Text3D>*/}
-      {/*  // </Center>*/}
-      {/*)}*/}
-
-      {/* 当有 moods 时才渲染 instancedMesh */}
       {totalCount > 0 && (
         <instancedMesh
           ref={moodMeshRef}
@@ -302,7 +268,7 @@ export function MoodSphere({isMobile = false, dark}: Props) {
         </instancedMesh>
       )}
 
-      {/* --- 1. Label (悬浮标签) --- */}
+      {/* ... (Label 和 Modal 代码保持不变) */}
       {activePosition && activeMoodData && !showModal && (
         <Html
           position={activePosition}
@@ -325,7 +291,6 @@ export function MoodSphere({isMobile = false, dark}: Props) {
         </Html>
       )}
 
-      {/* --- 2. Modal (详情对话框) --- */}
       {showModal && activeMoodData && (
         <Html
           fullscreen

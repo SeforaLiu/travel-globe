@@ -1,23 +1,126 @@
-import React, {useMemo, useRef} from 'react'
+// DiscoBall.tsx
+import React, {useMemo, useRef, useEffect} from 'react'
 import {useFrame} from '@react-three/fiber'
 import {Sphere, useEnvironment} from '@react-three/drei'
 import * as THREE from 'three'
+
+// 定义颜色类型
+type HSLColor = { h: number; s: number; l: number }
 
 type DiscoBallProps = {
   radius?: number
   tileSize?: number
   scale?: number | [number, number, number]
-  color?: string
+  moodVector?: number // 0 ~ 1
+  colorLow?: HSLColor
+  colorHigh?: HSLColor
 }
 
-export default function DiscoBall({
-                                    radius = 2,
-                                    tileSize = 0.15,
-                                    scale = 1,
-                                    color = '#888888'
-                                  }: DiscoBallProps) {
-  const meshRef = useRef<THREE.InstancedMesh>(null!)
-  const temp = new THREE.Object3D()
+// --- 自定义材质组件 ---
+// 将材质逻辑分离，保持代码整洁
+const DiscoMaterial = ({ moodVector, colorLow, colorHigh }: { moodVector: number, colorLow: HSLColor, colorHigh: HSLColor }) => {
+  console.log('中位数:',moodVector)
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null!)
+
+  // 将 HSL 配置转换为 THREE.Color
+  const cLow = useMemo(() => new THREE.Color().setHSL(colorLow.h, colorLow.s, Math.max(colorLow.l, 0.25)), [colorLow])
+  const cHigh = useMemo(() => new THREE.Color().setHSL(colorHigh.h, colorHigh.s, colorHigh.l), [colorHigh])
+
+  // 初始化 Shader 的 Uniforms
+  const uniforms = useRef({
+    uTime: { value: 0 },
+    uColorLow: { value: cLow },
+    uColorHigh: { value: cHigh },
+    uMood: { value: moodVector }
+  })
+
+  // 当 props 变化时更新 uniforms
+  useEffect(() => {
+    uniforms.current.uColorLow.value.copy(cLow)
+    uniforms.current.uColorHigh.value.copy(cHigh)
+    // 使用 lerp 让心情变化时颜色过渡更平滑
+    // 这里直接赋值，shader 内部会处理混合
+    uniforms.current.uMood.value = moodVector
+  }, [cLow, cHigh, moodVector])
+
+  useFrame((state) => {
+    if (materialRef.current) {
+      // 更新时间，控制流动速度 (0.5 是速度系数)
+      uniforms.current.uTime.value = state.clock.getElapsedTime() * 0.5
+    }
+  })
+
+  // @ts-ignore
+  const onBeforeCompile = (shader: THREE.Shader) => {
+    // 注入 uniforms
+    shader.uniforms.uTime = uniforms.current.uTime
+    shader.uniforms.uColorLow = uniforms.current.uColorLow
+    shader.uniforms.uColorHigh = uniforms.current.uColorHigh
+    shader.uniforms.uMood = uniforms.current.uMood
+
+    // --- 1. Vertex Shader 修改 ---
+    // 我们需要获取每个 Instance (晶块) 在球体上的原始高度，用于生成渐变
+    shader.vertexShader = `
+      varying float vYLevel; // 传递给 Fragment Shader 的高度变量
+      ${shader.vertexShader}
+    `.replace(
+      '#include <begin_vertex>',
+      `
+      #include <begin_vertex>
+      
+      // 计算 Instance 的中心位置 (在模型空间中)
+      // instanceMatrix 是 InstancedMesh 自动提供的
+      vec4 instanceCenter = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+      
+      // 归一化高度: 将 y 从 [-radius, radius] 映射到 [0, 1]
+      // 假设半径约为 2 (根据 MoodSphere 配置)
+      vYLevel = instanceCenter.y * 0.5 + 0.5; 
+      `
+    )
+
+    // --- 2. Fragment Shader 修改 ---
+    shader.fragmentShader = `
+      uniform float uTime;
+      uniform vec3 uColorLow;
+      uniform vec3 uColorHigh;
+      uniform float uMood;
+      varying float vYLevel;
+      ${shader.fragmentShader}
+    `.replace(
+      '#include <color_fragment>',
+      `
+      #include <color_fragment>
+      
+      // --- 流动渐变逻辑 ---
+      
+      // 1. 创建波浪: 使用 sin 函数结合高度和时间
+      // vYLevel * 3.0: 决定波浪的密度
+      // uTime: 决定波浪的移动
+      float wave = sin(vYLevel * 4.0 - uTime) * 0.5 + 0.5;
+      
+      // 2. 混合心情因子
+      // uMood (0~1) 决定了整体偏向哪种颜色
+      // 我们将波浪叠加在 Mood 之上
+      // mixFactor 越接近 0 越偏向 LowColor，越接近 1 越偏向 HighColor
+      
+      // 基础偏置：心情越好，整体越亮
+      float bias = uMood; 
+      
+      // 混合：70% 由心情决定，30% 由波浪决定 (产生流动感但不喧宾夺主)
+      float mixFactor = mix(bias, wave, 0.3);
+      
+      // 3. 计算最终颜色
+      vec3 gradientColor = mix(uColorLow, uColorHigh, clamp(mixFactor, 0.0, 1.0));
+      
+      // 4. 应用颜色
+      // 保持原本的 diffuseColor (如果有贴图的话)，这里直接覆盖 RGB
+      diffuseColor.rgb = gradientColor;
+      `
+    )
+
+    // 保存 shader 引用以便后续更新 uniforms (虽然这里用了引用传递，通常不需要这一步，但为了保险)
+    materialRef.current.userData.shader = shader
+  }
 
   const envMap = useEnvironment({
     files: [
@@ -30,118 +133,88 @@ export default function DiscoBall({
     ]
   })
 
+  return (
+    <meshStandardMaterial
+      ref={materialRef}
+      metalness={1.12} // 稍微降低一点金属度，让底色更明显
+      roughness={0.1}
+      envMap={envMap}
+      envMapIntensity={1}
+      onBeforeCompile={onBeforeCompile}
+    />
+  )
+}
+
+export default function DiscoBall({
+                                    radius = 2,
+                                    tileSize = 0.15,
+                                    scale = 1,
+                                    moodVector = 0.5,
+                                    colorLow = {h: 0.65, s: 0.9, l: 0.15},
+                                    colorHigh = {h: 0.08, s: 1.0, l: 0.6}
+                                  }: DiscoBallProps) {
+  const meshRef = useRef<THREE.InstancedMesh>(null!)
+  const temp = new THREE.Object3D()
+
+  // ... (tiles 计算逻辑保持完全不变，直接复用之前的代码)
   const tiles = useMemo(() => {
     const result: {
       position: THREE.Vector3
       rotation: THREE.Euler
       scale: THREE.Vector3
     }[] = []
-
-    // 辅助对象，用于计算旋转
     const dummy = new THREE.Object3D()
-
-    // 起始角度：从南极附近开始 (-PI/2)
     let currentPhi = -Math.PI / 2
-
-    // 循环直到到达北极 (PI/2)
-    // 使用 while 循环代替 for 循环，确保层与层之间紧密堆叠
     while (currentPhi < Math.PI / 2) {
-
-      // 1. 判断当前纬度区域
-      // 接近 +/- PI/2 (约1.57) 为极点。这里设定阈值 1.1 (约63度)
       const isHighLat = Math.abs(currentPhi) > 1.1
-
-      // 2. 动态设置 Overlap (解决缝隙问题)
-      // 中纬度: 1.0 (无重叠，清晰)
-      // 高纬度: 1.15 (重叠，遮盖缝隙)
       const overlap = isHighLat ? 1.15 : 1.0
-
-      // 3. 计算当前圈的几何参数
-      // ringRadius: 当前纬度圈的水平半径
-      // y: 当前纬度圈的高度
       const ringRadius = Math.cos(currentPhi) * radius
       const y = Math.sin(currentPhi) * radius
-
-      // 计算这一圈的周长
       const circumference = 2 * Math.PI * ringRadius
-
-      // 4. 计算这一圈能放多少个贴片
-      // 保持贴片宽度大致为 tileSize
       let tilesInRing = Math.floor(circumference / tileSize)
-
-      // 5. 极点处理 (Cap)
-      // 如果一圈放不下3个贴片，说明非常接近极点，直接跳过，
-      // 我们会在循环结束后单独加盖子，或者让下一层循环处理
       if (tilesInRing < 3) {
-        // 即使跳过，也要增加角度，防止死循环
-        // 极点附近的步长可以稍微大一点，快速跨过
         currentPhi += (tileSize / radius)
         continue
       }
-
-      // 6. 生成当前圈的贴片
       for (let j = 0; j < tilesInRing; j++) {
         const u = j / tilesInRing
-        const theta = u * Math.PI * 2 // 经度角度
-
+        const theta = u * Math.PI * 2
         const x = Math.cos(theta) * ringRadius
         const z = Math.sin(theta) * ringRadius
-
         dummy.position.set(x, y, z)
-        dummy.lookAt(0, 0, 0) // 面向球心
-
-        // --- 核心缩放逻辑 ---
-        // Scale X:
-        // (circumference / tilesInRing) 是当前每个贴片分到的实际弧长
-        // 除以 tileSize 得到缩放比例，确保填满圆周
+        dummy.lookAt(0, 0, 0)
         const scaleX = (circumference / tilesInRing) / tileSize * overlap
-
-        // Scale Y:
-        // 保持为 1 (即 tileSize 高度)，乘以 overlap
-        // 注意：这里不再缩小极点贴片的高度，保证行高一致，解决"4圈间隙大"的问题
         const scaleY = 1 * overlap
-
         result.push({
           position: new THREE.Vector3(x, y, z),
           rotation: dummy.rotation.clone(),
           scale: new THREE.Vector3(scaleX, scaleY, 1)
         })
       }
-
-      // 7. 计算下一层的角度步长 (关键修改)
-      // 我们希望下一层贴片正好接在这一层上面
-      // 弧长公式: L = r * angle -> angle = L / r
-      // 这里 L 就是贴片的高度 (tileSize)
       const dPhi = tileSize / radius
-
-      // 累加角度
       currentPhi += dPhi
     }
-
-    // --- 极点补丁 (Pole Caps) ---
-    const capScale = 1.2 // 稍微大一点盖住边缘
-
-    // 北极盖子
+    const capScale = 1.2
     result.push({
       position: new THREE.Vector3(0, radius, 0),
-      rotation: new THREE.Euler(Math.PI / 2, 0, 0), // 90度朝上
+      rotation: new THREE.Euler(Math.PI / 2, 0, 0),
       scale: new THREE.Vector3(1, 1, 1).multiplyScalar(capScale)
     })
-
-    // 南极盖子
     result.push({
       position: new THREE.Vector3(0, -radius, 0),
-      rotation: new THREE.Euler(-Math.PI / 2, 0, 0), // -90度朝下
+      rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
       scale: new THREE.Vector3(1, 1, 1).multiplyScalar(capScale)
     })
-
     return result
   }, [radius, tileSize])
 
   useFrame(() => {
     if (!meshRef.current) return
+    // 只需要初始化一次矩阵，除非你想让晶块本身移动
+    // 如果 tiles 是静态的，其实可以在 useEffect 里做
+    // 但为了保险起见（防止 context 丢失），这里保留
+    if (meshRef.current.instanceMatrix.needsUpdate) return;
 
-    // 批量更新矩阵
     tiles.forEach((tile, i) => {
       temp.position.copy(tile.position)
       temp.rotation.copy(tile.rotation)
@@ -149,36 +222,28 @@ export default function DiscoBall({
       temp.updateMatrix()
       meshRef.current.setMatrixAt(i, temp.matrix)
     })
-
     meshRef.current.instanceMatrix.needsUpdate = true
-
-    // 旋转动画
-    // meshRef.current.rotation.y += 0.002
   })
 
   return (
     <group scale={scale}>
-      {/* 内部黑球：作为缝隙的背景色 */}
       <Sphere args={[radius * 0.98, 32, 32]}>
         <meshBasicMaterial color="#000000"/>
       </Sphere>
 
       <instancedMesh
         ref={meshRef}
-        args={[null, null, tiles.length]}
+        args={[undefined, undefined, tiles.length]}
       >
-        {/*
-          几何体:
-          使用 BoxGeometry
-         */}
         <boxGeometry args={[tileSize, tileSize, 0.05]}/>
-        <meshStandardMaterial
-          color={color}
-          metalness={2}
-          roughness={0.1} // 极致光滑
-          envMap={envMap}
-          envMapIntensity={1}
+
+        {/* 使用我们自定义的材质组件 */}
+        <DiscoMaterial
+          moodVector={moodVector}
+          colorLow={colorLow}
+          colorHigh={colorHigh}
         />
+
       </instancedMesh>
     </group>
   )
