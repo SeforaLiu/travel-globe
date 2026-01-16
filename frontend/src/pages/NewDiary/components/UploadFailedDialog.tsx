@@ -1,5 +1,5 @@
 import React from 'react';
-import GenericDialog, { ButtonVariant } from '../../../components/GenericDialog';
+import GenericDialog from "@/components/GenericDialog";
 
 interface UploadFailedDialogProps {
   dark: boolean;
@@ -12,6 +12,7 @@ interface UploadFailedDialogProps {
   onSkip: () => void;
   onCancel: () => void;
   isRetrying?: boolean;
+  isOpen: boolean;
 }
 
 const UploadFailedDialog: React.FC<UploadFailedDialogProps> = ({
@@ -22,6 +23,7 @@ const UploadFailedDialog: React.FC<UploadFailedDialogProps> = ({
                                                                  onSkip,
                                                                  onCancel,
                                                                  isRetrying = false,
+                                                                 isOpen
                                                                }) => {
   // 自定义内容：失败图片列表
   const failedListContent = (
@@ -52,32 +54,28 @@ const UploadFailedDialog: React.FC<UploadFailedDialogProps> = ({
   return (
     <GenericDialog
       dark={dark}
+      isOpen={isOpen}
       title={t('photos.uploadFailed')}
       description={`${t('photos.photoFailedLength')} [${failedPhotos.length}]`}
+      children={failedListContent}
       iconVariant="warning"
-      onCancel={onCancel}
-      showCancelButton={true}
-      cancelButtonLabel={t('common.cancel')}
+      onClose={onCancel}
       primaryButton={{
         label: t('photos.retryAll'),
         onClick: onRetry,
-        variant: 'warning' as ButtonVariant,
+        variant: 'warning',
         loading: isRetrying,
-        disabled: isRetrying,
         dataTestId: 'retry-button',
       }}
       secondaryButton={{
         label: t('photos.skipAndSubmit'),
         onClick: onSkip,
-        variant: 'secondary' as ButtonVariant,
+        variant: 'ghost',
         dataTestId: 'skip-button',
       }}
-      fullScreenOnMobile={true}
       maxWidth="md"
       t={t}
-    >
-      {failedListContent}
-    </GenericDialog>
+    />
   );
 };
 

@@ -1,4 +1,16 @@
+// GenericDialog.tsx
+
 import React, { ReactNode } from 'react';
+// 导入 lucide-react 图标库，与 MoodDialog 保持一致
+import {
+  X,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Info,
+  HelpCircle,
+} from 'lucide-react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'outline' | 'ghost';
 
@@ -13,6 +25,9 @@ export interface DialogButton {
 }
 
 export interface GenericDialogProps {
+  // 新增：控制对话框的显示状态
+  isOpen: boolean;
+
   // 基础配置
   title: string | ReactNode;
   description?: string | ReactNode;
@@ -29,15 +44,13 @@ export interface GenericDialogProps {
   primaryButton?: DialogButton;
   secondaryButton?: DialogButton;
   additionalButtons?: DialogButton[];
-  showCancelButton?: boolean;
-  cancelButtonLabel?: string;
-  onCancel?: () => void;
+  // 如果需要取消按钮，可以这样传递：
+  // secondaryButton={{ label: 'Cancel', onClick: handleCancel, variant: 'ghost' }}
 
   // 样式配置
-  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  fullScreenOnMobile?: boolean;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; // 移除了 'full'，因为对话框通常不应占满全屏
   showCloseButton?: boolean;
-  onClose?: () => void;
+  onClose: () => void;
 
   // 国际化
   t?: (key: string) => string;
@@ -45,10 +58,10 @@ export interface GenericDialogProps {
   // 其他
   className?: string;
   dataTestId?: string;
-  isMobile?: boolean;
 }
 
 const GenericDialog: React.FC<GenericDialogProps> = ({
+                                                       isOpen,
                                                        title,
                                                        description,
                                                        dark = false,
@@ -58,72 +71,57 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
                                                        primaryButton,
                                                        secondaryButton,
                                                        additionalButtons = [],
-                                                       showCancelButton = true,
-                                                       cancelButtonLabel = 'Cancel',
-                                                       onCancel,
-                                                       maxWidth = 'lg',
-                                                       fullScreenOnMobile = false,
+                                                       maxWidth = 'md',
                                                        showCloseButton = true,
                                                        onClose,
                                                        t,
                                                        className = '',
                                                        dataTestId = 'generic-dialog',
-                                                       isMobile
                                                      }) => {
-  // 判断是否为移动端
-  // 如果外部传入了 isMobile，使用外部值；否则通过 CSS media query 处理
-  const isMobileView = isMobile !== undefined ? isMobile : false;
+  if (!isOpen) {
+    return null;
+  }
 
   // 获取图标颜色
   const getIconColor = () => {
     if (iconVariant) {
       const colors = {
-        success: dark ? 'text-green-400' : 'text-green-600',
-        warning: dark ? 'text-yellow-400' : 'text-yellow-600',
-        error: dark ? 'text-red-400' : 'text-red-600',
-        info: dark ? 'text-blue-400' : 'text-blue-600',
-        question: dark ? 'text-purple-400' : 'text-purple-600',
+        success: 'text-green-500',
+        warning: 'text-yellow-500',
+        error: 'text-red-500',
+        info: 'text-blue-500',
+        question: 'text-purple-500',
       };
       return colors[iconVariant];
     }
     return dark ? 'text-gray-400' : 'text-gray-500';
   };
 
-  // 获取按钮样式
+  // 获取按钮样式 (全新设计的现代样式)
   const getButtonClasses = (variant: ButtonVariant = 'primary') => {
-    const baseClasses = 'w-full px-4 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses =
+      'w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2';
+    const darkOffset = dark ? 'dark:focus:ring-offset-gray-900' : 'focus:ring-offset-white';
 
     const variants = {
       primary: dark
-        ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
-        : 'bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400',
-
+        ? 'bg-slate-50 text-slate-900 hover:bg-slate-200 focus:ring-slate-400'
+        : 'bg-slate-900 text-white hover:bg-slate-700 focus:ring-slate-500',
       secondary: dark
-        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200 focus:ring-gray-500'
-        : 'bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-400',
-
-      danger: dark
-        ? 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500'
-        : 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-400',
-
-      warning: dark
-        ? 'bg-yellow-600 hover:bg-yellow-700 text-white focus:ring-yellow-500'
-        : 'bg-yellow-500 hover:bg-yellow-600 text-white focus:ring-yellow-400',
-
-      success: dark
-        ? 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500'
-        : 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-400',
-
+        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 focus:ring-gray-600'
+        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-400',
+      danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
+      warning: 'bg-yellow-500 hover:bg-yellow-600 text-white focus:ring-yellow-400',
+      success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500',
       outline: dark
-        ? 'border border-gray-600 text-gray-300 hover:bg-gray-800 focus:ring-gray-500'
+        ? 'border border-gray-700 text-gray-300 hover:bg-gray-800 focus:ring-gray-500'
         : 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-400',
-
       ghost: dark
-        ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800 focus:ring-gray-500'
-        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:ring-gray-400',
+        ? 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 focus:ring-gray-500'
+        : 'bg-gray-100 text-gray-800 hover:text-gray-900 hover:bg-gray-200 focus:ring-gray-400',
     };
 
-    return `${baseClasses} ${variants[variant]}`;
+    return `${baseClasses} ${darkOffset} ${variants[variant]}`;
   };
 
   // 获取最大宽度类
@@ -134,233 +132,100 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
       md: 'max-w-md',
       lg: 'max-w-lg',
       xl: 'max-w-xl',
-      full: 'max-w-full',
     };
     return widths[maxWidth];
   };
 
-  // 获取默认图标
+  // 获取默认图标 (使用 lucide-react)
   const getDefaultIcon = () => {
     if (icon) return icon;
+    const iconProps = { size: 28, 'aria-hidden': true };
 
     const icons = {
-      success: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      warning: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.694-.833-3.464 0L4.312 16.5c-.77.833.192 2.5 1.732 2.5z" />
-        </svg>
-      ),
-      error: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      info: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      question: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
+      success: <CheckCircle2 {...iconProps} />,
+      warning: <AlertTriangle {...iconProps} />,
+      error: <XCircle {...iconProps} />,
+      info: <Info {...iconProps} />,
+      question: <HelpCircle {...iconProps} />,
     };
 
     return iconVariant ? icons[iconVariant] : null;
   };
 
-  // 收集所有按钮（不包括取消按钮）
+  // 收集所有按钮
   const allButtons: DialogButton[] = [];
-  if (primaryButton) allButtons.push(primaryButton);
-  if (secondaryButton) allButtons.push(secondaryButton);
-  if (additionalButtons.length > 0) allButtons.push(...additionalButtons);
+  if (secondaryButton) allButtons.push({ variant: 'ghost', ...secondaryButton }); // 默认次要按钮为 ghost
+  if (primaryButton) allButtons.push({ variant: 'primary', ...primaryButton });
+  // 你可以根据需要调整按钮顺序
+  // if (additionalButtons.length > 0) allButtons.push(...additionalButtons);
 
   // 渲染按钮
   const renderButton = (button: DialogButton, index: number) => (
     <button
       key={`button-${index}`}
       onClick={button.onClick}
-      disabled={button.disabled}
+      disabled={button.disabled || button.loading}
       className={`${getButtonClasses(button.variant)} ${button.className || ''}`}
       data-testid={button.dataTestId}
     >
-      {button.loading ? (
-        <span className="flex items-center justify-center">
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          {button.label}
-        </span>
-      ) : (
-        button.label
-      )}
+      {button.loading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {button.label}
     </button>
   );
 
-  // 移动端样式
-  const mobileStyles = isMobileView
-    ? `fixed bottom-0 left-0 right-0 w-full 
-       ${fullScreenOnMobile ? 'h-full' : ''}
-       rounded-t-xl rounded-b-none 
-       shadow-2xl
-       max-h-[40vh] overflow-y-auto`
-    : '';
-
-  // PC端样式 - 居中显示
-  const pcStyles = !isMobileView
-    ? `fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-       shadow-2xl
-       ${getMaxWidthClass()}`
-    : '';
-
   return (
+    // 1. 背景遮罩层：提供背景模糊和半透明效果，让对话框更突出
     <div
       data-testid={dataTestId}
-      className={`
-        ${dark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
-        rounded-lg p-6 z-50
-        ${isMobileView ? mobileStyles : pcStyles}
-        ${fullScreenOnMobile && isMobileView ? 'sm:rounded-lg sm:p-6' : ''}
-        ${className}
-        transition-all duration-200 ease-in-out
-      `}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose} // 点击背景关闭对话框
     >
-      {/* 关闭按钮 */}
-      {showCloseButton && onClose && (
-        <button
-          onClick={onClose}
-          className={`
-            absolute top-4 right-4
-            ${dark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}
-            p-1 rounded-full hover:bg-opacity-20
-            ${dark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}
-            transition-colors
-          `}
-          aria-label="Close"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
+      {/* 2. 对话框面板：阻止事件冒泡到背景层 */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`
+          w-full ${getMaxWidthClass()} rounded-2xl p-6 shadow-2xl transform transition-all
+          ${dark ? 'bg-gray-900 text-white border border-gray-700' : 'bg-white text-gray-900'}
+          ${className}
+        `}
+      >
+        {/* 3. 头部区域：标题和关闭按钮分离 */}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold">{title}</h3>
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-full text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
 
-      {/* 图标区域 */}
-      <div className="flex items-start mb-4">
-        {icon || iconVariant ? (
-          <div className={`flex-shrink-0 ${getIconColor()}`}>
-            {getDefaultIcon()}
+        {/* 4. 内容区域：图标和文字左右布局 */}
+        <div className="flex items-start gap-4">
+          {icon || iconVariant ? (
+            <div className={`flex-shrink-0 mt-1 ${getIconColor()}`}>{getDefaultIcon()}</div>
+          ) : null}
+
+          <div className="flex-1 mt-1">
+            {description && (
+              <p className={`text-base ${dark ? 'text-gray-300' : 'text-gray-600'}`}>{description}</p>
+            )}
+            {children && <div className="mt-4">{children}</div>}
           </div>
-        ) : null}
-
-        <div className={`${icon || iconVariant ? 'ml-4' : ''} flex-1`}>
-          {/* 标题 */}
-          <h3 className="text-xl font-bold">
-            {title}
-          </h3>
-
-          {/* 描述 */}
-          {description && (
-            <p className={`text-sm ${dark ? 'opacity-90' : 'text-gray-600'} mt-1`}>
-              {description}
-            </p>
-          )}
         </div>
+
+        {/* 5. 按钮区域：采用纯 CSS 响应式设计 */}
+        {/* 在小屏幕上 (默认) 是垂直排列，在 sm 及以上屏幕是水平排列 */}
+        {(primaryButton || secondaryButton || additionalButtons.length > 0) && (
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
+            {secondaryButton && renderButton({ variant: 'ghost', ...secondaryButton }, 1)}
+            {primaryButton && renderButton({ variant: 'primary', ...primaryButton }, 0)}
+          </div>
+        )}
       </div>
-
-      {/* 自定义内容区域 */}
-      {children && (
-        <div className="mb-6">
-          {children}
-        </div>
-      )}
-
-      {/* 按钮区域 */}
-      {isMobileView ? (
-        // 移动端按钮布局：垂直排列
-        <div className="space-y-3 mt-6">
-          {/* 主按钮 */}
-          {primaryButton && (
-            <div className="w-full">
-              {renderButton(primaryButton, 0)}
-            </div>
-          )}
-
-          {/* 次按钮 */}
-          {secondaryButton && (
-            <div className="w-full">
-              {renderButton(secondaryButton, 1)}
-            </div>
-          )}
-
-          {/* 额外按钮 */}
-          {additionalButtons.map((button, index) => (
-            <div key={`additional-${index}`} className="w-full">
-              {renderButton(button, index + 2)}
-            </div>
-          ))}
-
-          {/* 取消按钮在最下方 */}
-          {showCancelButton && onCancel && (
-            <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={onCancel}
-                className={`
-                  w-full
-                  ${getButtonClasses('ghost')}
-                `}
-                data-testid="cancel-button"
-              >
-                {t ? t('common.cancel') : cancelButtonLabel}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        // PC端按钮布局：水平排列（右对齐）
-        <div className="flex flex-row-reverse gap-3 mt-6">
-          {/* 主按钮在最右侧 */}
-          {primaryButton && (
-            <div>
-              {renderButton(primaryButton, 0)}
-            </div>
-          )}
-
-          {/* 次按钮 */}
-          {secondaryButton && (
-            <div>
-              {renderButton(secondaryButton, 1)}
-            </div>
-          )}
-
-          {/* 额外按钮 */}
-          {additionalButtons.map((button, index) => (
-            <div key={`additional-${index}`}>
-              {renderButton(button, index + 2)}
-            </div>
-          ))}
-
-          {/* 取消按钮在最左侧 */}
-          {showCancelButton && onCancel && (
-            <div className="mr-auto">
-              <button
-                onClick={onCancel}
-                className={`
-                  ${getButtonClasses('ghost')}
-                `}
-                data-testid="cancel-button"
-              >
-                {t ? t('common.cancel') : cancelButtonLabel}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

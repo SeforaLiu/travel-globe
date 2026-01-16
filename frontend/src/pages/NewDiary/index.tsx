@@ -494,33 +494,19 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
         onGenerate={handleAIGenerate}
         dark={dark}/>
 
-
       {/* 失败图片对话框 - 使用条件渲染 */}
-      {showFailedPhotosDialog && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            {/* 背景遮罩 */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-              onClick={handleDialogClose}
-            />
-
-            {/* 对话框内容 - 使用通用组件 */}
-            <div className="relative transform overflow-hidden rounded-lg shadow-xl transition-all w-full max-w-md">
-              <UploadFailedDialog
-                dark={dark}
-                failedPhotos={failedPhotosList}
-                t={t}
-                onRetry={handleDialogRetry}
-                onSkip={handleDialogSkip}
-                onCancel={handleDialogClose}
-                // 新增：传递重试加载状态
-                isRetrying={isRetryingFailedPhotos}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {showFailedPhotosDialog &&
+        <UploadFailedDialog
+          dark={dark}
+          failedPhotos={failedPhotosList}
+          t={t}
+          onRetry={handleDialogRetry}
+          onSkip={handleDialogSkip}
+          onCancel={handleDialogClose}
+          isRetrying={isRetryingFailedPhotos}
+          isOpen={showFailedPhotosDialog}
+        />
+      }
     </>
   );
 

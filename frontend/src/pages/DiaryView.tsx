@@ -179,30 +179,31 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
 
         {showDeleteDialog && <GenericDialog
           dark={dark}
+          isOpen={showDeleteDialog}
           title={t('sure to delete?')}
           iconVariant="error"
-          showCancelButton={false}
-          cancelButtonLabel={t('common.cancel')}
+          description={t('This cannot be undone')}
           primaryButton={{
             label: t('common.confirm'),
             onClick: handleConfirmDelete,
-            variant: 'danger' as ButtonVariant,
+            variant: 'danger',
             dataTestId: 'confirm-button',
+          }}
+          onClose={() => {
+            setShowDeleteDialog(false)
           }}
           secondaryButton={{
             label: t('common.cancel'),
             onClick: () => {
               setShowDeleteDialog(false)
             },
-            variant: 'secondary' as ButtonVariant,
+            variant: 'ghost',
             dataTestId: 'cancel-button',
           }}
-          fullScreenOnMobile={true}
           maxWidth="md"
           t={t}
-          isMobile={isMobile}
-        >
-        </GenericDialog>}
+        />}
+
       </div> : <div>{t('No diaries yet')}</div>)
 
     );

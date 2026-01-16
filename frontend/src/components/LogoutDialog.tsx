@@ -1,42 +1,43 @@
 // src/components/NewDiaryCloseDialog.tsx
-import React from 'react';
-import GenericDialog, { ButtonVariant } from './GenericDialog';
-import { useTranslation } from 'react-i18next';
+import React, {useState} from 'react';
+import GenericDialog, {ButtonVariant} from './GenericDialog';
+import {useTranslation} from 'react-i18next';
 
 interface Props {
+  isOpen: boolean;
   dark: boolean;
   isMobile: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export const LogoutDialog: React.FC<Props> = ({ dark, isMobile, onConfirm, onCancel }) => {
-  const { t } = useTranslation();
+export const LogoutDialog: React.FC<Props> = ({isOpen, dark, onConfirm, onCancel}) => {
+  const {t} = useTranslation();
 
   return (
     <GenericDialog
+      isOpen={isOpen}
       dark={dark}
       title={t('sure to logout?')}
+      description={t('you will need to login again once logout')}
       iconVariant="error"
-      showCancelButton={false}
-      cancelButtonLabel={t('common.cancel')}
+      onClose={onCancel}
+      maxWidth="md"
+      t={t}
       primaryButton={{
         label: t('common.confirm'),
         onClick: onConfirm,
-        variant: 'danger' as ButtonVariant,
+        variant: 'danger',
         dataTestId: 'confirm-button',
       }}
       secondaryButton={{
         label: t('common.cancel'),
         onClick: onCancel,
-        variant: 'secondary' as ButtonVariant,
+        variant: 'ghost',
         dataTestId: 'cancel-button',
       }}
-      fullScreenOnMobile={true}
-      maxWidth="md"
-      t={t}
-      isMobile={isMobile}
     >
     </GenericDialog>
+
   );
 };

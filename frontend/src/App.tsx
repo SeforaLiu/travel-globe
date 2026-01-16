@@ -123,7 +123,7 @@ export default function App() {
       {showNewDiaryCloseDialog && (
         <NewDiaryCloseDialog
           dark={darkMode}
-          isMobile={isMobile}
+          isOpen={showNewDiaryCloseDialog}
           onConfirm={() => {
             setShowNewDiaryCloseDialog(false);
             if (location.pathname === '/diary/edit'){
@@ -144,6 +144,7 @@ export default function App() {
           isMobile={isMobile}
           onConfirm={handleConfirmLogout}
           onCancel={() => setShowLogoutDialog(false)}
+          isOpen={showLogoutDialog}
         />
       )}
     </>

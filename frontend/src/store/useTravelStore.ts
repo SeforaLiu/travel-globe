@@ -48,6 +48,7 @@ interface TravelState {
   setShowMoodModal: (show: boolean) => void;
   activeMoodData: Mood | null;
   setActiveMoodData: (data: Mood | null) => void;
+  deleteMood: (id: number) => Promise<void>;
 
   // --- 动作 (Actions) ---
   // A. 获取分页列表
@@ -144,6 +145,25 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       await get().fetchMoods(true);
     } catch (err) {
       console.error("Create mood failed", err);
+      throw err;
+    }
+  },
+
+  // 删除心情的 action 实现
+  deleteMood: async (id: number) => {
+    try {
+      // 1. 调用后端 DELETE API
+      await api.delete(`/moods/${id}`);
+      // 2. API 调用成功后，更新前端状态
+      // 使用 filter 方法从 moods 数组中移除已删除的项
+      // 这样可以立即在 UI 上看到变化，无需重新请求整个列表
+      set((state) => ({
+        moods: state.moods.filter((mood) => mood.id !== id),
+      }));
+      console.log(`Mood with id ${id} deleted successfully.`);
+    } catch (err) {
+      console.error(`Failed to delete mood with id ${id}`, err);
+      // 抛出错误，以便 UI 层可以捕获并处理（例如显示错误提示）
       throw err;
     }
   },

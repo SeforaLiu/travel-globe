@@ -1,7 +1,11 @@
 // MoodDetailModal.tsx
-import React from 'react';
-import { X, Calendar, Quote } from 'lucide-react';
+import React, {useState} from 'react';
+import {X, Calendar, Quote, Trash2} from 'lucide-react';
 import {t} from "i18next";
+import {useTravelStore} from "@/store/useTravelStore";
+import GenericDialog from "@/components/GenericDialog";
+import {toast} from "sonner";
+import {useNavigate} from "react-router-dom";
 
 // 定义数据接口
 interface MoodData {
@@ -19,8 +23,37 @@ interface Props {
   dark: boolean;
 }
 
-export default function MoodDetailModal({ isOpen, onClose, data, dark }: Props) {
+export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteMood = useTravelStore((state) => state.deleteMood);
+
+  const navigate = useNavigate()
+
   if (!isOpen || !data) return null;
+
+  // 处理删除确认的函数
+  const handleDeleteConfirm = async () => {
+    if (!data) return;
+    setIsDeleting(true);
+    try {
+      await deleteMood(data.id);
+      toast.success(t('ai.delete successful'))
+      setIsConfirmingDelete(false);
+      onClose();
+    } catch (error: any) {
+      console.error("Failed to delete mood:", error);
+
+      if (error.response?.status === 401) {
+        toast.error(t('Session expired, please login again'));
+        navigate('/login');
+      } else {
+        toast.error(t('ai.delete failed'))
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // 格式化日期
   const formatDate = (dateString: string) => {
@@ -39,70 +72,135 @@ export default function MoodDetailModal({ isOpen, onClose, data, dark }: Props) 
   };
 
   return (
-    // 遮罩层：使用 fixed inset-0 确保覆盖全屏，backdrop-blur 增加质感
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose} // 点击背景关闭
-      style={{ pointerEvents: 'auto' }} // 确保能接收点击
-    >
-      {/* 卡片容器 */}
+    <>
       <div
-        className={`w-96 rounded-2xl p-6 shadow-2xl transform transition-all scale-100 opacity-100 ${
-          dark
-            ? 'bg-gray-900 text-white border border-gray-700'
-            : 'bg-white text-gray-900 border border-gray-100'
-        }`}
-        style={{
-          writingMode: 'horizontal-tb',
-          textOrientation: 'mixed',
-        }}
-        onClick={(e) => e.stopPropagation()} // 阻止冒泡，防止点击卡片关闭
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={onClose} // 点击背景关闭
+        style={{pointerEvents: 'auto'}} // 确保能接收点击
       >
-        {/* Header: 标题与关闭按钮 */}
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-              {t('ai.Mood Memory')}
-              {/*记录心情*/}
-            </h2>
-            <div className={`flex items-center gap-1.5 text-xs mt-1 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
-              <Calendar size={12} />
-              <span>{formatDate(data.created_at)}</span>
+        {/* 卡片容器 */}
+        <div
+          className={`w-96 rounded-2xl p-6 shadow-2xl transform transition-all scale-100 opacity-100 ${
+            dark
+              ? 'bg-gray-900 text-white border border-gray-700'
+              : 'bg-white text-gray-900 border border-gray-100'
+          }`}
+          style={{
+            writingMode: 'horizontal-tb',
+            textOrientation: 'mixed',
+          }}
+          onClick={(e) => e.stopPropagation()} // 阻止冒泡，防止点击卡片关闭
+        >
+          {/* Header: 标题与关闭按钮 */}
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2
+                className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
+                {t('ai.Mood Memory')}
+                {/*记录心情*/}
+              </h2>
+              <div className={`flex items-center gap-1.5 text-xs mt-1 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Calendar size={12}/>
+                <span>{formatDate(data.created_at)}</span>
+              </div>
             </div>
+
+            <button
+              onClick={onClose}
+              className={`p-1.5 rounded-full transition-colors ${
+                dark
+                  ? 'hover:bg-gray-800 text-gray-400 hover:text-white'
+                  : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <X size={20}/>
+            </button>
           </div>
 
-          <button
-            onClick={onClose}
-            className={`p-1.5 rounded-full transition-colors ${
-              dark
-                ? 'hover:bg-gray-800 text-gray-400 hover:text-white'
-                : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Content: 文本内容 */}
-        <div className="relative mb-5">
-          <Quote size={24} className={`absolute -top-2 -left-1 opacity-20 ${dark ? 'text-pink-400' : 'text-pink-600'}`} />
-          <p className={`text-base leading-relaxed pl-6 ${dark ? 'text-gray-200' : 'text-gray-700'}`}>
-            {data.content}
-          </p>
-        </div>
-
-        {/* Photo: 图片展示 (如果有) */}
-        {data.photo_url && (
-          <div className={`rounded-xl overflow-hidden border ${dark ? 'border-gray-700 bg-black/50' : 'border-gray-200 bg-gray-50'}`}>
-            <img
-              src={data.photo_url}
-              alt="mood moment"
-              className="w-full h-auto max-h-72 object-contain mx-auto"
-              loading="lazy"
-            />
+          {/* Content: 文本内容 */}
+          <div className="relative mb-5">
+            <Quote size={24}
+                   className={`absolute -top-2 -left-1 opacity-20 ${dark ? 'text-pink-400' : 'text-pink-600'}`}/>
+            <p className={`text-base leading-relaxed pl-6 ${dark ? 'text-gray-200' : 'text-gray-700'}`}>
+              {data.content}
+            </p>
           </div>
-        )}
+
+          {/* Photo: 图片展示 (如果有) */}
+          {data.photo_url && (
+            <div
+              className={`rounded-xl overflow-hidden border ${dark ? 'border-gray-700 bg-black/50' : 'border-gray-200 bg-gray-50'}`}>
+              <img
+                src={data.photo_url}
+                alt="mood moment"
+                className="w-full h-auto max-h-72 object-contain mx-auto"
+                loading="lazy"
+              />
+            </div>
+          )}
+
+          {/* Actions Footer: 删除按钮 */}
+          <div className="mt-6 pt-4 border-t flex justify-end">
+            <button
+              onClick={() => setIsConfirmingDelete(true)}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                dark
+                  ? 'text-red-400 hover:bg-red-500/20'
+                  : 'text-red-600 hover:bg-red-100'
+              }`}
+              aria-label={t('common.delete')}
+            >
+              <Trash2 size={16}/>
+              <span>{t('common.delete')}</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* [新增] 删除确认对话框 */}
+      {isConfirmingDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          {/*<GenericDialog*/}
+          {/*  dark={dark}*/}
+          {/*  title={t('ai.deleteConfirmTitle')}*/}
+          {/*  description={t('ai.deleteConfirmDesc')}*/}
+          {/*  iconVariant="warning"*/}
+          {/*  onClose={() => setIsConfirmingDelete(false)}*/}
+          {/*  onCancel={() => setIsConfirmingDelete(false)}*/}
+          {/*  primaryButton={{*/}
+          {/*    label: t('common.delete'),*/}
+          {/*    onClick: handleDeleteConfirm,*/}
+          {/*    variant: 'danger',*/}
+          {/*    loading: isDeleting,*/}
+          {/*    disabled: isDeleting,*/}
+          {/*  }}*/}
+          {/*/>*/}
+
+          <GenericDialog
+            // 1. 新增 isOpen 属性，用于控制对话框的显示和隐藏
+            isOpen={isConfirmingDelete}
+            dark={dark}
+            title={t('ai.deleteConfirmTitle')}
+            description={t('ai.deleteConfirmDesc')}
+            iconVariant="warning"
+            onClose={() => setIsConfirmingDelete(false)}
+            primaryButton={{
+              label: t('common.delete'),
+              onClick: handleDeleteConfirm,
+              variant: 'danger',
+              loading: isDeleting,
+              // 最佳实践：当 loading 为 true 时，按钮会自动禁用，无需重复设置 disabled
+            }}
+            // 2. onCancel 属性被移除，统一使用 secondaryButton 来创建取消按钮
+            secondaryButton={{
+              label: t('common.cancel'),
+              onClick: () => setIsConfirmingDelete(false),
+              // variant: 'ghost' 是 secondaryButton 的默认样式，无需显式指定
+            }}
+          />
+
+        </div>
+      )}
+    </>
   );
 }
