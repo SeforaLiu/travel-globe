@@ -7,7 +7,7 @@ import {t} from "i18next";
 interface MoodData {
   id: number;
   content: string;
-  photo_url: string | null;
+  photo_url: string | null | undefined;
   created_at: string;
   mood_vector: number;
 }
@@ -66,6 +66,7 @@ export default function MoodDetailModal({ isOpen, onClose, data, dark }: Props) 
               {/*记录心情*/}
             </h2>
             <div className={`flex items-center gap-1.5 text-xs mt-1 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+              <Calendar size={12} />
               <span>{formatDate(data.created_at)}</span>
             </div>
           </div>
@@ -84,8 +85,8 @@ export default function MoodDetailModal({ isOpen, onClose, data, dark }: Props) 
 
         {/* Content: 文本内容 */}
         <div className="relative mb-5">
-          {/*<Quote size={12} className={`absolute -top-2 -left-1 opacity-20 ${dark ? 'text-pink-400' : 'text-pink-600'}`} />*/}
-          <p className={`text-base leading-relaxed ${dark ? 'text-gray-200' : 'text-gray-700'}`}>
+          <Quote size={24} className={`absolute -top-2 -left-1 opacity-20 ${dark ? 'text-pink-400' : 'text-pink-600'}`} />
+          <p className={`text-base leading-relaxed pl-6 ${dark ? 'text-gray-200' : 'text-gray-700'}`}>
             {data.content}
           </p>
         </div>

@@ -1,13 +1,11 @@
 // MoodSphere.tsx
-import React, {useMemo, useRef, useState} from 'react';
-import {useFrame} from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import {Html} from '@react-three/drei';
-import {useTravelStore} from '@/store/useTravelStore';
-import DiscoBall from "@/three/DiscoBall";
-import MoodDetailModal from '@/components/MoodDetailModal';
+import { Html } from '@react-three/drei';
+import { useTravelStore } from '@/store/useTravelStore';
+import DiscoBall from '@/three/DiscoBall';
 
-// ... (类型定义保持不变)
 type Mood = {
   id: number;
   content: string;
@@ -36,13 +34,11 @@ const CONFIG = {
     lightnessRange: 0.1,
   },
   colors: {
-    low: {h: 0.65, s: 0.9, l: 0.15},
-    high: {h: 0.08, s: 1.0, l: 0.6},
-  }
+    low: { h: 0.65, s: 0.9, l: 0.15 },
+    high: { h: 0.08, s: 1.0, l: 0.6 },
+  },
 };
 
-// --- 新增：提取颜色计算逻辑 ---
-// 将 mood_vector 转换为 HSL 对象的逻辑提取出来
 const getHSLFromVector = (vector: number) => {
   let h, s, l;
   if (vector < 0.5) {
@@ -61,7 +57,7 @@ const getHSLFromVector = (vector: number) => {
 };
 
 const getFibonacciSpherePoints = (samples: number, radius: number) => {
-  const points = [];
+  const points: THREE.Vector3[] = [];
   const phi = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < samples; i++) {
     const y = 1 - (i / (samples - 1)) * 2;
@@ -79,230 +75,165 @@ const seededRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-const truncateText = (text: string, limit: number = 30) => {
-  if (!text) return '';
-  return text.length > limit ? text.slice(0, limit) + '...' : text;
-};
+const truncateText = (text: string, limit = 30) =>
+  text.length > limit ? text.slice(0, limit) + '...' : text;
 
 
-export function MoodSphere({isMobile = false, dark}: Props) {
+export function MoodSphere({ isMobile = false, dark }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const moodMeshRef = useRef<THREE.InstancedMesh>(null);
 
-  const moods = useTravelStore(state => state.moods) as Mood[];
+  const moods = useTravelStore(state => state.moods)
+  const showMoodModal = useTravelStore(state => state.showMoodModal)
+  const activeMoodData = useTravelStore(state => state.activeMoodData)
+  const setShowMoodModal = useTravelStore(state => state.setShowMoodModal)
+  const setActiveMoodData = useTravelStore(state => state.setActiveMoodData)
+
   const totalCount = moods.length;
-
-  // --- 状态管理 ---
-  const [activeInstanceId, setActiveInstanceId] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState(false);
-
   const isPausedRef = useRef(false);
-  const resumeTimeoutRef = useRef<number | null>(null);
 
-  // --- 数据准备 ---
-  const {positions, randomIndices} = useMemo(() => {
-    if (totalCount === 0) {
-      return { positions: [], randomIndices: [] };
-    }
+  const { positions, randomIndices } = useMemo(() => {
+    if (!totalCount) return { positions: [], randomIndices: [] };
     const points = getFibonacciSpherePoints(totalCount, CONFIG.moodSphereRadius);
-    const indices = Array.from({length: totalCount}, (_, i) => i);
+    const indices = [...Array(totalCount).keys()];
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(seededRandom(i * 123.45) * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    return {positions: points, randomIndices: indices};
+    return { positions: points, randomIndices: indices };
   }, [totalCount]);
 
-  // --- 计算平均 Mood Vector ---
+  // 3. [核心改进] activeInstanceId 现在从全局 activeMoodData 派生而来
+  // 这确保了 store 是唯一的数据源。
+  const activeInstanceId = useMemo(() => {
+    if (!activeMoodData) return null;
+    const index = moods.findIndex(m => m.id === activeMoodData.id);
+    return index !== -1 ? index : null;
+  }, [activeMoodData, moods]);
+
+
   const avgMoodVector = useMemo(() => {
-    if (totalCount === 0) return 0.5;
-    const total = moods.reduce((sum, m) => sum + m.mood_vector, 0);
-    return total / totalCount;
+    if (!totalCount) return 0.5;
+    return moods.reduce((s, m) => s + m.mood_vector, 0) / totalCount;
   }, [moods, totalCount]);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colorHelper = useMemo(() => new THREE.Color(), []);
 
-  // --- 动画循环 ---
   useFrame((state, delta) => {
+    // 当有粒子被选中或模态框打开时，暂停旋转
+    isPausedRef.current = activeInstanceId !== null || showMoodModal;
+
     const time = state.clock.getElapsedTime();
 
     if (groupRef.current && !isPausedRef.current) {
-      groupRef.current.rotation.y += delta * 0.2;
+      groupRef.current.rotation.y += delta * 0.05;
     }
 
-    if (moodMeshRef.current && moods.length > 0) {
-      let needsUpdate = false;
+    if (!moodMeshRef.current) return;
 
-      moods.forEach((mood, i) => {
-        const slotIndex = randomIndices[i];
-        const pos = positions[slotIndex];
+    moods.forEach((mood, i) => {
+      const pos = positions[randomIndices[i]];
+      const breath = Math.sin(time * CONFIG.breathing.speed + i * 10);
+      const baseSize =
+        CONFIG.moodParticle.baseSize +
+        mood.mood_vector * CONFIG.moodParticle.sizeFactor;
 
-        const breath = Math.sin(time * CONFIG.breathing.speed + i * 10);
-        const baseSize = CONFIG.moodParticle.baseSize + (mood.mood_vector * CONFIG.moodParticle.sizeFactor);
+      const isActive = i === activeInstanceId;
+      const scale =
+        baseSize *
+        (1 + breath * CONFIG.breathing.scaleRange) *
+        (isActive ? 1.5 : 1);
 
-        const isActive = i === activeInstanceId;
-        const highlightScale = isActive ? 1.5 : 1;
+      dummy.position.copy(pos);
+      dummy.scale.setScalar(scale);
+      dummy.updateMatrix();
+      moodMeshRef.current!.setMatrixAt(i, dummy.matrix);
 
-        const scaleFactor = (1 + breath * CONFIG.breathing.scaleRange) * highlightScale;
-        const currentSize = baseSize * scaleFactor;
-
-        dummy.position.copy(pos);
-        dummy.scale.set(currentSize, currentSize, currentSize);
-        dummy.updateMatrix();
-        moodMeshRef.current!.setMatrixAt(i, dummy.matrix);
-
-        // 使用提取出来的逻辑
+      if (isActive) {
+        colorHelper.set('#ff3b3b');
+      } else {
         const { h, s, l } = getHSLFromVector(mood.mood_vector);
-
-        const breathingLightness = l + (breath * CONFIG.breathing.lightnessRange);
-
-        if (isActive) {
-          colorHelper.set('#ffffff');
-        } else {
-          colorHelper.setHSL(h, s, Math.max(0, Math.min(1, breathingLightness)));
-        }
-
-        moodMeshRef.current!.setColorAt(i, colorHelper);
-        needsUpdate = true;
-      });
-
-      if (needsUpdate) {
-        moodMeshRef.current.instanceMatrix.needsUpdate = true;
-        if (moodMeshRef.current.instanceColor) moodMeshRef.current.instanceColor.needsUpdate = true;
+        colorHelper.setHSL(
+          h,
+          s,
+          THREE.MathUtils.clamp(l + breath * CONFIG.breathing.lightnessRange, 0, 1),
+        );
       }
-    }
+
+      moodMeshRef.current!.setColorAt(i, colorHelper);
+    });
+
+    moodMeshRef.current.instanceMatrix.needsUpdate = true;
+    moodMeshRef.current.instanceColor!.needsUpdate = true;
   });
 
-  // ... (交互处理函数保持不变: pauseRotation, resumeRotation, handlePointerOver, etc.)
-  const pauseRotation = () => {
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    isPausedRef.current = true;
-  };
-
-  const resumeRotation = (delay = 1000) => {
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    resumeTimeoutRef.current = setTimeout(() => {
-      if (!showModal) {
-        isPausedRef.current = false;
-      }
-    }, delay);
-  };
-
-  const handlePointerOver = (e: any) => {
-    if (isMobile || showModal) return;
-    e.stopPropagation();
-    const instanceId = e.instanceId;
-    if (instanceId !== undefined) {
-      setActiveInstanceId(instanceId);
-      pauseRotation();
-    }
-  };
-
-  const handlePointerOut = (e: any) => {
-    if (isMobile || showModal) return;
-    setActiveInstanceId(null);
-    resumeRotation(1500);
-  };
-
+  // 4. 更新事件处理器，使其调用 store actions
+  /** 点击粒子 */
   const handleClick = (e: any) => {
     e.stopPropagation();
-    const instanceId = e.instanceId;
+    const id = e.instanceId;
+    if (id === undefined) return;
 
-    if (instanceId === undefined) return;
-
-    if (isMobile) {
-      if (activeInstanceId === instanceId) {
-        setShowModal(true);
-        pauseRotation();
-      } else {
-        setActiveInstanceId(instanceId);
-        pauseRotation();
-      }
+    // 设置全局的 activeMoodData
+    const clickedMood = moods[id];
+    if (clickedMood) {
+      setActiveMoodData(clickedMood);
     }
+  };
+
+  /** 点击背景 / 球体其它地方 */
+  const handleBackgroundClick = () => {
+    if (showMoodModal) return; // 如果模态框开着，点击背景不应有任何反应
+    // 清除全局的 activeMoodData，这将自动取消高亮
+    setActiveMoodData(null);
   };
 
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowModal(true);
-    pauseRotation();
+    // 打开模态框
+    setShowMoodModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setActiveInstanceId(null);
-    isPausedRef.current = false;
-  };
+  const activePosition =
+    activeInstanceId !== null
+      ? positions[randomIndices[activeInstanceId]]
+      : null;
 
-  const activePosition = useMemo(() => {
-    if (activeInstanceId === null) return null;
-    const slotIndex = randomIndices[activeInstanceId];
-    return positions[slotIndex];
-  }, [activeInstanceId, positions, randomIndices]);
-
-  const activeMoodData = activeInstanceId !== null ? moods[activeInstanceId] : null;
-
+  // 5. 更新渲染逻辑，使用 store 中的状态
   return (
-    <group ref={groupRef} scale={1.5}>
-
+    <group ref={groupRef} scale={1.5} onPointerMissed={handleBackgroundClick}>
       <DiscoBall
         scale={0.8}
         moodVector={avgMoodVector}
-        colorLow={CONFIG.colors.low}   // {h, s, l}
-        colorHigh={CONFIG.colors.high} // {h, s, l}
+        colorLow={CONFIG.colors.low}
+        colorHigh={CONFIG.colors.high}
       />
 
       {totalCount > 0 && (
         <instancedMesh
           ref={moodMeshRef}
           args={[undefined, undefined, totalCount]}
-          onPointerOver={handlePointerOver}
-          onPointerOut={handlePointerOut}
           onClick={handleClick}
         >
-          <sphereGeometry args={[1, 16, 16]}/>
-          <meshStandardMaterial
-            roughness={CONFIG.moodParticle.roughness}
-            emissiveIntensity={0.2}
-          />
+          <sphereGeometry args={[1, 16, 16]} />
+          <meshStandardMaterial roughness={CONFIG.moodParticle.roughness} />
         </instancedMesh>
       )}
 
-      {/* ... (Label 和 Modal 代码保持不变) */}
-      {activePosition && activeMoodData && !showModal && (
-        <Html
-          position={activePosition}
-          center
-          distanceFactor={10}
-          zIndexRange={[30, 0]}
-          style={{pointerEvents: 'none'}}
-        >
+      {/* 当有 activeMoodData 且模态框未显示时，才显示标签 */}
+      {activePosition && activeMoodData && !showMoodModal && (
+        <Html center position={activePosition} distanceFactor={10}>
           <div
-            className={`px-3 py-1.5 rounded-lg text-sm cursor-pointer border backdrop-blur-sm transition-colors whitespace-nowrap ${
-              dark
-                ? 'bg-black/80 text-white border-white/20 hover:bg-white/20'
-                : 'bg-white/90 text-gray-900 border-gray-200 hover:bg-white shadow-sm'
-            }`}
-            style={{pointerEvents: 'auto'}}
             onClick={handleLabelClick}
+            className={`px-3 py-1.5 rounded-lg text-sm cursor-pointer border backdrop-blur-sm ${
+              dark
+                ? 'bg-black/80 text-white border-white/20'
+                : 'bg-white/90 text-gray-900 border-gray-200 shadow-sm'
+            }`}
           >
             {truncateText(activeMoodData.content)}
           </div>
-        </Html>
-      )}
-
-      {showModal && activeMoodData && (
-        <Html
-          fullscreen
-          transform={false}
-          style={{pointerEvents: 'none'}}
-          zIndexRange={[200, 0]}>
-          <MoodDetailModal
-            isOpen={showModal}
-            onClose={handleCloseModal}
-            data={activeMoodData}
-            dark={dark}
-          />
         </Html>
       )}
     </group>

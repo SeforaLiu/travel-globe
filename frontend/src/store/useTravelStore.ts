@@ -43,7 +43,11 @@ interface TravelState {
   // --- 心情球 ----
   moods: Mood[]; 
   fetchMoods: (force?: boolean) => Promise<void>;
-  createMood: (data: MoodCreatePayload) => Promise<void>; 
+  createMood: (data: MoodCreatePayload) => Promise<void>;
+  showMoodModal:boolean;
+  setShowMoodModal: (show: boolean) => void;
+  activeMoodData: Mood | null;
+  setActiveMoodData: (data: Mood | null) => void;
 
   // --- 动作 (Actions) ---
   // A. 获取分页列表
@@ -115,6 +119,10 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   setShowSidebar:(show) => set({showSidebar:show}),
 
   moods: [],
+  showMoodModal:false,
+  setShowMoodModal:(show:boolean) => set({ showMoodModal: show }),
+  activeMoodData: null,
+  setActiveMoodData: (data: Mood | null) => set({ activeMoodData: data }),
 
   fetchMoods: async (force=false) => {
     if (get().moodsInitialized && !force) {

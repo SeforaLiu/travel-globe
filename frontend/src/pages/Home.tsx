@@ -11,9 +11,7 @@ import MoodDialog from "@/components/MoodDialog";
 import {useTravelStore} from "@/store/useTravelStore";
 import {useNavigate} from "react-router-dom";
 import {toast} from "sonner";
-import {useTransition, useSpring, a} from '@react-spring/three'
-import {DiscoLightsBackground} from "@/three/DiscoLightsBackground";
-import {Perf} from "r3f-perf";
+import MoodDetailModal from "@/components/MoodDetailModal";
 
 type Props = {
   dark: boolean;
@@ -28,23 +26,10 @@ export default function Home({dark, isMobile}: Props) {
 
   const moods = useTravelStore(state => state.moods)
   const isLoggedIn = useTravelStore(state => state.isLoggedIn)
-
-  // --- 2. 配置组件切换动画 (Transition) ---
-  // item 代表 moodMode 的状态 (true/false)
-  const transitions = useTransition(moodMode, {
-    from: {scale: 0, rotation: [0, -Math.PI, 0]}, // 初始: 缩放为0, 旋转-180度
-    enter: {scale: 1, rotation: [0, 0, 0]},       // 进入: 正常大小, 旋转归零
-    leave: {scale: 0, rotation: [0, Math.PI, 0]}, // 离开: 缩放为0, 旋转180度
-    config: {mass: 1, tension: 280, friction: 60}, // 物理参数: 弹性适中
-    expires: true, // 关键: 动画结束后彻底卸载旧组件，释放性能
-  })
-
-  // --- 3. 配置环境光过渡动画 (Spring) ---
-  // 平滑改变环境光强度，防止切换时亮度跳变
-  const {ambientIntensity} = useSpring({
-    ambientIntensity: moodMode ? 3 : 2,
-    config: {duration: 500} // 500ms 线性过渡
-  })
+  const showMoodModal = useTravelStore(state => state.showMoodModal)
+  const activeMoodData = useTravelStore(state => state.activeMoodData)
+  const setShowMoodModal = useTravelStore(state => state.setShowMoodModal)
+  const setActiveMoodData = useTravelStore(state => state.setActiveMoodData)
 
   function handleClickAddMood() {
     if (!isLoggedIn) {
@@ -53,6 +38,11 @@ export default function Home({dark, isMobile}: Props) {
     } else {
       setIsMoodDialogOpen(true)
     }
+  }
+
+  const handleMoodModalClose = () => {
+    setShowMoodModal(false);
+    setActiveMoodData(null); // 关闭时清空数据
   }
 
   // @ts-ignore
@@ -130,8 +120,8 @@ export default function Home({dark, isMobile}: Props) {
               flex items-center gap-2 px-5 py-2.5
               bg-white/10 backdrop-blur-md
               border border-white/20 rounded-full
-              text-white
-              hover:bg-white/20 hover:scale-105 active:scale-95
+              text-pink-500
+              hover:bg-white/50 hover:scale-110 active:scale-95
               transition-all duration-300
               shadow-lg group
             "
@@ -151,19 +141,14 @@ export default function Home({dark, isMobile}: Props) {
         dpr={[1, 2]}
       >
 
-        <ambientLight intensity={moodMode? 3 : 2} color='#ffffff' />
+        <ambientLight intensity={moodMode ? 3 : 2} color='#ffffff'/>
 
-        {
-          moodMode?
-            <DiscoLightsBackground baseColor="#333352" />:
-            <SkyGradientBackground dark={dark}/>
-        }
-
-        {/* 4. 使用 animated (a) 组件应用动态光照强度 */}
-        {/*<a.ambientLight*/}
-        {/*  intensity={ambientIntensity}*/}
-        {/*  color='#ffffff'*/}
-        {/*/>*/}
+        {/*{*/}
+        {/*  moodMode?*/}
+        {/*    <DiscoLightsBackground baseColor="#333352" />:*/}
+        {/*    <SkyGradientBackground dark={dark}/>*/}
+        {/*}*/}
+        <SkyGradientBackground dark={dark}/>
 
         <OrbitControls
           enableZoom={true}
@@ -185,27 +170,10 @@ export default function Home({dark, isMobile}: Props) {
         >
 
           {
-            moodMode? <MoodSphere dark={dark} isMobile={isMobile}/> :
+            moodMode ? <MoodSphere dark={dark} isMobile={isMobile}/> :
               <Earth dark={dark} isMobile={isMobile}/>
           }
 
-          {/* 5. 使用 transitions 渲染组件 */}
-          {/*{transitions((style, item) => (*/}
-          {/*  <a.group*/}
-          {/*    // 应用动画样式 (scale, rotation)*/}
-          {/*    // @ts-ignore: react-spring 的 rotation 类型定义在某些版本可能与 Three.js 不完全匹配，这里忽略 TS 检查*/}
-          {/*    scale={style.scale}*/}
-          {/*    rotation={style.rotation}*/}
-          {/*  >*/}
-          {/*    {item ? (*/}
-          {/*      // MoodSphere 及其内部私有灯光 (RectAreaLight)*/}
-          {/*      <MoodSphere dark={dark} isMobile={isMobile}/>*/}
-          {/*    ) : (*/}
-          {/*      // Earth 及其内部私有灯光 (DirectionalLight)*/}
-          {/*      <Earth dark={dark} isMobile={isMobile}/>*/}
-          {/*    )}*/}
-          {/*  </a.group>*/}
-          {/*))}*/}
         </PresentationControls>
       </Canvas>
 
@@ -215,6 +183,15 @@ export default function Home({dark, isMobile}: Props) {
         onClose={() => setIsMoodDialogOpen(false)}
         dark={dark}
       />
+
+      {/*  心情详情 */}
+      { activeMoodData && <MoodDetailModal
+        isOpen={showMoodModal}
+        onClose={handleMoodModalClose}
+        data={activeMoodData}
+        dark={dark}
+      />}
+
     </div>
   )
 }

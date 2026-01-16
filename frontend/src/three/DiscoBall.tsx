@@ -123,7 +123,7 @@ const DiscoMaterial = ({
     <meshStandardMaterial
       ref={materialRef}
       metalness={2.0}
-      roughness={0.15} // 稍微增加一点粗糙度，让颜色更容易显现，同时保持金属感
+      roughness={0.1} // 稍微增加一点粗糙度，让颜色更容易显现，同时保持金属感
       envMap={envMap}
       envMapIntensity={1.8} // 稍微增强环境光反射，弥补金属感
       onBeforeCompile={onBeforeCompile}
@@ -141,7 +141,7 @@ export default function DiscoBall({
                                   }: DiscoBallProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null!)
   const temp = new THREE.Object3D()
-  console.log('中位数', moodVector)
+  console.log('中位数moodVector', moodVector)
 
   const tiles = useMemo(() => {
     const result: {
