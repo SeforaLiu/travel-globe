@@ -1,21 +1,32 @@
 // frontend/src/pages/DiaryView.tsx
-
-import React, {useEffect, useState, useRef} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
-import {useTranslation} from 'react-i18next';
-import {useTravelStore} from "@/store/useTravelStore";
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useTravelStore } from "@/store/useTravelStore";
 import Loading from '@/components/Loading';
-import GenericDialog, {ButtonVariant} from "@/components/GenericDialog";
-import {toast} from "sonner";
+import GenericDialog from "@/components/GenericDialog";
+import { toast } from "sonner";
+// 引入图标库，提升视觉效果
+import {
+  MapPin,
+  Calendar,
+  Plane,
+  ArrowLeft,
+  Edit3,
+  Trash2,
+  Quote,
+  Navigation,
+  Clock
+} from 'lucide-react';
 
 const ENTRY_TYPE = {
   VISITED: 'visited',
   WISHLIST: 'wishlist',
 };
 
-const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMobile}) => {
-  const {t, i18n} = useTranslation();
-  const {id} = useParams<{ id: string }>();
+const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMobile }) => {
+  const { t, i18n } = useTranslation();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail);
@@ -28,6 +39,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
 
   const fetchingIdRef = useRef<number | null>(null);
 
+  // --- 数据获取逻辑 (保持原有逻辑不变) ---
   useEffect(() => {
     if (!id || isNaN(Number(id))) {
       setStatus('error');
@@ -81,11 +93,18 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
   // --- 渲染逻辑 ---
   const renderContent = () => {
     if (status === 'loading' || status === 'idle') {
-      return <Loading dark={dark}/>;
+      return <Loading dark={dark} />;
     }
 
     if (status === 'error') {
-      return <div className="flex justify-center items-center min-h-screen text-red-500">{t('Network error')}</div>;
+      return (
+        <div className="flex flex-col justify-center items-center min-h-screen text-red-500 gap-4">
+          <p>{error || t('Network error')}</p>
+          <button onClick={() => navigate(-1)} className="text-blue-500 underline">
+            {t('common.back')}
+          </button>
+        </div>
+      );
     }
 
     if (!currentDiary || status !== 'success') {
@@ -99,7 +118,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
       if (!dateStr) return '';
       try {
         const date = new Date(dateStr);
-        return new Intl.DateTimeFormat(i18n.language, {year: 'numeric', month: 'long', day: 'numeric'}).format(date);
+        return new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
       } catch (e) {
         return dateStr;
       }
@@ -108,7 +127,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
     const renderDateRange = () => {
       const start = currentDiary!.date_start;
       const end = currentDiary!.date_end;
-      if (!start) return null;
+      if (!start) return '-';
       const formattedStart = formatDate(start);
       if (!end || start === end) return formattedStart;
       const formattedEnd = formatDate(end);
@@ -116,96 +135,215 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({dark, isMob
     };
 
     const handleEditClick = () => navigate(`/diary/edit?id=${id}`);
-    const handleDeleteClick = () => setShowDeleteDialog(true)
-    const handleBackClick = () => navigate('/');
+    const handleDeleteClick = () => setShowDeleteDialog(true);
+    const handleBackClick = () => navigate(-1); // 使用 -1 返回上一页更自然
 
     const handleConfirmDelete = async () => {
       try {
-        await deleteDiary(Number(id))
-        toast.success(t('delete successful'))
-        navigate('/')
+        await deleteDiary(Number(id));
+        toast.success(t('delete successful'));
+        navigate('/');
       } catch (error) {
         console.error("delete failed:", error);
-        toast.error(t('Network error'))
+        toast.error(t('Network error'));
       }
+      setShowDeleteDialog(false);
+    };
 
-      setShowDeleteDialog(false)
-    }
+    // 样式类定义
+    const containerClass = `min-h-screen transition-colors duration-300 ${
+      dark ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'
+    }`;
+
+    const cardClass = `max-w-4xl mx-auto rounded-3xl shadow-xl overflow-hidden transition-all duration-300 ${
+      dark ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-100'
+    }`;
+
+    const iconClass = `w-4 h-4 ${dark ? 'text-gray-400' : 'text-gray-500'}`;
+    const metaTextClass = `text-sm font-medium ${dark ? 'text-gray-300' : 'text-gray-600'}`;
 
     return (
-      (currentDiary ? <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-        <div className={`max-w-3xl mx-auto p-6 ${isMobile ? 'px-4' : ''}`}>
-          <div className="flex justify-end gap-2 mb-4">
-            <button onClick={handleBackClick}
-                    className="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">{t('common.back')}</button>
-            <button onClick={handleEditClick}
-                    className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500">{t('common.edit')}</button>
-            <button onClick={handleDeleteClick}
-                    className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500">{t('common.delete')}</button>
-          </div>
-          <div className="mb-8">
-            <div className="flex items-center mb-2">
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-sm font-medium text-white ${isVisited ? 'bg-diary' : 'bg-guide'}`}>{isVisited ? t('AddTypeVisited') : t('AddTypeWishList')}</span>
+      <div className={containerClass}>
+        {/* 顶部导航栏 */}
+        <div className={`sticky top-0 z-10 backdrop-blur-md border-b ${
+          dark ? 'bg-gray-950/80 border-gray-800' : 'bg-white/80 border-gray-200'
+        }`}>
+          <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <button
+              onClick={handleBackClick}
+              className={`flex items-center gap-2 px-3 py-2 rounded-full transition-colors ${
+                dark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">{t('common.back')}</span>
+            </button>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditClick}
+                className={`p-2 rounded-full transition-colors ${
+                  dark ? 'hover:bg-blue-900/30 text-blue-400' : 'hover:bg-blue-50 text-blue-600'
+                }`}
+                title={t('common.edit')}
+              >
+                <Edit3 size={20} />
+              </button>
+              <button
+                onClick={handleDeleteClick}
+                className={`p-2 rounded-full transition-colors ${
+                  dark ? 'hover:bg-red-900/30 text-red-400' : 'hover:bg-red-50 text-red-600'
+                }`}
+                title={t('common.delete')}
+              >
+                <Trash2 size={20} />
+              </button>
             </div>
-            <h1 className="text-3xl font-bold text-center">{currentDiary.title}</h1>
           </div>
-          <div className="rounded-xl p-6 mb-8 bg-white shadow-sm dark:bg-gray-800">
-            <div className="space-y-4">
-              <div className="flex flex-wrap justify-between items-center">
-                <div className="flex-1 min-w-[200px] mb-4 md:mb-0"><p
-                  className="text-lg">{currentDiary.location_name}</p></div>
-                <div className="flex-1 min-w-[200px] mb-4 md:mb-0 md:text-center"><p
-                  className="text-lg">{currentDiary.transportation}</p></div>
-                <div className="flex-1 min-w-[200px] md:text-right"><p className="text-lg">{renderDateRange()}</p></div>
-              </div>
-              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700"><p
-                className="text-lg whitespace-pre-line">{currentDiary.content}</p></div>
-            </div>
-          </div>
-          {photos.length > 0 && (
-            <div className="rounded-xl p-6 bg-white shadow-sm dark:bg-gray-800">
-              <div className={`grid gap-4 ${photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {photos.map((photo, index) => (
-                  <div key={photo.id || index} className="rounded-lg overflow-hidden">
-                    <img src={photo.url} alt={`Photo ${index + 1}`} className="w-full h-auto object-cover"
-                         loading="lazy"/>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {showDeleteDialog && <GenericDialog
-          dark={dark}
-          isOpen={showDeleteDialog}
-          title={t('sure to delete?')}
-          iconVariant="error"
-          description={t('This cannot be undone')}
-          primaryButton={{
-            label: t('common.confirm'),
-            onClick: handleConfirmDelete,
-            variant: 'danger',
-            dataTestId: 'confirm-button',
-          }}
-          onClose={() => {
-            setShowDeleteDialog(false)
-          }}
-          secondaryButton={{
-            label: t('common.cancel'),
-            onClick: () => {
-              setShowDeleteDialog(false)
-            },
-            variant: 'ghost',
-            dataTestId: 'cancel-button',
-          }}
-          maxWidth="md"
-          t={t}
-        />}
+        {/* 主要内容区域 */}
+        <div className={`p-4 md:p-8 ${isMobile ? 'pb-20' : ''}`}>
+          <div className={cardClass}>
 
-      </div> : <div>{t('No diaries yet')}</div>)
+            {/* 头部区域：标题与状态 */}
+            <div className="p-6 md:p-10 pb-0">
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${
+                  isVisited
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${isVisited ? 'bg-emerald-500' : 'bg-violet-500'}`}></span>
+                  {isVisited ? t('AddTypeVisited') : t('AddTypeWishList')}
+                </span>
+              </div>
 
+              {/* 渐变标题 - 参考 MoodDetailModal */}
+              <h1 className="text-3xl md:text-4xl font-extrabold leading-tight mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">
+                {currentDiary.title}
+              </h1>
+
+              {/* 元数据网格 */}
+              <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl ${
+                dark ? 'bg-gray-800/50' : 'bg-gray-50'
+              }`}>
+                {/* 地点 */}
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${dark ? 'bg-gray-700' : 'bg-white shadow-sm'}`}>
+                    <MapPin className={iconClass} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">{t('AddLocation')}</span>
+                    <span className={metaTextClass}>{currentDiary.location_name || '-'}</span>
+                  </div>
+                </div>
+
+                {/* 交通 */}
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${dark ? 'bg-gray-700' : 'bg-white shadow-sm'}`}>
+                    {/* 根据内容动态显示图标，这里默认用 Plane 或 Navigation */}
+                    {currentDiary.transportation?.toLowerCase().includes('flight') ? <Plane className={iconClass} /> : <Navigation className={iconClass} />}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">{t('AddTransportation')}</span>
+                    <span className={metaTextClass}>{currentDiary.transportation || '-'}</span>
+                  </div>
+                </div>
+
+                {/* 时间 */}
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${dark ? 'bg-gray-700' : 'bg-white shadow-sm'}`}>
+                    <Calendar className={iconClass} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">{t('AddDate')}</span>
+                    <span className={metaTextClass}>{renderDateRange()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 正文内容 */}
+            <div className="p-6 md:p-10 relative">
+              <Quote
+                size={48}
+                className={`absolute top-6 left-4 opacity-10 ${dark ? 'text-pink-400' : 'text-pink-600'}`}
+              />
+              <div className={`relative z-10 prose max-w-none ${dark ? 'prose-invert' : ''}`}>
+                <p className={`text-lg leading-relaxed whitespace-pre-line ${
+                  dark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {currentDiary.content}
+                </p>
+              </div>
+            </div>
+
+            {/* 图片展示区 */}
+            {photos.length > 0 && (
+              <div className={`p-6 md:p-10 pt-0`}>
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${
+                  dark ? 'text-gray-500' : 'text-gray-400'
+                }`}>
+                  <span className="w-8 h-[1px] bg-current"></span>
+                  {t('Gallery')}
+                </h3>
+                <div className={`grid gap-4 ${
+                  photos.length === 1 ? 'grid-cols-1' :
+                    photos.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+                      'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                }`}>
+                  {photos.map((photo, index) => (
+                    <div
+                      key={photo.id || index}
+                      className={`group relative rounded-xl overflow-hidden shadow-sm aspect-[4/3] ${
+                        dark ? 'bg-gray-800' : 'bg-gray-100'
+                      }`}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={`Memory ${index + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      {/* 图片遮罩，仅在暗黑模式下稍微压暗，hover时变亮 */}
+                      {dark && <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 底部装饰条 */}
+            <div className="h-2 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500"></div>
+          </div>
+        </div>
+
+        {/* 删除确认弹窗 */}
+        {showDeleteDialog && (
+          <GenericDialog
+            dark={dark}
+            isOpen={showDeleteDialog}
+            title={t('sure to delete?')}
+            iconVariant="error"
+            description={t('This cannot be undone')}
+            primaryButton={{
+              label: t('common.confirm'),
+              onClick: handleConfirmDelete,
+              variant: 'danger',
+              dataTestId: 'confirm-button',
+            }}
+            onClose={() => setShowDeleteDialog(false)}
+            secondaryButton={{
+              label: t('common.cancel'),
+              onClick: () => setShowDeleteDialog(false),
+              variant: 'ghost',
+              dataTestId: 'cancel-button',
+            }}
+            maxWidth="md"
+          />
+        )}
+      </div>
     );
   };
 

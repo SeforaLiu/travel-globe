@@ -1,11 +1,11 @@
 // MoodDetailModal.tsx
 import React, {useState} from 'react';
 import {X, Calendar, Quote, Trash2} from 'lucide-react';
-import {t} from "i18next";
 import {useTravelStore} from "@/store/useTravelStore";
 import GenericDialog from "@/components/GenericDialog";
 import {toast} from "sonner";
 import {useNavigate} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 
 // 定义数据接口
 interface MoodData {
@@ -29,6 +29,7 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
   const deleteMood = useTravelStore((state) => state.deleteMood);
 
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation();
 
   if (!isOpen || !data) return null;
 
@@ -59,13 +60,13 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleString(undefined, {
+      return new Intl.DateTimeFormat(i18n.language, {
         year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+        month: 'long',
+        day: 'numeric' ,
         hour: '2-digit',
         minute: '2-digit',
-      });
+      }).format(date);
     } catch (e) {
       return '';
     }
