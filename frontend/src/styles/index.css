@@ -46,7 +46,7 @@ input, select, textarea {
 
 /* 自定义滚动条样式 */
 .scrollbar-custom {
-    scrollbar-width: thin;
+    scrollbar-width: auto;
     scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
 }
 

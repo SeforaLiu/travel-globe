@@ -272,7 +272,7 @@ export default function Sidebar({
       </div>
 
       {/* List Area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-custom">
         {!isLoggedIn ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-60">
             <Globe size={48} className="text-blue-400/50" />
