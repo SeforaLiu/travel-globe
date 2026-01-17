@@ -8,7 +8,6 @@ import {
   Plus, ChevronLeft, Globe, Languages, X, LogIn
 } from 'lucide-react';
 import {toast} from "sonner";
-import Login from "@/pages/Login";
 
 type Props = {
   dark: boolean;
@@ -20,6 +19,8 @@ type Props = {
   handleClickLogout: () => void;
   handleShowSidebar:() => void;
 };
+
+type TabType = 'visited' | 'wishlist';
 
 // 稍微调整背景色，使其在暗黑模式下更有质感
 const sidebarDayBg = '#eef2f6'; // 更柔和的浅蓝灰
@@ -70,10 +71,11 @@ export default function Sidebar({
   const inputBg = dark ? 'bg-slate-800' : 'bg-white';
   const borderColor = dark ? 'border-slate-700' : 'border-slate-200';
 
-  const handleClickTab = async (tab) => {
+  const handleClickTab = async (tab:TabType | '') => {
     setActiveTab(tab)
     try {
-      await fetchAllDiaries(true, searchKeyword, tab)
+      const apiTab = tab === '' ? undefined : (tab as TabType);
+      await fetchAllDiaries(true, searchKeyword, apiTab)
       if(isMobile) handleShowSidebar()
     } catch (err) {
       console.error(err);
@@ -82,9 +84,12 @@ export default function Sidebar({
 
   const handleSearchKeyWord = async (queryOverride?: string) => {
     const query = typeof queryOverride === 'string' ? queryOverride : searchKeyword;
+    const validTab: TabType | undefined = (activeTab === 'visited' || activeTab === 'wishlist')
+      ? activeTab
+      : undefined;
 
     try {
-      await fetchAllDiaries(true, query, activeTab || undefined)
+      await fetchAllDiaries(true, query, validTab)
       if(isMobile) handleShowSidebar()
     } catch (err) {
       console.error(err);
