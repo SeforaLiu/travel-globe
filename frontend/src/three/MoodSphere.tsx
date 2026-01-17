@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { useTravelStore } from '@/store/useTravelStore';
 import DiscoBall from '@/three/DiscoBall';
+import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 
 type Mood = {
   id: number;
@@ -103,8 +104,6 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
     return { positions: points, randomIndices: indices };
   }, [totalCount]);
 
-  // 3. [核心改进] activeInstanceId 现在从全局 activeMoodData 派生而来
-  // 这确保了 store 是唯一的数据源。
   const activeInstanceId = useMemo(() => {
     if (!activeMoodData) return null;
     const index = moods.findIndex(m => m.id === activeMoodData.id);
@@ -183,11 +182,10 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
   };
 
   /** 点击背景 / 球体其它地方 */
-  const handleBackgroundClick = () => {
-    if (showMoodModal) return; // 如果模态框开着，点击背景不应有任何反应
-    // 清除全局的 activeMoodData，这将自动取消高亮
+  const handleBackgroundClick = useDebouncedCallback(() => {
+    if (showMoodModal) return;
     setActiveMoodData(null);
-  };
+  }, 300)
 
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -208,6 +206,7 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
         moodVector={avgMoodVector}
         colorLow={CONFIG.colors.low}
         colorHigh={CONFIG.colors.high}
+        handleBackgroundClick={handleBackgroundClick}
       />
 
       {totalCount > 0 && (

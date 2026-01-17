@@ -106,7 +106,7 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
           {/* Top: Logo */}
           <div className="cursor-pointer" onClick={() => setShowSidebar(true)}>
             <img
-              src="/logo/logo-placeholder-image.png"
+              src="/logo/logo_new.png"
               alt="logo"
               className="w-10 h-10 rounded-xl shadow-md hover:scale-105 transition-transform"
             />

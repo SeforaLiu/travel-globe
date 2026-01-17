@@ -1,4 +1,4 @@
-// MoodDetailModal.tsx
+// frontend/src/components/MoodDetailModal.tsx
 import React, {useState} from 'react';
 import {X, Calendar, Quote, Trash2} from 'lucide-react';
 import {useTravelStore} from "@/store/useTravelStore";
@@ -6,20 +6,12 @@ import GenericDialog from "@/components/GenericDialog";
 import {toast} from "sonner";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "react-i18next";
-
-// 定义数据接口
-interface MoodData {
-  id: number;
-  content: string;
-  photo_url: string | null | undefined;
-  created_at: string;
-  mood_vector: number;
-}
+import { Mood } from '@/types/mood';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  data: MoodData | null;
+  data: Mood | null;
   dark: boolean;
 }
 
@@ -76,8 +68,8 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
     <>
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={onClose} // 点击背景关闭
-        style={{pointerEvents: 'auto'}} // 确保能接收点击
+        onClick={onClose}
+        style={{pointerEvents: 'auto'}}
       >
         {/* 卡片容器 */}
         <div
@@ -90,7 +82,7 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
             writingMode: 'horizontal-tb',
             textOrientation: 'mixed',
           }}
-          onClick={(e) => e.stopPropagation()} // 阻止冒泡，防止点击卡片关闭
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Header: 标题与关闭按钮 */}
           <div className="flex justify-between items-start mb-4">
@@ -98,7 +90,6 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
               <h2
                 className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
                 {t('ai.Mood Memory')}
-                {/*记录心情*/}
               </h2>
               <div className={`flex items-center gap-1.5 text-xs mt-1 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
                 <Calendar size={12}/>
@@ -158,27 +149,10 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
         </div>
       </div>
 
-      {/* [新增] 删除确认对话框 */}
+      {/* 删除确认对话框 */}
       {isConfirmingDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          {/*<GenericDialog*/}
-          {/*  dark={dark}*/}
-          {/*  title={t('ai.deleteConfirmTitle')}*/}
-          {/*  description={t('ai.deleteConfirmDesc')}*/}
-          {/*  iconVariant="warning"*/}
-          {/*  onClose={() => setIsConfirmingDelete(false)}*/}
-          {/*  onCancel={() => setIsConfirmingDelete(false)}*/}
-          {/*  primaryButton={{*/}
-          {/*    label: t('common.delete'),*/}
-          {/*    onClick: handleDeleteConfirm,*/}
-          {/*    variant: 'danger',*/}
-          {/*    loading: isDeleting,*/}
-          {/*    disabled: isDeleting,*/}
-          {/*  }}*/}
-          {/*/>*/}
-
           <GenericDialog
-            // 1. 新增 isOpen 属性，用于控制对话框的显示和隐藏
             isOpen={isConfirmingDelete}
             dark={dark}
             title={t('ai.deleteConfirmTitle')}
@@ -190,16 +164,12 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
               onClick: handleDeleteConfirm,
               variant: 'danger',
               loading: isDeleting,
-              // 最佳实践：当 loading 为 true 时，按钮会自动禁用，无需重复设置 disabled
             }}
-            // 2. onCancel 属性被移除，统一使用 secondaryButton 来创建取消按钮
             secondaryButton={{
               label: t('common.cancel'),
               onClick: () => setIsConfirmingDelete(false),
-              // variant: 'ghost' 是 secondaryButton 的默认样式，无需显式指定
             }}
           />
-
         </div>
       )}
     </>

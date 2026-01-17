@@ -14,6 +14,7 @@ type DiscoBallProps = {
   moodVector?: number // 0 ~ 1
   colorLow?: HSLColor
   colorHigh?: HSLColor
+  handleBackgroundClick:()=>void
 }
 
 // --- 自定义材质组件 ---
@@ -137,11 +138,11 @@ export default function DiscoBall({
                                     scale = 1,
                                     moodVector = 0.5,
                                     colorLow = {h: 0.65, s: 0.9, l: 0.15},
-                                    colorHigh = {h: 0.08, s: 1.0, l: 0.6}
+                                    colorHigh = {h: 0.08, s: 1.0, l: 0.6},
+                                    handleBackgroundClick
                                   }: DiscoBallProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null!)
   const temp = new THREE.Object3D()
-  console.log('中位数moodVector', moodVector)
 
   const tiles = useMemo(() => {
     const result: {
@@ -210,7 +211,9 @@ export default function DiscoBall({
   })
 
   return (
-    <group scale={scale}>
+    <group scale={scale}
+           onClick={handleBackgroundClick}
+         >
       {/* 内部黑色球体，防止缝隙漏光 */}
       <Sphere args={[radius * 0.98, 32, 32]}>
         <meshBasicMaterial color="#000000"/>

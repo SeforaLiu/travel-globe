@@ -12,6 +12,7 @@ import {useTravelStore} from "@/store/useTravelStore";
 import {useNavigate} from "react-router-dom";
 import {toast} from "sonner";
 import MoodDetailModal from "@/components/MoodDetailModal";
+import {DiscoLightsBackground} from "@/three/DiscoLightsBackground";
 
 type Props = {
   dark: boolean;
@@ -120,8 +121,9 @@ export default function Home({dark, isMobile}: Props) {
               flex items-center gap-2 px-5 py-2.5
               bg-white/10 backdrop-blur-md
               border border-white/20 rounded-full
-              text-pink-500
-              hover:bg-white/50 hover:scale-110 active:scale-95
+             text-white
+              hover:bg-purple-400
+               hover:scale-110 active:scale-95
               transition-all duration-300
               shadow-lg group
             "
@@ -143,12 +145,12 @@ export default function Home({dark, isMobile}: Props) {
 
         <ambientLight intensity={moodMode ? 3 : 2} color='#ffffff'/>
 
-        {/*{*/}
-        {/*  moodMode?*/}
-        {/*    <DiscoLightsBackground baseColor="#333352" />:*/}
-        {/*    <SkyGradientBackground dark={dark}/>*/}
-        {/*}*/}
-        <SkyGradientBackground dark={dark}/>
+        {
+          moodMode?
+            <DiscoLightsBackground baseColor="#333352" />:
+            <SkyGradientBackground dark={dark}/>
+        }
+        {/*<SkyGradientBackground dark={dark}/>*/}
 
         <OrbitControls
           enableZoom={true}
@@ -185,7 +187,7 @@ export default function Home({dark, isMobile}: Props) {
       />
 
       {/*  心情详情 */}
-      { activeMoodData && <MoodDetailModal
+      {activeMoodData && <MoodDetailModal
         isOpen={showMoodModal}
         onClose={handleMoodModalClose}
         data={activeMoodData}

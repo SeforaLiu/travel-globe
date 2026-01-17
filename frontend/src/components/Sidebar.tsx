@@ -5,9 +5,10 @@ import { useTravelStore } from "@/store/useTravelStore";
 // 引入 Lucide 图标，替代 Emoji
 import {
   Moon, Sun, LogOut, Search, MapPin, BookOpen,
-  Plus, ChevronLeft, Globe, Languages, X
+  Plus, ChevronLeft, Globe, Languages, X, LogIn
 } from 'lucide-react';
 import {toast} from "sonner";
+import Login from "@/pages/Login";
 
 type Props = {
   dark: boolean;
@@ -79,9 +80,11 @@ export default function Sidebar({
     }
   }
 
-  const handleSearchKeyWord = async () => {
+  const handleSearchKeyWord = async (queryOverride?: string) => {
+    const query = typeof queryOverride === 'string' ? queryOverride : searchKeyword;
+
     try {
-      await fetchAllDiaries(true, searchKeyword, activeTab || undefined)
+      await fetchAllDiaries(true, query, activeTab || undefined)
       if(isMobile) handleShowSidebar()
     } catch (err) {
       console.error(err);
@@ -104,28 +107,20 @@ export default function Sidebar({
       `}
       style={{ backgroundColor: sidebarBg }}
     >
-      {/*
-        Header Area: Logo & Controls
-        使用 flex-col 在顶部留出空间，布局更紧凑
-      */}
       <div className="p-5 space-y-5 flex-shrink-0">
-
-        {/* Top Row: Logo & Settings */}
         <div className="flex items-center justify-between">
-          {/* Logo & Title */}
           <div
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => navigate('/')}
           >
             <div className="relative w-10 h-10 overflow-hidden rounded-xl shadow-md group-hover:scale-105 transition-transform">
-              <img src="/logo/logo-placeholder-image.png" alt="logo" className="w-full h-full object-cover" />
+              <img src="/logo/logo_new.png" alt="logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
               {t('title')}
             </span>
           </div>
 
-          {/* Controls (Dark Mode & Lang) */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setDark(!dark)}
@@ -144,7 +139,6 @@ export default function Sidebar({
               `}>
                 <Languages size={18} />
               </div>
-              {/* 自定义 Select 样式覆盖在图标上，实现无边框效果 */}
               <select
                 value={i18n.language}
                 onChange={e => i18n.changeLanguage(e.target.value)}
@@ -158,7 +152,6 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* User Card */}
         <div className={`
           flex items-center gap-3 p-3 rounded-2xl border transition-colors
           ${dark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}
@@ -186,6 +179,15 @@ export default function Sidebar({
               <LogOut size={16} />
             </button>
           )}
+          {!isLoggedIn && (
+            <button
+              onClick={()=>navigate('/login')}
+              className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors"
+              title={t('Login')}
+            >
+              <LogIn size={16} />
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -206,7 +208,10 @@ export default function Sidebar({
           />
           {searchKeyword && (
             <button
-              onClick={() => { setSearchKeyword(''); handleSearchKeyWord(); }}
+              onClick={() => {
+                setSearchKeyword('');
+                handleSearchKeyWord('');
+              }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <X size={14} />
@@ -214,7 +219,6 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Tabs (Segmented Control) */}
         {isLoggedIn && total > 0 && (
           <div className={`
             flex p-1 rounded-xl border
@@ -256,7 +260,6 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* Add Button (CTA) */}
         <button
           className={`
             w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white shadow-lg shadow-blue-500/30

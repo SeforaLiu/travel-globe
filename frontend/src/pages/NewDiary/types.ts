@@ -17,31 +17,6 @@ export type LocationResult = {
   name?: string;
 };
 
-export type FormHandlers = {
-  onSubmit: (e: React.FormEvent) => void;
-  onClose: () => void;
-  updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
-  addPhotos: (files: File[]) => void;
-  removePhoto: (index: number) => void;
-  sortPhotos: (fromIndex: number, toIndex: number) => void;
-  handleLocationSelect: (place: LocationResult) => void;
-  handleLocationChange: (value: string) => void;
-  handleMapClick: (latLng: { lat: number; lng: number }, address: string) => void;
-  handleInputFocus: () => void;
-  handleLocationInputFocus: () => void;
-};
-
-export type PhotoDragHandlers = {
-  draggedIndex: number | null;
-  handleDragStart: (index: number) => void;
-  handleDragEnter: (e: React.DragEvent, index: number) => void;
-  handleDragEnd: () => void;
-  handleTouchStart: (e: React.TouchEvent, index: number) => void;
-  handleTouchMove: (e: React.TouchEvent) => void;
-  handleTouchEnd: () => void;
-  setDraggedIndex: (index: number | null) => void;
-};
-
 export type CloudinaryPhotoInfo = {
   publicId: string;
   url: string;
