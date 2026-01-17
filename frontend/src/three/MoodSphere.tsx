@@ -7,16 +7,6 @@ import { useTravelStore } from '@/store/useTravelStore';
 import DiscoBall from '@/three/DiscoBall';
 import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 
-type Mood = {
-  id: number;
-  content: string;
-  photo_url: string | null;
-  created_at: string;
-  mood_vector: number;
-  mood_reason?: string;
-  photo_public_id?: string | null;
-};
-
 type Props = {
   isMobile?: boolean;
   dark: boolean;
@@ -83,6 +73,7 @@ const truncateText = (text: string, limit = 30) =>
 export function MoodSphere({ isMobile = false, dark }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const moodMeshRef = useRef<THREE.InstancedMesh>(null);
+  const discoBallGroupRef = useRef<THREE.Group>(null)
 
   const moods = useTravelStore(state => state.moods)
   const showMoodModal = useTravelStore(state => state.showMoodModal)
@@ -189,7 +180,6 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
 
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // 打开模态框
     setShowMoodModal(true);
   };
 
@@ -207,6 +197,7 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
         colorLow={CONFIG.colors.low}
         colorHigh={CONFIG.colors.high}
         handleBackgroundClick={handleBackgroundClick}
+        discoBallGroupRef={discoBallGroupRef}
       />
 
       {totalCount > 0 && (
@@ -220,20 +211,25 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
         </instancedMesh>
       )}
 
-      {/* 当有 activeMoodData 且模态框未显示时，才显示标签 */}
       {activePosition && activeMoodData && !showMoodModal && (
-        <Html center position={activePosition} distanceFactor={10}>
-          <div
-            onClick={handleLabelClick}
-            className={`px-3 py-1.5 rounded-lg text-sm cursor-pointer border backdrop-blur-sm ${
-              dark
-                ? 'bg-black/80 text-white border-white/20'
-                : 'bg-white/90 text-gray-900 border-gray-200 shadow-sm'
-            }`}
+        <group  position={activePosition}>
+          <Html
+            position={[0, 0.1, 0]}
+            center
+            distanceFactor={8}
+            scale={2}
+            style={{ pointerEvents: 'none' }}
+            zIndexRange={[30, 0]}
           >
-            {truncateText(activeMoodData.content)}
-          </div>
-        </Html>
+            <div
+              onClick={handleLabelClick}
+              style={{ pointerEvents: 'auto' }}
+              className="text-white text-xs px-2 py-1 rounded whitespace-nowrap cursor-pointer bg-black/70"
+            >
+              {truncateText(activeMoodData.content)}
+            </div>
+          </Html>
+        </group>
       )}
     </group>
   );

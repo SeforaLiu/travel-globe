@@ -14,7 +14,8 @@ type DiscoBallProps = {
   moodVector?: number // 0 ~ 1
   colorLow?: HSLColor
   colorHigh?: HSLColor
-  handleBackgroundClick:()=>void
+  handleBackgroundClick: () => void
+  discoBallGroupRef: React.RefObject<THREE.Group | null>
 }
 
 // --- 自定义材质组件 ---
@@ -35,10 +36,10 @@ const DiscoMaterial = ({
   const cHigh = useMemo(() => new THREE.Color().setHSL(colorHigh.h, colorHigh.s, colorHigh.l), [colorHigh])
 
   const uniforms = useRef({
-    uTime: { value: 0 },
-    uColorLow: { value: cLow },
-    uColorHigh: { value: cHigh },
-    uMood: { value: moodVector }
+    uTime: {value: 0},
+    uColorLow: {value: cLow},
+    uColorHigh: {value: cHigh},
+    uMood: {value: moodVector}
   })
 
   useEffect(() => {
@@ -139,7 +140,8 @@ export default function DiscoBall({
                                     moodVector = 0.5,
                                     colorLow = {h: 0.65, s: 0.9, l: 0.15},
                                     colorHigh = {h: 0.08, s: 1.0, l: 0.6},
-                                    handleBackgroundClick
+                                    handleBackgroundClick,
+                                    discoBallGroupRef
                                   }: DiscoBallProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null!)
   const temp = new THREE.Object3D()
@@ -213,7 +215,8 @@ export default function DiscoBall({
   return (
     <group scale={scale}
            onClick={handleBackgroundClick}
-         >
+           ref={discoBallGroupRef}
+    >
       {/* 内部黑色球体，防止缝隙漏光 */}
       <Sphere args={[radius * 0.98, 32, 32]}>
         <meshBasicMaterial color="#000000"/>
