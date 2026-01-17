@@ -150,7 +150,6 @@ export default function Home({dark, isMobile}: Props) {
             <DiscoLightsBackground baseColor="#333352" />:
             <SkyGradientBackground dark={dark}/>
         }
-        {/*<SkyGradientBackground dark={dark}/>*/}
 
         <OrbitControls
           enableZoom={true}

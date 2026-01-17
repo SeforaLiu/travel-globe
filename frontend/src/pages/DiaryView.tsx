@@ -286,7 +286,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
                   dark ? 'text-gray-500' : 'text-gray-400'
                 }`}>
                   <span className="w-8 h-[1px] bg-current"></span>
-                  {t('Gallery')}
+                  {t('AddPhotos')}
                 </h3>
                 <div className={`grid gap-4 ${
                   photos.length === 1 ? 'grid-cols-1' :
