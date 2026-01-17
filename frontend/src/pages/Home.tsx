@@ -1,5 +1,5 @@
 // frontend/src/pages/Home.tsx
-import React, {useState} from 'react'
+import React, {useState, Suspense} from 'react' // 1. 引入 Suspense
 import {Canvas} from '@react-three/fiber'
 import {OrbitControls, PresentationControls} from '@react-three/drei'
 import {useTranslation} from 'react-i18next'
@@ -13,6 +13,7 @@ import {useNavigate} from "react-router-dom";
 import {toast} from "sonner";
 import MoodDetailModal from "@/components/MoodDetailModal";
 import {DiscoLightsBackground} from "@/three/DiscoLightsBackground";
+import Loading from "@/components/Loading";
 
 type Props = {
   dark: boolean;
@@ -111,7 +112,7 @@ export default function Home({dark, isMobile}: Props) {
 
         {/* +心情 按钮 (仅在 Mood 模式下显示) */}
         {moodMode && (<div className={`
-          pointer-events-auto 
+          pointer-events-auto
           transition-all duration-500 ease-in-out translate-y-0
           ${!moods.length ? 'animate-subtle-pulse' : ''}
         `}>
@@ -137,46 +138,47 @@ export default function Home({dark, isMobile}: Props) {
         </div>)}
       </div>
 
-      {/* 3D 场景 */}
-      <Canvas
-        camera={{position: [0, 0, 6]}}
-        dpr={[1, 2]}
-      >
-
-        <ambientLight intensity={moodMode ? 3 : 2} color='#ffffff'/>
-
-        {
-          moodMode?
-            <DiscoLightsBackground baseColor="#333352" />:
-            <SkyGradientBackground dark={dark}/>
-        }
-
-        <OrbitControls
-          enableZoom={true}
-          zoomSpeed={0.5}
-          minDistance={1}
-          maxDistance={10}
-          enablePan={true}
-          target={[0, 0, 0]}
-          enableRotate={false}
-        />
-
-        <PresentationControls
-          enabled={true}
-          zoom={1}
-          global
-          polar={[-Math.PI / 2, Math.PI / 2]}
-          azimuth={[-Infinity, Infinity]}
-          config={{mass: 1, tension: 170, friction: 26}}
+      <Suspense fallback={<Loading dark={dark}/>}>
+        {/* 3D 场景 */}
+        <Canvas
+          camera={{position: [0, 0, 6]}}
+          dpr={[1, 2]}
         >
+          <ambientLight intensity={moodMode ? 3 : 2} color='#ffffff'/>
 
           {
-            moodMode ? <MoodSphere dark={dark} isMobile={isMobile}/> :
-              <Earth dark={dark} isMobile={isMobile}/>
+            moodMode ?
+              <DiscoLightsBackground baseColor="#333352"/> :
+              <SkyGradientBackground dark={dark}/>
           }
 
-        </PresentationControls>
-      </Canvas>
+          <OrbitControls
+            enableZoom={true}
+            zoomSpeed={0.5}
+            minDistance={1}
+            maxDistance={10}
+            enablePan={true}
+            target={[0, 0, 0]}
+            enableRotate={false}
+          />
+
+          <PresentationControls
+            enabled={true}
+            zoom={1}
+            global
+            polar={[-Math.PI / 2, Math.PI / 2]}
+            azimuth={[-Infinity, Infinity]}
+            config={{mass: 1, tension: 170, friction: 26}}
+          >
+
+            {
+              moodMode ? <MoodSphere dark={dark} isMobile={isMobile}/> :
+                <Earth dark={dark} isMobile={isMobile}/>
+            }
+
+          </PresentationControls>
+        </Canvas>
+      </Suspense>
 
       {/* 心情发布对话框 */}
       <MoodDialog
