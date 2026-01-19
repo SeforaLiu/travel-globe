@@ -15,7 +15,6 @@ import UploadFailedDialog from './components/UploadFailedDialog';
 import Loading from "../../components/Loading";
 import {generateDiaryDraft} from '@/services/ai'; // 导入 API
 import AIDiaryDialog from './components/AIDiaryDialog'; // 导入 Dialog
-import {Sparkles} from 'lucide-react';
 
 const INITIAL_FORM_DATA: FormDataT = {
   title: '',
@@ -29,7 +28,7 @@ const INITIAL_FORM_DATA: FormDataT = {
   photos: [], // 关键修复：确保 photos 是一个空数组
 };
 
-export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubmit' | 'loading'>) {
+export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail }: Omit<Props, 'onSubmit' | 'loading'>) {
   const {t} = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -274,10 +273,17 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
     setIsUploading(true);
     try {
       await uploadPhotos(
+        // 这里的 p.file! 是安全的，因为 filter 已经保证了
         photosToUpload.map(p => ({file: p.file!, url: p.url, status: p.status})),
         (index, status, result, error) => {
           const targetFile = photosToUpload[index].file;
-          updatePhotoStatusByFile(targetFile, status, result, error);
+          // 关键修复：在调用前增加一个 null 检查
+          // 这既能满足 TypeScript 的类型要求，也增加了代码的健壮性
+          if (targetFile) {
+            updatePhotoStatusByFile(targetFile, status, result, error);
+          } else {
+            console.warn(`[uploadCallback] 警告: 索引 ${index} 对应的 targetFile 为 null，无法更新状态。`);
+          }
         }
       );
       console.log('图片上传流程完成。');
@@ -293,13 +299,9 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
 
   // 辅助函数 6 (原 proceedWithSubmit): 最终提交数据
   const finalizeAndSubmit = useCallback((finalFormData: FormDataT) => {
-    // 过滤出所有成功的照片（包括已存在的和新上传的）
+    // 过滤出所有成功的照片
     const successPhotos = finalFormData.photos.filter(p => p.status === 'success' && p.cloudinary);
-    console.log('上传结果统计:', {
-      总图片数: finalFormData.photos.length,
-      成功数: successPhotos.length,
-      失败数: finalFormData.photos.length - successPhotos.length,
-    });
+
     const photosToSubmit = successPhotos.map(photo => ({
       url: photo.cloudinary!.url,
       public_id: photo.cloudinary!.publicId,
@@ -311,7 +313,15 @@ export default function NewDiary({isMobile, dark, onClose,}: Omit<Props, 'onSubm
       original_filename: photo.cloudinary!.originalFilename,
       created_at: photo.cloudinary!.created_at
     }));
-    const submitData = {...finalFormData, photos: photosToSubmit};
+    if (!finalFormData.coordinates) {
+      console.log("坐标丢失");
+      return;
+    }
+    const submitData = {
+      ...finalFormData,
+      coordinates: finalFormData.coordinates,
+      photos: photosToSubmit
+    };
     console.log('调用 submitDiary，将控制权交给 hook...');
     submitDiary(submitData, diaryId ? Number(diaryId) : undefined);
   }, [submitDiary, diaryId]);

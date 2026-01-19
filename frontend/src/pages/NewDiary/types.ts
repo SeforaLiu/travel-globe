@@ -1,9 +1,8 @@
 export type Props = {
   isMobile: boolean;
-  onClose: () => void;
-  onSubmit: (data: SubmitData) => void; // 直接使用 FormData 类型
   dark: boolean;
-  loading:boolean;
+  onClose: () => void;
+  shouldFetchDiaryDetail?: boolean;
 };
 
 export type LocationResult = {
@@ -41,7 +40,7 @@ export type FormData = {
   transportation: string;
   content: string;
   photos: Array<{
-    file: File;
+    file: File | null;
     url?: string; // 本地预览URL
     publicId?: string; // Cloudinary public ID
     status: UploadStatus;

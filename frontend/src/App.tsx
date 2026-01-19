@@ -12,7 +12,6 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import NewDiary from '@/pages/NewDiary';
 import DiaryView from '@/pages/DiaryView';
-import {DiaryManager} from '@/components/DiaryManager';
 import {LogoutDialog} from "@/components/LogoutDialog";
 
 export default function App() {
@@ -94,9 +93,7 @@ export default function App() {
               <NewDiary
                 dark={darkMode}
                 onClose={handleNewDiaryClose} // 使用 useCallback 包装后的稳定函数
-                onSubmit={submitDiary}
                 isMobile={isMobile}
-                loading={isSubmitting}
               />
             }
           />
@@ -106,16 +103,13 @@ export default function App() {
               <NewDiary
                 dark={darkMode}
                 onClose={handleNewDiaryClose} // 复用同一个稳定函数
-                onSubmit={submitDiary}
                 isMobile={isMobile}
-                loading={isSubmitting}
                 shouldFetchDiaryDetail={shouldFetchDiaryDetail}
               />
             }
           />
 
           <Route path="/diary/:id" element={<DiaryView dark={darkMode} isMobile={isMobile}/>}/>
-          <Route path="/diary-manage" element={<DiaryManager/>}/>
         </Route>
       </Routes>
 

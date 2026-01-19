@@ -9,6 +9,9 @@ export const DiaryManager: React.FC = () => {
   const deleteDiary = useTravelStore(state => state.deleteDiary);
   const total = useTravelStore(state => state.total);
   const error = useTravelStore(state => state.error);
+  const fetchDiaries = useTravelStore(state => state.fetchDiaries);
+
+  const currentPage = 1
 
   // 4. 编辑逻辑
   const handleEdit = async (diary: DiarySummary) => {
@@ -60,7 +63,7 @@ export const DiaryManager: React.FC = () => {
       )}
 
       <div className="grid gap-4">
-        {diaries.map((diary) => (
+        {allDiaries.map((diary) => (
           <div key={diary.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-center">
               <div>
@@ -98,14 +101,14 @@ export const DiaryManager: React.FC = () => {
         ))}
       </div>
 
-      {diaries.length === 0 && !loading && (
+      {allDiaries.length === 0 && !loading && (
         <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
           <p className="text-gray-400 text-lg">世界这么大，不想去看看吗？</p>
         </div>
       )}
 
       {/* 分页控制：状态全部来自 Store */}
-      {totalPages > 1 && (
+      {total > 1 && (
         <div className="flex justify-center items-center gap-6 mt-10">
           <button
             onClick={() => fetchDiaries(currentPage - 1)}
@@ -115,11 +118,11 @@ export const DiaryManager: React.FC = () => {
             ←
           </button>
           <span className="font-medium text-gray-600">
-             {currentPage} / {totalPages}
+             {currentPage} / {total}
           </span>
           <button
             onClick={() => fetchDiaries(currentPage + 1)}
-            disabled={currentPage === totalPages || loading}
+            disabled={currentPage === total || loading}
             className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-full hover:border-blue-500 disabled:opacity-30"
           >
             →
@@ -128,7 +131,7 @@ export const DiaryManager: React.FC = () => {
       )}
 
       {/* 异步操作时的全局微型加载条 */}
-      {loading && diaries.length > 0 && (
+      {loading && allDiaries.length > 0 && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full text-xs shadow-2xl animate-bounce">
           正在同步云端数据...
         </div>

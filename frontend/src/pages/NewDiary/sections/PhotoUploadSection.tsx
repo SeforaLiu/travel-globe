@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 type Props = {
   photos: Array<{
-    file: File;
+    file: File | null;
     url?: string;
     publicId?: string;
     status: 'pending' | 'uploading' | 'success' | 'error';

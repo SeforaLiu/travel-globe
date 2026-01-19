@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export const usePhotoDragSort = (
   photos: Array<{
-    file: File;
+    file: File | null;
     url?: string;
     publicId?: string;
     status: 'pending' | 'uploading' | 'success' | 'error';
