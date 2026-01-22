@@ -61,7 +61,9 @@
     "retryAll": "riprova tutto",
     "skipAndSubmit": "salta & applica",
     "photoFailedLength": "numero di foto non caricate:",
-    "error": "errore di rete"
+    "error": "errore di rete",
+    "retryInProgress": "Riprova in corso...",
+    "uploadingInProgress": "Upload in corso..."
   },
   "googleMap": {
     "error": "❌ Caricamento servizio mappa fallito. Si prega di aggiornare la pagina e riprovare."

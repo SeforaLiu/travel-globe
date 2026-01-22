@@ -61,7 +61,9 @@
     "retryAll": "retry all",
     "skipAndSubmit": "skip & submit",
     "photoFailedLength": "photos failed quantity:",
-    "error": "network error"
+    "error": "network error",
+    "retryInProgress": "Retrying failed image upload, please wait...",
+    "uploadingInProgress": "Uploading in progress, please wait..."
   },
   "googleMap": {
     "error": "❌ Map service failed to load. Please refresh the page and try again."

@@ -118,7 +118,7 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
           setShowMapPreview(!!transformedData.coordinates);
         } catch (error) {
           console.error(`[Edit Mode] 加载日记 ${diaryId} 失败:`, error);
-          toast.error(t('diary.loadFailed') || '加载日记详情失败');
+          toast.error(t('Network error'));
         } finally {
           setIsPageLoading(false);
         }
@@ -164,7 +164,7 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       toast.success(t('photos.retryStarted', {count: failedPhotos.length}) || `正在重试 ${failedPhotos.length} 张图片`);
     } catch (error) {
       console.error('重置失败图片状态时出错:', error);
-      toast.error(t('photos.retryFailed') || '重试失败，请稍后重试');
+      toast.error(t('photos.retryFailed'));
     } finally {
       // 延迟一点时间再重置加载状态，让用户看到操作反馈
       setTimeout(() => {
@@ -224,11 +224,11 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   // 辅助函数 2: 检查进行中的进程
   const checkForOngoingProcesses = useCallback(() => {
     if (isUploading) {
-      toast.info(t('uploadingInProgress') || '正在上传中，请稍候...');
+      toast.info(t('photos.uploadingInProgress'));
       return true;
     }
     if (isRetryingFailedPhotos) {
-      toast.info(t('photos.retryInProgress') || '正在重试上传失败图片，请稍候...');
+      toast.info(t('photos.retryInProgress'));
       return true;
     }
     return false;
@@ -289,8 +289,8 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       console.log('图片上传流程完成。');
       return true;
     } catch (error) {
-      console.error('上传过程中出现严重错误:', error);
-      toast.error(t('uploadFailed') || '图片上传失败，请检查网络连接后重试');
+      console.error('上传过程中出现错误:', error);
+      toast.error(t('photos.uploadFailed'));
       return false; // 上传失败
     } finally {
       setIsUploading(false);

@@ -61,7 +61,9 @@
     "retryAll": "全部重试",
     "skipAndSubmit": "跳过并直接提交",
     "photoFailedLength": "上传失败数量:",
-    "error": "网络错误"
+    "error": "网络错误",
+    "retryInProgress": "正在重试上传失败图片，请稍候...",
+    "uploadingInProgress": "正在上传中，请稍候..."
   },
   "googleMap": {
     "error": "❌ 地图服务加载失败 请刷新页面重试"
