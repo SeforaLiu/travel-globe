@@ -20,7 +20,6 @@ const HeaderSection: React.FC<Props> = ({ dark, onClose, isEditMode = false, onO
           {isEditMode ? t('common.edit') : t('addNewDiaryOrGuide')}
         </h2>
 
-        {/* 新增：AI 入口按钮 (仅在非编辑模式或根据需求显示) */}
         {!isEditMode && onOpenAI && (
           <button
             onClick={onOpenAI}

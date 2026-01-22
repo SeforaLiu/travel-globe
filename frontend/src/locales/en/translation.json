@@ -63,6 +63,9 @@
     "photoFailedLength": "photos failed quantity:",
     "error": "network error"
   },
+  "googleMap": {
+    "error": "❌ Map service failed to load. Please refresh the page and try again."
+  },
   "AddSelectPhotosTip": "Drag here or click to upload",
   "AddSelectPhotosButton": "select photos",
   "search location": "enter and select location",
@@ -81,7 +84,7 @@
   "input will be clear": "Unsaved changes will be lost.",
   "cannot find this diary": "cannot find this diary",
   "validation": {
-    "fillRequiredFields": "Please fill in the title, and select a location and diary type"
+    "fillRequiredFields": "Please fill in the title, and select a location correctly"
   },
   "ai": {
     "name": "AI Assistant Little Bee",
@@ -91,6 +94,7 @@
     "mini window": "compact window view",
     "full window": "full window view",
     "diary generator name": "AI Travel Diary Generator (Beta)",
+    "diary generator mobile name": "AI (Beta)",
     "describe your travel plans": "describe your travel plans / record your journey",
     "diary example":"Example: Spent 3 days in Guangzhou, enjoyed dim sum, the BBQ pork buns were delicious...",
     "overwrite warning": "Warning! AI-generated draft will overwrite your existing content!",

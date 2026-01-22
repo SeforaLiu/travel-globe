@@ -63,6 +63,9 @@
     "photoFailedLength": "numero di foto non caricate:",
     "error": "errore di rete"
   },
+  "googleMap": {
+    "error": "❌ Caricamento servizio mappa fallito. Si prega di aggiornare la pagina e riprovare."
+  },
   "AddSelectPhotosTip": "Trascina qui o clicca per caricare",
   "AddSelectPhotosButton": "sceglie foto",
   "search location": "inserisce e cerca posti",
@@ -81,7 +84,7 @@
   "input will be clear": "I dati non salvati saranno persi.",
   "cannot find this diary": "Questo diario non è stato trovato",
   "validation": {
-    "fillRequiredFields": "Si prega di inserire il titolo, selezionare la località e il tipo di diario"
+    "fillRequiredFields": "Si prega di inserire il titolo e selezionare la località correttamente"
   },
   "ai": {
     "name": "AI Assistente Ape Viaggiatrice",
@@ -91,6 +94,7 @@
     "mini window": "finestra compatta",
     "full window": "finestra espansa",
     "diary generator name": "Generatore di diari AI (Beta)",
+    "diary generator mobile name": "AI (Beta)",
     "describe your travel plans": "Descrivi i tuoi piani di viaggio o scrivi il tuo percorso ...",
     "diary example":"Esempio: 3 giorni a Guangzhou, preso dim sum, i panini al maiale erano deliziosi...",
     "overwrite warning": "Attenzione! La bozza generata dall'AI sovrascriverà il contenuto esistente!",

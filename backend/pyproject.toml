@@ -1,0 +1,6 @@
+# backend/pyproject.toml
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# 告诉 pytest，在运行测试时，将当前目录（.）添加到 Python 的模块搜索路径中
+pythonpath = "."

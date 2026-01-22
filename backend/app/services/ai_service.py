@@ -7,6 +7,7 @@ from app.constants.ai_constants import SYSTEM_INSTRUCTION, DEFAULT_MODEL_NAME, D
 import json
 import re
 from datetime import datetime
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,11 @@ os.environ["http_proxy"] = "http://127.0.0.1:7890"
 os.environ["https_proxy"] = "http://127.0.0.1:7890"
 
 # 配置 API Key
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if GOOGLE_API_KEY:
-  genai.configure(api_key=GOOGLE_API_KEY)
-else:
+GOOGLE_API_KEY = settings.GOOGLE_API_KEY
+if not GOOGLE_API_KEY:
   logger.warning("未检测到 GOOGLE_API_KEY，AI 功能将不可用")
+else:
+  genai.configure(api_key=GOOGLE_API_KEY)
 
 async def get_travel_advice(frontend_messages: list):
   """

@@ -32,7 +32,6 @@ const LocationSection: React.FC<Props> = ({
                                           }) => {
   const { t } = useTranslation();
 
-  // --- 新增逻辑：从 store 获取状态和 action ---
   const {
     loadGoogleMaps,
     isGoogleMapsLoaded,
@@ -40,9 +39,7 @@ const LocationSection: React.FC<Props> = ({
     googleMapsError
   } = useTravelStore();
 
-  // --- 新增逻辑：组件挂载时触发 API 加载 ---
   useEffect(() => {
-    console.log('现在选择的语言',i18n.language)
     let lang =''
     if(i18n.language==='zh') {
       lang='zh-CN'
@@ -70,9 +67,8 @@ const LocationSection: React.FC<Props> = ({
     return (
       <div className="mb-6 p-4 border border-red-400 rounded bg-red-50 dark:bg-red-900/20">
         <p className="text-sm text-red-700 dark:text-red-300">
-          {t('map_load_error', '地图服务加载失败，请刷新页面重试。')}
+          {t('googleMap.error')}
         </p>
-        <p className="text-xs text-gray-500 mt-1">{googleMapsError}</p>
       </div>
     );
   }

@@ -8,6 +8,7 @@ import PhotoUploadSection from '../sections/PhotoUploadSection';
 import FooterSection from '../sections/FooterSection';
 import {FormData} from '../types';
 import {Sparkles} from "lucide-react";
+import {t} from "i18next";
 
 type Props = {
   dark: boolean;
@@ -32,8 +33,8 @@ type Props = {
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
   isUploading: boolean;
-  loading?:boolean;
-  isEditMode?:boolean;
+  loading?: boolean;
+  isEditMode?: boolean;
   onOpenAI?: () => void;
 };
 
@@ -69,10 +70,17 @@ const MobileLayout: React.FC<Props> = ({
         <div
           className={`flex justify-between items-center p-4 ${dark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${dark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold ...">新增日记/攻略</h2>
+            <h2 className="text-lg font-semibold">{isEditMode ? t('common.edit') : t('addNewDiaryOrGuide')}</h2>
             {onOpenAI && !isEditMode && (
-              <button onClick={onOpenAI} className="...">
-                <Sparkles size={16} className="text-blue-500"/>
+              <button
+                onClick={onOpenAI}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-200 dark:border-blue-800 transition-all group"
+              >
+                <Sparkles size={14} className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform"/>
+                <span
+                  className="text-xs font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {t('ai.diary generator mobile name')}
+                </span>
               </button>
             )}
           </div>

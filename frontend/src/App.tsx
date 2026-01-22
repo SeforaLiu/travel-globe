@@ -3,7 +3,6 @@ import React, {useState, useEffect, useCallback} from 'react'; // 引入 useCall
 import {Routes, Route, useNavigate, useLocation} from 'react-router-dom';
 import {toast, Toaster} from 'sonner';
 import {useTravelStore} from '@/store/useTravelStore';
-import {useDiarySubmission} from '@/hooks/useDiarySubmission';
 import {MainLayout} from '@/layouts/MainLayout';
 import Loading from '@/components/Loading';
 import {NewDiaryCloseDialog} from '@/components/NewDiaryCloseDialog';
@@ -27,8 +26,6 @@ export default function App() {
   const setIsMobile = useTravelStore(state => state.setIsMobile);
   const isMobile = useTravelStore(state => state.isMobile);
   const logout = useTravelStore(state => state.logout);
-
-  const {submitDiary, isSubmitting} = useDiarySubmission();
 
   const handleNewDiaryClose = useCallback(() => {
     setShowNewDiaryCloseDialog(true);

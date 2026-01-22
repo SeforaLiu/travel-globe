@@ -1,5 +1,5 @@
 // frontend/src/pages/DiaryView.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react'; // 引入 useCallback
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTravelStore } from "@/store/useTravelStore";
@@ -16,13 +16,17 @@ import {
   Trash2,
   Quote,
   Navigation,
-  Clock
 } from 'lucide-react';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {detectDevice, DeviceInfo} from '@/utils/deviceDetector';
 
 const ENTRY_TYPE = {
   VISITED: 'visited',
   WISHLIST: 'wishlist',
 };
+
+
 
 const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMobile }) => {
   const { t, i18n } = useTranslation();
@@ -38,6 +42,13 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
 
   const fetchingIdRef = useRef<number | null>(null);
+
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+
+  useEffect(() => {
+    const info = detectDevice();
+    setDeviceInfo(info);
+  }, []);
 
   // --- 数据获取逻辑 (保持原有逻辑不变) ---
   useEffect(() => {
@@ -90,6 +101,51 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
 
   }, [id, currentDiary, fetchDiaryDetail, t]);
 
+  // --- 优化点: 使用 useCallback 封装函数 ---
+  // 这样做可以避免在每次组件重渲染时都重新创建这些函数。
+  // 依赖项数组 [i18n.language] 确保了在语言切换时，日期格式能正确更新。
+  const formatDate = useCallback((dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      return new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
+    } catch (e) {
+      console.error("Error formatting date:", e);
+      return dateStr;
+    }
+  }, [i18n.language]);
+
+  const renderDateRange = useCallback(() => {
+    if (!currentDiary) return '-';
+    const start = currentDiary.date_start;
+    const end = currentDiary.date_end;
+    if (!start) return '-';
+    const formattedStart = formatDate(start);
+    if (!end || start === end) return formattedStart;
+    const formattedEnd = formatDate(end);
+    return `${formattedStart} - ${formattedEnd}`;
+  }, [currentDiary, formatDate]);
+
+
+  // --- 事件处理函数也使用 useCallback 封装 ---
+  const handleEditClick = useCallback(() => navigate(`/diary/edit?id=${id}`), [id, navigate]);
+  const handleDeleteClick = useCallback(() => setShowDeleteDialog(true), []);
+  const handleBackClick = useCallback(() => navigate(-1), [navigate]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!id) return;
+    try {
+      await deleteDiary(Number(id));
+      toast.success(t('delete successful'));
+      navigate('/');
+    } catch (error) {
+      console.error("delete failed:", error);
+      toast.error(t('Network error'));
+    }
+    setShowDeleteDialog(false);
+  }, [id, deleteDiary, navigate, t]);
+
+
   // --- 渲染逻辑 ---
   const renderContent = () => {
     if (status === 'loading' || status === 'idle') {
@@ -113,42 +169,6 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
 
     const isVisited = currentDiary.entry_type === ENTRY_TYPE.VISITED;
     const photos = currentDiary.photos || [];
-
-    const formatDate = (dateStr: string) => {
-      if (!dateStr) return '';
-      try {
-        const date = new Date(dateStr);
-        return new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
-      } catch (e) {
-        return dateStr;
-      }
-    };
-
-    const renderDateRange = () => {
-      const start = currentDiary!.date_start;
-      const end = currentDiary!.date_end;
-      if (!start) return '-';
-      const formattedStart = formatDate(start);
-      if (!end || start === end) return formattedStart;
-      const formattedEnd = formatDate(end);
-      return `${formattedStart} - ${formattedEnd}`;
-    };
-
-    const handleEditClick = () => navigate(`/diary/edit?id=${id}`);
-    const handleDeleteClick = () => setShowDeleteDialog(true);
-    const handleBackClick = () => navigate(-1); // 使用 -1 返回上一页更自然
-
-    const handleConfirmDelete = async () => {
-      try {
-        await deleteDiary(Number(id));
-        toast.success(t('delete successful'));
-        navigate('/');
-      } catch (error) {
-        console.error("delete failed:", error);
-        toast.error(t('Network error'));
-      }
-      setShowDeleteDialog(false);
-    };
 
     // 样式类定义
     const containerClass = `min-h-screen transition-colors duration-300 ${
@@ -270,12 +290,23 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
                 size={48}
                 className={`absolute top-6 left-4 opacity-10 ${dark ? 'text-pink-400' : 'text-pink-600'}`}
               />
+              {/*
+                使用 Tailwind Prose 插件来为 Markdown 渲染的 HTML 元素提供样式。
+                - `prose`: 应用基础排版样式。
+                - `max-w-none`: 取消 prose 默认的最大宽度限制，让它撑满父容器。
+                - `prose-invert`: 在暗黑模式下反转颜色。
+              */}
               <div className={`relative z-10 prose max-w-none ${dark ? 'prose-invert' : ''}`}>
-                <p className={`text-lg leading-relaxed whitespace-pre-line ${
-                  dark ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {currentDiary.content}
-                </p>
+                {/*@ts-ignore*/}
+                {deviceInfo.isIOS ? <div>{currentDiary.content || ''}</div> :
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                  >
+                    {currentDiary.content || ''}
+                  </ReactMarkdown>
+                }
+
+
               </div>
             </div>
 

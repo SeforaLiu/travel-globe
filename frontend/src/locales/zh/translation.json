@@ -63,6 +63,9 @@
     "photoFailedLength": "上传失败数量:",
     "error": "网络错误"
   },
+  "googleMap": {
+    "error": "❌ 地图服务加载失败 请刷新页面重试"
+  },
   "AddSelectPhotosTip": "拖动到这里或点击上传",
   "AddSelectPhotosButton": "选择照片",
   "search location": "输入并选择地点",
@@ -81,7 +84,7 @@
   "delete successful": "删除成功",
   "cannot find this diary": "找不到相关内容",
   "validation": {
-    "fillRequiredFields": "请填写标题、并选择地点、是否去过"
+    "fillRequiredFields": "请填写标题、并正确选择地点"
   },
   "ai": {
     "name": "AI 助手小蜜蜂",
@@ -91,6 +94,7 @@
     "mini window": "恢复小窗",
     "full window": "大窗模式",
     "diary generator name": "AI 生成旅行日记 (Beta)",
+    "diary generator mobile name": "AI (Beta)",
     "describe your travel plans": "描述你的旅行计划 / 记录你的旅程 ...",
     "diary example":"例如：在广州玩了3天，早茶喝了，叉烧包美味...",
     "overwrite warning": "请注意! AI生成的草稿将会覆盖你已经输入的内容!",
