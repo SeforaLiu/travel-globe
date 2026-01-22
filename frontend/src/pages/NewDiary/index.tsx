@@ -330,6 +330,8 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   // --- 主提交函数 (指挥官) ---
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const currentFormData = formDataRef.current;
     // 步骤 1: 前置检查
     if (!validateForm(currentFormData)) return;
