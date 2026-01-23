@@ -66,7 +66,6 @@ export default function LocationSearch({ onSelect, value, onChange, onFocus }: P
           setInputValue(place.formatted_address);
         }
       });
-      console.log('Autocomplete初始化成功');
       setIsInitialized(true);
     } catch (error) {
       console.error('Autocomplete初始化失败:', error);
@@ -83,7 +82,6 @@ export default function LocationSearch({ onSelect, value, onChange, onFocus }: P
         setTimeout(checkApiLoaded, 100);
       }
     };
-    console.log('组件---location search')
     checkApiLoaded();
 
     return () => {

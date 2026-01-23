@@ -51,7 +51,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
   // 添加新照片
   const addPhotos = useCallback((newPhotos: File[]) => {
-    console.log('添加照片', newPhotos.length);
     const photoObjects = newPhotos.map(file => ({
       file,
       url: URL.createObjectURL(file),
@@ -88,7 +87,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     cloudinary?: CloudinaryPhotoInfo,
     error?: string
   ) => {
-    console.log('通过文件更新照片状态:', { fileName: file.name, status });
     setFormDataState(prev => ({
       ...prev,
       photos: prev.photos.map(photo =>
@@ -107,7 +105,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
     cloudinary?: CloudinaryPhotoInfo,
     error?: string
   ) => {
-    console.log('通过索引更新照片状态:', { index, status });
     setFormDataState(prev => {
       if (index < 0 || index >= prev.photos.length) {
         console.warn('照片索引超出范围:', index);
@@ -140,7 +137,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
   // 重试所有上传失败的照片
   const retryFailedPhotos = useCallback(() => {
-    console.log('重试所有失败的照片');
     setFormDataState(prev => ({
       ...prev,
       photos: prev.photos.map(photo =>
@@ -153,7 +149,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
   // 通过索引重试单张照片
   const retryPhotoByIndex = useCallback((index: number) => {
-    console.log('重试指定照片，索引:', index);
     setFormDataState(prev => {
       if (index < 0 || index >= prev.photos.length) {
         console.warn('照片索引超出范围:', index);
@@ -170,7 +165,6 @@ export const useFormData = (initialData?: Partial<FormData>) => {
 
   // 通过文件对象重试单张照片
   const retryPhotoByFile = useCallback((file: File) => {
-    console.log('重试指定文件:', file.name);
     setFormDataState(prev => ({
       ...prev,
       photos: prev.photos.map(photo =>

@@ -59,11 +59,8 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
     }
     const diaryId = Number(id);
 
-    console.log(`[Effect Run] ID: ${diaryId}, Status: ${status}, Store Diary: ${currentDiary?.id}, Fetching Ref: ${fetchingIdRef.current}`);
-
     // 1. [成功状态]
     if (currentDiary && currentDiary.id === diaryId) {
-      console.log(`[Handler] Case 1: Success. Store data is correct.`);
       setStatus('success');
       if (fetchingIdRef.current === diaryId) {
         fetchingIdRef.current = null;
@@ -73,13 +70,10 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
 
     // 2. [防循环锁]
     if (fetchingIdRef.current === diaryId) {
-      console.log(`[Handler] Case 2: Locked. Already fetching or failed for ID ${diaryId}. Aborting.`);
       return;
     }
 
     // 3. [执行加载]
-    console.log(`[Handler] Case 3: Start fetch for ID ${diaryId}.`);
-
     const loadData = async () => {
       fetchingIdRef.current = diaryId; // 上锁
       setStatus('loading');
@@ -87,7 +81,6 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
 
       try {
         await fetchDiaryDetail(diaryId);
-        console.log(`[Fetch] API call for ${diaryId} initiated successfully.`);
       } catch (err) {
         console.error(`[Fetch] API call for ${diaryId} failed.`, err);
         if (fetchingIdRef.current === diaryId) {

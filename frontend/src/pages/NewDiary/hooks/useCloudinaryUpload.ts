@@ -142,14 +142,8 @@ export const useCloudinaryUpload = () => {
       );
 
       if (photosToUpload.length === 0) {
-        console.log('没有需要上传的照片');
         return results;
       }
-
-      console.log('开始上传照片，数量:', photosToUpload.length, {
-        pending: photosToUpload.filter(p => p.status === 'pending').length,
-        error: photosToUpload.filter(p => p.status === 'error').length
-      });
 
       // Step 2: 去重处理
       const uniquePhotos: QueuedPhoto[] = [];
@@ -163,7 +157,6 @@ export const useCloudinaryUpload = () => {
             // 通知成功状态
             onProgress(index, 'success', uploadedFiles[signature]);
             results.push(uploadedFiles[signature]);
-            console.log(`"${photo.file.name}" 已存在，使用缓存结果`);
           }
           return;
         }
@@ -176,7 +169,6 @@ export const useCloudinaryUpload = () => {
       });
 
       if (uniquePhotos.length === 0) {
-        console.log('所有照片都已处理完成');
         return results;
       }
 
@@ -215,7 +207,6 @@ export const useCloudinaryUpload = () => {
           }));
 
           onProgress(originalIndex, 'success', result);
-          console.log('上传照片成功:', result.originalFilename);
           return result;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知错误';
@@ -263,8 +254,6 @@ export const useCloudinaryUpload = () => {
       });
 
       await Promise.all(workers);
-
-      console.log(`上传完成，成功数量: ${results.length}，耗时 ${((performance.now() - uploadStartTime) / 1000).toFixed(2)}秒`);
 
       return results;
     } catch (error) {

@@ -17,7 +17,6 @@ export const useResponsiveLayout = () => {
         setShowSidebar(true);
         setShowLeftRightButtonsMobile(false);
       } else {
-        console.log('是移动端 隐藏sidebar')
         setShowSidebar(false);
         setShowLeftRightButtonsMobile(location.pathname === '/');
       }

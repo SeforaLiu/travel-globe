@@ -62,7 +62,6 @@ export default function Earth({ dark, isMobile }: Props) {
         position: latLonToCartesian(lat, lng, 2.02)
       });
     }
-    console.log('result',result)
     return result;
   }, [allDiaries]);
 

@@ -127,7 +127,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   fetchMoods: async (force=false) => {
     if (get().moodsInitialized && !force) {
-      console.log('fetchMoods: Already initialized and not forced, skipping fetch.');
       return;
     }
     try {
@@ -156,7 +155,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       set((state) => ({
         moods: state.moods.filter((mood) => mood.id !== id),
       }));
-      console.log(`Mood with id ${id} deleted successfully.`);
     } catch (err) {
       console.error(`Failed to delete mood with id ${id}`, err);
       throw err;
@@ -168,24 +166,20 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     return new Promise((resolve, reject) => {
       // 1. 如果已经加载成功，直接成功返回
       if (get().isGoogleMapsLoaded && get().googleMapsApiLang === lang) {
-        console.log('这个语言的 Google Maps API 已加载，跳过。');
         return resolve();
       }
       // 2. 如果正在加载中，也直接返回一个等待中的 Promise (这里我们简单返回，让调用者等待状态变化)
       if (get().isGoogleMapsLoading) {
-        console.log('Google Maps API 正在加载中，请等待...');
         return resolve();
       }
       // 3. 最终检查 window 对象，作为双重保险
       // @ts-ignore
       if (window.google && window.google.maps && get().googleMapsApiLang === lang) {
-        console.log('这个语言的 Google Maps API 已存在于 window 对象，直接标记为已加载。');
         set({ isGoogleMapsLoaded: true });
         return resolve();
       }
 
       // 如果以上条件都不满足，开始加载
-      console.log('开始加载 Google Maps API...');
       set({ isGoogleMapsLoading: true, googleMapsError: null });
 
       const script = document.createElement('script');
@@ -195,7 +189,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       script.id = 'google-maps-script';
 
       script.onload = () => {
-        console.log('✅ Google Maps API 加载完毕');
         set({ isGoogleMapsLoading: false, isGoogleMapsLoaded: true, googleMapsApiLang: lang });
         resolve();
       };
@@ -223,14 +216,11 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   // 在 useTravelStore.ts 中修改 fetchDiaries 函数
   fetchDiaries: async (page = 1, pageSize = 10) => {
-    console.log(`call 获取日记fetchDiaries called: page=${page}, pageSize=${pageSize}`);
     set({ loading: true, error: null });
     try {
       const response = await api.get<DiaryListResponse>('/entries', {
         params: { page, page_size: pageSize }
       });
-
-      console.log(`获取日记成功 fetchDiaries success: got ${response.data.items.length} items, total=${response.data.total}`);
 
       set({
         diaries: response.data.items,
@@ -255,7 +245,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   fetchAllDiaries: async (force = false, keyword,type) => {
     // 1. 【修改保护逻辑】如果已经初始化过 且 不是强制刷新，则直接返回
     if (get().allDiariesInitialized && !force) {
-      console.log('fetchAllDiaries: Already initialized and not forced, skipping fetch.');
       return;
     }
     set({ loading: true, error: null });
@@ -272,9 +261,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
         total: response.data.total,
         allDiariesInitialized: true
       });
-      if(keyword && !type){
-        console.log('只有关键词没有类型')
-      }
     } catch (err: any) {
       console.error('获取全部日记失败 fetchAllDiaries failed:', err);
       set({
@@ -302,7 +288,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   createDiary: async (newDiaryData) => {
     try {
       const response = await api.post<DiaryDetail>('/entries', newDiaryData);
-      console.log('日记创建成功, Diary created successfully.');
       await get().fetchAllDiaries(true);
       return response.data;
     } catch (err: any) {
@@ -314,10 +299,8 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   // D. 更新
   updateDiary: async (id, data) => {
     try {
-      console.log(`[Store] 准备更新日记，ID: ${id}`, data);
       const response = await api.put<DiaryDetail>(`/entries/${id}`, data);
       const updatedDiary = response.data;
-      console.log('[Store] 日记更新成功:', updatedDiary);
 
       set(state => ({
         allDiaries: state.allDiaries.map(diary =>
@@ -341,7 +324,6 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     set({ loading: true });
     try {
       await api.delete(`/entries/${id}`);
-      console.log(`日记 ${id} 删除成功, Diary ${id} deleted successfully.`);
 
       set(state => ({
         allDiaries: state.allDiaries.filter(d => d.id !== id),

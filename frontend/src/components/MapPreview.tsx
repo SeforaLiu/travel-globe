@@ -27,7 +27,6 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
   const markerRef = useRef<google.maps.Marker>();
 
   useEffect(() => {
-    console.log('地图previw加载')
     if (!mapRef.current || !lat || !lng) return;
 
     // @ts-ignore

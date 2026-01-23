@@ -68,16 +68,13 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   useEffect(() => {
     const loadAndSetDiaryData = async () => {
       if (diaryId) {
-        console.log(`[Edit Mode] 开始加载日记数据, ID: ${diaryId}`);
         setIsPageLoading(true);
         try {
           // --- 核心修复逻辑 ---
           // 1. 优先从 store 中获取 currentDiary
           let diaryDetail = currentDiary;
-          console.log('进入编辑页面 -- diaryDetail', diaryDetail)
           // // 2. 如果 store 中没有数据（或者 id 不匹配），则通过 API 获取
           if (!diaryDetail || diaryDetail.id !== Number(diaryId)) {
-            console.log(`[Edit Mode] Store 中无数据或 ID 不匹配，从 API 获取详情...`);
             diaryDetail = await fetchDiaryDetail(Number(diaryId));
           }
           // --- 修复结束 ---
@@ -85,7 +82,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
           if (!diaryDetail) {
             throw new Error(`无法获取 ID 为 ${diaryId} 的日记详情。`);
           }
-          console.log('[Edit Mode] 获取数据成功, 开始填充表单:', diaryDetail);
           // 数据转换：将后端数据格式转换为前端 FormData 格式
           const transformedData: Partial<FormDataT> = {
             title: diaryDetail.title,
@@ -123,7 +119,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
           setIsPageLoading(false);
         }
       } else {
-        console.log('[New Mode] 新建日记');
         // 新建模式下，确保表单是空的（如果之前有编辑数据的话）
         setFormData(INITIAL_FORM_DATA);
         setIsPageLoading(false);
@@ -140,13 +135,11 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       // 这样可以防止数据污染，例如从编辑页返回新建页时看到旧数据
       clearCurrentDiary();
       resetCache();
-      console.log('NewDiary component unmounted, clearing current diary.');
     };
   }, [clearCurrentDiary, resetCache]);
 
 // 修改：处理失败图片重试的函数（增加加载状态）
   const handleRetryFailedPhotos = useCallback((failedPhotos: Array<{ file: File; error?: string }>) => {
-    console.log('用户选择重试失败的图片');
     setIsRetryingFailedPhotos(true);
 
     try {
@@ -163,7 +156,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       // 显示重试成功的 toast
       toast.success(t('photos.retryStarted', {count: failedPhotos.length}) || `正在重试 ${failedPhotos.length} 张图片`);
     } catch (error) {
-      console.error('重置失败图片状态时出错:', error);
       toast.error(t('photos.retryFailed'));
     } finally {
       // 延迟一点时间再重置加载状态，让用户看到操作反馈
@@ -175,7 +167,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
 
   // 修改：处理跳过失败图片的函数
   const handleSkipFailedPhotos = useCallback(() => {
-    console.log('用户选择跳过失败的图片');
     setUserAction('skip');
     // 继续执行提交逻辑，失败的图片会被过滤掉
   }, []);
@@ -238,7 +229,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   // 返回 true 表示已处理重试，主流程应中断
   const handleUserRetryAction = useCallback((e: React.FormEvent) => {
     if (userAction === 'retry') {
-      console.log('用户选择重试，重新触发提交...');
       setUserAction(null); // 重置操作
       setTimeout(() => handleSubmit(e), 500); // 延迟后重新调用主函数
       return true;
@@ -252,7 +242,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
     // 只关心那些新上传失败的图片 (有 file 对象)
     const failedUploads = photos.filter(p => p.status === 'error' && p.file);
     if (failedUploads.length > 0) {
-      console.log('发现失败的图片:', failedUploads.map(p => p.file?.name));
       showFailedPhotosDialogModal(
         failedUploads.map(p => ({file: p.file!, error: p.error}))
       );
@@ -266,10 +255,8 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const uploadPendingPhotos = useCallback(async (photos: FormDataT['photos']) => {
     const photosToUpload = photos.filter(p => p.status === 'pending' && p.file);
     if (photosToUpload.length === 0) {
-      console.log('没有需要上传的新图片。');
       return true; // 无需上传，视为成功
     }
-    console.log(`需要上传的图片数量: ${photosToUpload.length}`);
     setIsUploading(true);
     try {
       await uploadPhotos(
@@ -286,7 +273,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
           }
         }
       );
-      console.log('图片上传流程完成。');
       return true;
     } catch (error) {
       console.error('上传过程中出现错误:', error);
@@ -314,7 +300,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       created_at: photo.cloudinary!.created_at
     }));
     if (!finalFormData.coordinates) {
-      console.log("坐标丢失");
       return;
     }
     const submitData = {
@@ -322,7 +307,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       coordinates: finalFormData.coordinates,
       photos: photosToSubmit
     };
-    console.log('调用 submitDiary，将控制权交给 hook...');
     submitDiary(submitData, diaryId ? Number(diaryId) : undefined);
   }, [submitDiary, diaryId]);
 
@@ -356,7 +340,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
       return;
     }
     // 步骤 6: 所有检查通过，正式提交
-    console.log('所有检查通过，准备提交最终数据。');
     finalizeAndSubmit(updatedFormData);
   }, [
     validateForm,
@@ -369,7 +352,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   ]);
 
   const handleLocationSelect = (place: LocationResult) => {
-    console.log('选择了地址', place);
     if (place.geometry?.location) {
       const addressText = place.formatted_address || place.name || '';
       const lat = typeof place.geometry.location.lat === 'function'
@@ -466,7 +448,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const handleAIGenerate = async (prompt: string) => {
     try {
       const data = await generateDiaryDraft(prompt);
-      console.log('AI 生成的数据:', data);
 
       const newFormData: FormDataT = {
         ...formData,

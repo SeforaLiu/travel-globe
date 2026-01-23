@@ -31,12 +31,10 @@ export const useDiarySubmission = () => {
       };
 
       if (isEditMode) {
-        console.log(`📤 更新日记数据 (ID: ${diaryId}):`, data);
         await updateDiaryAction(diaryId, data);
         toast.success(t('submit successful'));
         navigate(`/diary/${diaryId}`);
       } else {
-        console.log('📤 创建日记数据:', data);
         await createDiaryAction(data);
         toast.success(t('submit successful'));
         navigate('/');
