@@ -6,7 +6,6 @@ import { useTravelStore } from "@/store/useTravelStore";
 import Loading from '@/components/Loading';
 import GenericDialog from "@/components/GenericDialog";
 import { toast } from "sonner";
-// 引入图标库，提升视觉效果
 import {
   MapPin,
   Calendar,
@@ -26,8 +25,6 @@ const ENTRY_TYPE = {
   WISHLIST: 'wishlist',
 };
 
-
-
 const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMobile }) => {
   const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -36,6 +33,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
   const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail);
   const currentDiary = useTravelStore(state => state.currentDiary);
   const deleteDiary = useTravelStore(state => state.deleteDiary);
+  const deletedDiaryIds  = useTravelStore(state => state.deletedDiaryIds);
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +56,10 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
       return;
     }
     const diaryId = Number(id);
+
+    if (deletedDiaryIds.has(diaryId)) {
+      return; // 已删除，禁止再 fetch
+    }
 
     // 1. [成功状态]
     if (currentDiary && currentDiary.id === diaryId) {
@@ -85,7 +87,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
         console.error(`[Fetch] API call for ${diaryId} failed.`, err);
         if (fetchingIdRef.current === diaryId) {
           setStatus('error');
-          setError(t('error.loadFailed') || '加载日记详情失败');
+          setError(t('cannot find this diary'));
         }
       }
     };

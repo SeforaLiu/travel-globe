@@ -23,6 +23,7 @@ interface TravelState {
   initialized: boolean;
   allDiariesInitialized: boolean;
   moodsInitialized: boolean;
+  deletedDiaryIds: Set<number>;
 
   // --- 用户状态 ---
   isLoggedIn: boolean;
@@ -105,6 +106,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   initialized:false,
   allDiariesInitialized:false,
   moodsInitialized:false,
+  deletedDiaryIds: new Set<number>(),
 
   // --- Google Maps API 初始状态 ---
   isGoogleMapsLoading: false,
@@ -340,6 +342,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
       await api.delete(`/entries/${id}`);
 
       set(state => ({
+        deletedDiaryIds: new Set(state.deletedDiaryIds).add(id),
         allDiaries: state.allDiaries.filter(d => d.id !== id),
         diaries: state.diaries.filter(d => d.id !== id),
         currentDiary: state.currentDiary?.id === id ? null : state.currentDiary,
