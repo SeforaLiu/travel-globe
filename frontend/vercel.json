@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://travel-globe-lvn2.onrender.com/api/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
