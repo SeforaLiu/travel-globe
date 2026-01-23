@@ -31,4 +31,30 @@ A personal travel journal & visualization platform with 3D globe and AI-assisted
 ## Live Demo
 👉 https://travel-globe-3d.vercel.app/
 
+Note: 
+- The backend service is hosted on a free instance. 
+- Please allow **up to 1 minute** for the initial spin-up if the app seems unresponsive.
+
 ## Screenshots / GIFs
+
+
+
+## Credits & Attributions
+### Earth Texture
+
+The 3D Earth texture used in this project is provided by  
+**Solar System Scope**  
+https://www.solarsystemscope.com/textures/
+
+Licensed under the **Creative Commons Attribution 4.0 International (CC BY 4.0)** license.  
+https://creativecommons.org/licenses/by/4.0/
+
+The texture has been resized and processed for use in a WebGL / Three.js environment.
+
+### HDRI Environment Map
+
+The HDRI environment map used for lighting is sourced from  
+**Poly Haven**  
+https://polyhaven.com/hdris
+
+Poly Haven assets are provided under the **CC0 1.0 Universal (Public Domain)** license.

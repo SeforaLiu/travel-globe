@@ -25,6 +25,9 @@ type Props = {
   isMobile: boolean;
 };
 
+const dayImageUrl = 'https://res.cloudinary.com/ggg-lll/image/upload/v1769159373/travel_globe_prod/photos/8k_day_yftl7r.jpg'
+const nightImageUrl = 'https://res.cloudinary.com/ggg-lll/image/upload/v1769159773/travel_globe_prod/photos/night_sd1kpe.jpg'
+
 export default function Earth({ dark, isMobile }: Props) {
   const earthGroupRef = useRef<THREE.Group>(null!);
   const earthMeshRef = useRef<THREE.Mesh>(null!);
@@ -37,10 +40,21 @@ export default function Earth({ dark, isMobile }: Props) {
   const [shouldRotate, setShouldRotate] = useState(true);
 
   const allDiaries = useTravelStore(state => state.allDiaries as Diary[]);
-  const [dayMap, nightMap] = useLoader(TextureLoader, ['/textures/8k_day.jpg', '/textures/night.jpg']);
+
+  const [dayMap, nightMap] = useLoader(TextureLoader, [
+    dayImageUrl,
+    nightImageUrl
+  ]);
+
+  useEffect(() => {
+    dayMap.colorSpace = THREE.SRGBColorSpace;
+    nightMap.colorSpace = THREE.SRGBColorSpace;
+
+    dayMap.anisotropy = 8;
+    nightMap.anisotropy = 8;
+  }, [dayMap, nightMap]);
 
   const groupedPoints = useMemo<GroupedPoint[]>(() => {
-    // (此处省略你的聚类逻辑代码，保持原样)
     if (!allDiaries || allDiaries.length === 0) return [];
     const groups = new Map<string, Diary[]>();
     const CLUSTERING_PRECISION = 0;
@@ -141,7 +155,7 @@ export default function Earth({ dark, isMobile }: Props) {
 
         {/* 地球 Mesh */}
         <mesh ref={earthMeshRef} geometry={new THREE.SphereGeometry(2, 64, 64)} onClick={handleEarthClick}>
-          <meshStandardMaterial map={dayMap} />
+          <meshStandardMaterial map={dayMap ?? undefined} />
         </mesh>
         {dark && (
           <mesh geometry={new THREE.SphereGeometry(2, 64, 64)}>
