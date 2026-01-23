@@ -24,14 +24,13 @@ export const GlobalDataInitializer = () => {
 
   // 效果2: 当登录状态变为 true 时，获取全局日记数据
   useEffect(() => {
-    // 只有在用户已登录且 allDiaries 尚未初始化时才去获取
     if (isLoggedIn && !allDiariesInitialized) {
       fetchAllDiaries();
     }
     if(isLoggedIn && !moodsInitialized){
       fetchMoods()
     }
-  }, [isLoggedIn, allDiariesInitialized, fetchAllDiaries, fetchMoods,moodsInitialized ]); // 依赖登录状态和初始化标记
+  }, [isLoggedIn, allDiariesInitialized, fetchAllDiaries, fetchMoods, moodsInitialized ]); // 依赖登录状态和初始化标记
 
-  return null; // 这个组件不产生任何可见的元素
+  return null;
 };

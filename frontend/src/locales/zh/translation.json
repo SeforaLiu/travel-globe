@@ -39,6 +39,7 @@
   "Incorrect username or password": "用户名或密码错误",
   "Registration successful! Redirecting to login...": "注册成功!",
   "Login successful!": "登录成功",
+  "No response from server": "服务器无响应，请刷新后重试",
   "sure to logout?": "确定要退出吗?",
   "you will need to login again once logout": "登出后需要重新登录",
   "No diaries yet": "还没有日记呢",

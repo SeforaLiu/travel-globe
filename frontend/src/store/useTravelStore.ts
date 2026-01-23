@@ -126,14 +126,20 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   setActiveMoodData: (data: Mood | null) => set({ activeMoodData: data }),
 
   fetchMoods: async (force=false) => {
+    if (get().loading) {
+      return;
+    }
     if (get().moodsInitialized && !force) {
       return;
     }
     try {
       const res = await api.get<Mood[]>('/moods');
-      set({ moods: res.data, moodsInitialized: true });
+      set({ moods: res.data, moodsInitialized: true, loading: false });
     } catch (err) {
       console.error("Fetch moods failed", err);
+      set({ loading: false });
+    }finally {
+      set({ loading: false });
     }
   },
 
@@ -242,22 +248,27 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   },
 
 // B. 获取全部 (用于地图展示)
-  fetchAllDiaries: async (force = false, keyword,type) => {
-    // 1. 【修改保护逻辑】如果已经初始化过 且 不是强制刷新，则直接返回
+  fetchAllDiaries: async (force = false, keyword, type) => {
+    if (get().loading) {
+      return;
+    }
+
     if (get().allDiariesInitialized && !force) {
       return;
     }
+
     set({ loading: true, error: null });
+
     try {
       const response = await api.get<DiaryListResponse>('/entries', {
-        params: {get_all: true, keyword: keyword ? keyword : null, entry_type: type}
+        params: { get_all: true, keyword: keyword ? keyword : null, entry_type: type }
       });
       set({
         allDiaries: response.data.items,
         loading: false,
-        diaryTotal:response.data.diary_total,
-        guideTotal:response.data.guide_total,
-        placeTotal:response.data.place_total,
+        diaryTotal: response.data.diary_total,
+        guideTotal: response.data.guide_total,
+        placeTotal: response.data.place_total,
         total: response.data.total,
         allDiariesInitialized: true
       });
@@ -267,8 +278,11 @@ export const useTravelStore = create<TravelState>((set, get) => ({
         error: '获取全部数据失败',
         loading: false,
       });
+    }finally {
+      set({ loading: false });
     }
   },
+
 
   // C. 获取详情
   fetchDiaryDetail: async (id) => {

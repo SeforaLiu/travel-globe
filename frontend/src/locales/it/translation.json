@@ -39,6 +39,7 @@
   "Registration successful! Redirecting to login...": "Registrazione completata!",
   "Incorrect username or password": "username o password non corretto",
   "Login successful!": "Accesso riuscito!",
+  "No response from server": "Server non risponde, si prega di aggiornare e riprovare",
   "sure to logout?": "Esci ora?",
   "No diaries yet": "Ancora nessun diario",
   "Click the button above to create your first diary": "Clicca il pulsante sopra per creare diario",
