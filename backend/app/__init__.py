@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.database import create_db_and_tables
-from app.routers import location, user, entry, ai, mood
-from app.config import settings # <--- 1. 导入配置实例
+from app.routers import location, user, entry, ai, mood, health
+from app.config import settings
 
 # 定义生命周期管理器
 @asynccontextmanager
@@ -39,6 +39,7 @@ app.include_router(user.router, prefix="/api", tags=["users"])
 app.include_router(location.router, prefix="/api", tags=["locations"])
 app.include_router(ai.router, prefix="/api", tags=["ai"])
 app.include_router(mood.router, prefix="/api", tags=["moods"])
+app.include_router(health.router)
 
 @app.get("/")
 def read_root():

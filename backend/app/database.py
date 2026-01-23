@@ -3,9 +3,14 @@ import logging
 from sqlmodel import create_engine, Session, SQLModel
 from sqlalchemy import text
 import time
+from .config import settings
+
+# 设置日志级别为 INFO
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 替换为您的实际连接 URL
-DATABASE_URL = "postgresql://postgres:post123@localhost:5432/travel_db"
+DATABASE_URL = settings.DATABASE_URL
 
 # 创建引擎，设置连接池和超时
 engine = create_engine(
@@ -18,11 +23,6 @@ engine = create_engine(
   pool_pre_ping=True,  # 预先检查连接是否可用
   echo_pool=True,  # 打印连接池日志
 )
-
-# 设置日志级别为 INFO
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 def create_indexes():
   """

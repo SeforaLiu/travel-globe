@@ -40,6 +40,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-print("DEBUG GOOGLE_API_KEY =", settings.GOOGLE_API_KEY)
-

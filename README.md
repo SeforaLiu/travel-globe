@@ -29,6 +29,6 @@ A personal travel journal & visualization platform with 3D globe and AI-assisted
 - Mobile: Optimized
 
 ## Live Demo
-👉 https://xxxxx
+👉 https://travel-globe-3d.vercel.app/
 
 ## Screenshots / GIFs
