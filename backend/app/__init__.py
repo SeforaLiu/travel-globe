@@ -1,4 +1,6 @@
 # backend/app/__init__.py
+import os
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +21,9 @@ async def lifespan(app: FastAPI):
 
 # 在初始化时传入 lifespan
 app = FastAPI(lifespan=lifespan)
+
+PORT = int(os.getenv("PORT", 8000))
+HOST = os.getenv("HOST", "0.0.0.0")
 
 # 允许跨域请求 (CORS)
 # origins: 从配置中动态读取，不再硬编码
@@ -50,5 +55,7 @@ def read_root():
 # 在生产环境中，这个块不会被执行。Render/Gunicorn 会直接通过 uvicorn worker 导入上面的 `app` 对象。
 if __name__ == "__main__":
     print("--- Starting Uvicorn server for local development ---")
+    print(f"Starting Uvicorn server on {HOST}:{PORT}")
     # 在实际项目中，端口等配置也应该从 settings 中读取，这里为了简单起见暂时硬编码
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    # uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", host=HOST, port=PORT, reload=False)
