@@ -11,16 +11,19 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# ==================== 代理配置 (关键) ====================
-os.environ["http_proxy"] = "http://127.0.0.1:7890"
-os.environ["https_proxy"] = "http://127.0.0.1:7890"
+# 仅在本地开发时使用代理
+if settings.ENVIRONMENT == "development":
+  # 只有本地需要代理时才开启，或者直接在本地 .env 里设环境变量
+  os.environ["http_proxy"] = "http://127.0.0.1:7890"
+  pass
 
 # 配置 API Key
 GOOGLE_API_KEY = settings.GOOGLE_API_KEY
 if not GOOGLE_API_KEY:
-  logger.warning("未检测到 GOOGLE_API_KEY，AI 功能将不可用")
+  logger.warning("未检测到 GOOGLE_API_KEY")
 else:
   genai.configure(api_key=GOOGLE_API_KEY)
+
 
 async def get_travel_advice(frontend_messages: list):
   """
