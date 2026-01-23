@@ -3,15 +3,51 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 网站标题 -->
+  <title>Travel Globe - Explore the world, document wonderful journeys</title>
+
+  <!-- SEO 这段描述会显示在搜索引擎结果中，吸引用户点击。请用简洁、有吸引力的语言描述你的网站。 -->
+  <meta name="description" content="Travel Globe explores global destinations with you, capturing precious travel moments" />
+
+  <!-- PWA / Mobile "Add to Home Screen" 设置 (iOS) -->
+  <!-- 这些 meta 标签主要用于 iOS 设备将网站添加到主屏幕时的行为和显示。 -->
   <meta name="apple-mobile-web-app-title" content="Travel Globe">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Travel Globe</title>
+
+  <!-- Favicon 设置 -->
+  <!-- 提供多种格式和尺寸的图标，以适应不同设备和浏览器。 -->
   <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="shortcut icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <!-- PWA Manifest 文件 -->
+  <!-- 这个文件定义了 PWA 的名称、图标、启动方式等。 -->
   <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- Open Graph Meta Tags (用于社交媒体分享) -->
+  <meta property="og:title" content="Travel Globe - Explore the world, document wonderful journeys" />
+  <meta property="og:description" content="Travel Globe explores global destinations with you, capturing precious travel moments" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Travel Globe" />
+
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta property="og:locale:alternate" content="it_IT" />
+
+  <!-- TODO: replace with production URL -->
+  <meta property="og:url" content="http://localhost:5173" />
+  <meta property="og:image" content="/og-image.jpg" />
+
+  <!-- 类似于 Open Graph，但专为 Twitter 设计。 -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Travel Globe - Explore the world, document wonderful journeys" />
+  <meta name="twitter:description" content="Travel Globe explores global destinations with you, capturing precious travel moments" />
+  <!-- TODO: replace with production URL -->
+  <meta name="twitter:image" content="/og-image.jpg" />
+
 </head>
 <body>
 <div id="root"></div>

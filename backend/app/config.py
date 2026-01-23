@@ -3,7 +3,6 @@ from typing import List
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
-
 class Settings(BaseSettings):
   # --- 核心配置 ---
   ENVIRONMENT: str = "development"

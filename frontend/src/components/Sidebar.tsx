@@ -325,8 +325,7 @@ export default function Sidebar({
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {item.title}
+<span className="font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">                        {item.title}
                       </span>
                       <ChevronLeft size={14} className="opacity-0 group-hover:opacity-100 rotate-180 transition-opacity text-slate-400" />
                     </div>
