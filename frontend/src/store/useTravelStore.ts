@@ -343,11 +343,10 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
       set(state => ({
         deletedDiaryIds: new Set(state.deletedDiaryIds).add(id),
-        allDiaries: state.allDiaries.filter(d => d.id !== id),
-        diaries: state.diaries.filter(d => d.id !== id),
         currentDiary: state.currentDiary?.id === id ? null : state.currentDiary,
         loading: false
       }));
+      await get().fetchAllDiaries(true);
 
     } catch (err: any) {
       set({ loading: false });
@@ -369,7 +368,19 @@ export const useTravelStore = create<TravelState>((set, get) => ({
     set({ loading: true });
     try {
       const res = await api.post('/auth/logout');
-      set({ loading: false, user: null, isLoggedIn: false, diaries: [], allDiaries:[], currentDiary:null });
+      set({
+        loading: false,
+        user: null,
+        isLoggedIn: false,
+        diaries: [],
+        allDiaries:[],
+        currentDiary:null,
+        moods:[],
+        total: 0,
+        diaryTotal:0,
+        guideTotal:0,
+        placeTotal:0
+      });
     } catch (err: any) {
       set({ loading: false });
       throw err;
