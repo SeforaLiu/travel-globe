@@ -25,6 +25,8 @@
   "Register": "Register",
   "Username": "Username",
   "Password": "Password",
+  "change password": "change password",
+  "Username cannot be modified later": "Please remember your username, as it cannot be changed later",
   "Confirm Password": "Confirm Password",
   "No account?": "No account?",
   "Already have an account?": "Already have an account?",

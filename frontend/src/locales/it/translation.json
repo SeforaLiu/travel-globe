@@ -25,6 +25,8 @@
   "you will need to login again once logout": "Dopo il logout sarà necessario riaccedere",
   "Username": "Nome utente",
   "Password": "Password",
+  "change password": "modifica password",
+  "Username cannot be modified later": "Si prega di memorizzare il nome utente, poiché non potrà essere modificato successivamente",
   "Confirm Password": "Conferma password",
   "No account?": "Non hai un account?",
   "Already have an account?": "Hai già un account?",

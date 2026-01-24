@@ -164,6 +164,9 @@ const Register: React.FC<Props> = ({dark, isMobile}) => {
                 } rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 placeholder={t('Confirm Password')}
               />
+              <p className={`mt-2 text-xs ${dark ? 'text-blue-400' : 'text-blue-700'}`}>
+                * {t('Username cannot be modified later')}
+              </p>
               <p className={`mt-2 text-xs ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
                 * {t('Password must be at least 6 characters with letters and numbers')}
               </p>

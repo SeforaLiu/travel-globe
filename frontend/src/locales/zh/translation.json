@@ -24,6 +24,8 @@
   "logout": "退出",
   "Username": "用户名",
   "Password": "密码",
+  "change password": "修改密码",
+  "Username cannot be modified later": "请记住用户名，后续不可修改",
   "Confirm Password": "确认密码",
   "No account?": "还没有账号？",
   "Already have an account?": "已有账号？",
