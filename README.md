@@ -35,6 +35,17 @@ Note:
 - The backend service is hosted on a free instance. 
 - Please allow **up to 1 minute** for the initial spin-up if the app seems unresponsive.
 
+## 🔐 Demo Account
+
+To help reviewers explore the application quickly, a demo account is provided:
+
+- Username: demo01
+- Password: Demo1234!
+
+⚠️ This account is read-only for demonstration purposes.  
+Please feel free to create your own account for full functionality.
+
+
 ## Screenshots / GIFs
 
 
