@@ -316,10 +316,13 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if(user.username==='demo01'){
-      toast.info(t('demo account has no right'))
-      return
-    }
+
+    // 展示账号不可新增/编辑日记
+    // if(user.username==='demo01'){
+    //   toast.info(t('demo account has no right'))
+    //   return
+    // }
+
     const currentFormData = formDataRef.current;
     // 步骤 1: 前置检查
     if (!validateForm(currentFormData)) return;
