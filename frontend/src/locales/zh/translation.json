@@ -87,7 +87,7 @@
   "sure to delete?": "确定要删除吗?",
   "This cannot be undone": "删除后将不可找回!",
   "delete successful": "删除成功",
-  "demo account has no right": "demo账号没有权限删除，请注册新账号体验完整功能",
+  "demo account has no right": "demo账号没有权限编辑或删除，请注册新账号体验完整功能",
   "cannot find this diary": "找不到相关内容",
   "validation": {
     "fillRequiredFields": "请填写标题、并正确选择地点"

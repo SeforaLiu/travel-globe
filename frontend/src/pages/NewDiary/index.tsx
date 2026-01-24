@@ -38,6 +38,7 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const currentDiary = useTravelStore(state => state.currentDiary)
   const clearCurrentDiary = useTravelStore(state => state.clearCurrentDiary)
   const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail)
+  const user = useTravelStore(state => state.user)
   const {submitDiary, isSubmitting} = useDiarySubmission();
   const {
     formData,
@@ -315,7 +316,10 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-
+    if(user.username==='demo01'){
+      toast.info(t('demo account has no right'))
+      return
+    }
     const currentFormData = formDataRef.current;
     // 步骤 1: 前置检查
     if (!validateForm(currentFormData)) return;
