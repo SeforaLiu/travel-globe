@@ -51,42 +51,19 @@ export default function Home({dark, isMobile}: Props) {
   return (
     <div className="h-full relative">
       {/* 顶部控制区域 */}
-      <div className="
-        absolute
-        z-20
-        flex
-        flex-col
-        items-center
-        top-6
-        inset-x-0
-        pointer-events-none
-      ">
+      <div className="absolute z-20 flex flex-col items-center top-3 inset-x-0 pointer-events-none">
         {/*
           1. 切换器容器 (Segmented Control)
         */}
-        <div className="
-          pointer-events-auto
-          mb-6
-          p-1.5
-          flex
-          items-center
-          gap-1
-          rounded-full
-          bg-white/20
-          dark:bg-black/20
-          backdrop-blur-xl
-          border
-          border-white/20
-          shadow-lg
-        ">
+        <div className="pointer-events-auto mb-6 p-1.5 flex items-center gap-1 rounded-full bg-white/20 dark:bg-black/20 backdrop-blur-xl border border-white/20 shadow-lg">
           {/* Earth 按钮 */}
           <button
             onClick={() => setMoodMode(false)}
             className={`
               relative flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ease-out
               ${!moodMode
-              ? 'bg-white text-blue-600 shadow-sm scale-100' // 选中样式
-              : 'text-white bg-transparent  hover:bg-white/10 hover:text-white/90' // 未选中样式
+              ? 'bg-white text-blue-600 shadow-sm scale-100'
+              : 'text-white bg-transparent  hover:bg-white/10 hover:text-white/90' 
             }
             `}
           >
@@ -100,8 +77,8 @@ export default function Home({dark, isMobile}: Props) {
             className={`
               relative flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ease-out
               ${moodMode
-              ? 'bg-white text-pink-600 shadow-sm scale-100' // 选中样式
-              : 'text-white bg-transparent hover:bg-white/10 hover:text-white/90' // 未选中样式
+              ? 'bg-white text-pink-600 shadow-sm scale-100'
+              : 'text-white bg-transparent hover:bg-white/10 hover:text-white/90'
             }
             `}
           >
