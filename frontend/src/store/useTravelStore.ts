@@ -379,7 +379,10 @@ export const useTravelStore = create<TravelState>((set, get) => ({
         total: 0,
         diaryTotal:0,
         guideTotal:0,
-        placeTotal:0
+        placeTotal:0,
+        moodsInitialized:false,
+        allDiariesInitialized:false,
+        initialized: false,
       });
     } catch (err: any) {
       set({ loading: false });
