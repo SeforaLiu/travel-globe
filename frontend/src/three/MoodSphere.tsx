@@ -48,6 +48,11 @@ const getHSLFromVector = (vector: number) => {
 };
 
 const getFibonacciSpherePoints = (samples: number, radius: number) => {
+  if (samples <= 1) {
+    // 如果只有一个点，直接放在球体顶部，避免除以零的错误
+    return [new THREE.Vector3(0, radius, 0)];
+  }
+
   const points: THREE.Vector3[] = [];
   const phi = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < samples; i++) {
@@ -83,7 +88,6 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
 
   const totalCount = moods.length;
   const isPausedRef = useRef(false);
-
   const { positions, randomIndices } = useMemo(() => {
     if (!totalCount) return { positions: [], randomIndices: [] };
     const points = getFibonacciSpherePoints(totalCount, CONFIG.moodSphereRadius);
@@ -164,6 +168,11 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
     e.stopPropagation();
     const id = e.instanceId;
     if (id === undefined) return;
+
+    if(activeMoodData){
+      setShowMoodModal(true)
+      return
+    }
 
     // 设置全局的 activeMoodData
     const clickedMood = moods[id];

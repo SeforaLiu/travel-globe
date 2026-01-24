@@ -160,9 +160,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   deleteMood: async (id: number) => {
     try {
       await api.delete(`/moods/${id}`);
-      set((state) => ({
-        moods: state.moods.filter((mood) => mood.id !== id),
-      }));
+      await get().fetchMoods(true);
     } catch (err) {
       console.error(`Failed to delete mood with id ${id}`, err);
       throw err;
