@@ -34,6 +34,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
   const currentDiary = useTravelStore(state => state.currentDiary);
   const deleteDiary = useTravelStore(state => state.deleteDiary);
   const deletedDiaryIds  = useTravelStore(state => state.deletedDiaryIds);
+  const user  = useTravelStore(state => state.user);
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
     const diaryId = Number(id);
 
     if (deletedDiaryIds.has(diaryId)) {
-      return; // 已删除，禁止再 fetch
+      return;
     }
 
     // 1. [成功状态]
@@ -129,6 +130,11 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
 
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return;
+    if(user.username==='demo01'){
+      toast.info(t('demo account has no right'))
+      setShowDeleteDialog(false);
+      return
+    }
     try {
       await deleteDiary(Number(id));
       toast.success(t('delete successful'));

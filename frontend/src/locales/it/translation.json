@@ -86,6 +86,7 @@
   "sure to delete?": "Sicura/o di voler eliminare?",
   "This cannot be undone": "L'azione è irreversibile!",
   "delete successful": "Operazione riuscita",
+  "demo account has no right": "L'account demo non ha i permessi per eliminare. Si prega di registrare un nuovo account per usufruire di tutte le funzionalità.",
   "input will be clear": "I dati non salvati saranno persi.",
   "cannot find this diary": "Questo diario non è stato trovato",
   "validation": {
