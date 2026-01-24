@@ -42,17 +42,8 @@ export default function Earth({ dark, isMobile }: Props) {
   const allDiaries = useTravelStore(state => state.allDiaries as Diary[]);
 
   const [dayMap, nightMap] = useLoader(TextureLoader, [
-    dayImageUrl,
-    nightImageUrl
+   '/earth/day.jpg','/earth/night.jpg'
   ]);
-
-  useEffect(() => {
-    dayMap.colorSpace = THREE.SRGBColorSpace;
-    nightMap.colorSpace = THREE.SRGBColorSpace;
-
-    dayMap.anisotropy = 8;
-    nightMap.anisotropy = 8;
-  }, [dayMap, nightMap]);
 
   const groupedPoints = useMemo<GroupedPoint[]>(() => {
     if (!allDiaries || allDiaries.length === 0) return [];
@@ -151,7 +142,7 @@ export default function Earth({ dark, isMobile }: Props) {
   return (
     <group>
       {/*{!isMobile && <Perf position="top-left" />}*/}
-      <group ref={earthGroupRef} scale={1.5} rotation={[0.36, Math.PI, 0]}>
+      <group ref={earthGroupRef} scale={isMobile? 1.1 : 1.5} rotation={[0.36, Math.PI, 0]}>
 
         {/* 地球 Mesh */}
         <mesh ref={earthMeshRef} geometry={new THREE.SphereGeometry(2, 64, 64)} onClick={handleEarthClick}>

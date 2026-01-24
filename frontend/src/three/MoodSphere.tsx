@@ -190,7 +190,7 @@ export function MoodSphere({ isMobile = false, dark }: Props) {
 
   // 5. 更新渲染逻辑，使用 store 中的状态
   return (
-    <group ref={groupRef} scale={1.5} onPointerMissed={handleBackgroundClick}>
+    <group ref={groupRef} scale={isMobile? 1.2 : 1.5} onPointerMissed={handleBackgroundClick}>
       <DiscoBall
         scale={0.8}
         moodVector={avgMoodVector}
