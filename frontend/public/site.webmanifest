@@ -1,7 +1,7 @@
 {
-  "name": "Travel Globe - 探索世界，发现精彩旅程",
+  "name": "Travel Globe - Explore the world, document wonderful journeys",
   "short_name": "Travel Globe",
-  "description": "Travel Globe 助您探索全球热门目的地，发现独特的旅行体验，规划您的梦想之旅。",
+  "description": "Travel Globe explores global destinations with you, capturing precious travel moments",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
