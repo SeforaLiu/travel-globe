@@ -439,7 +439,7 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   // --- 渲染逻辑 ---
   const renderContent = () => {
     // 增加页面加载状态
-    if (isUploading || isPageLoading) return <Loading dark={dark}/>;
+    if (isUploading || isPageLoading || isSubmitting) return <Loading dark={dark}/>;
 
     return isMobile ? (
       <MobileLayout {...commonProps} />

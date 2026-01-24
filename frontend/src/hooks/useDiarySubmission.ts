@@ -14,6 +14,7 @@ export const useDiarySubmission = () => {
   const updateDiaryAction = useTravelStore((state) => state.updateDiary);
 
   const submitDiary = useCallback(async (formData: SubmitData, diaryId?: number) => {
+    if(isSubmitting) return;
     setIsSubmitting(true);
     const isEditMode = !!diaryId;
 
@@ -44,19 +45,16 @@ export const useDiarySubmission = () => {
 
     } catch (error: any) {
       const actionType = isEditMode ? '更新' : '提交';
-      // log a more detailed error message for debugging
       console.error(`❌ 日记${actionType}失败:`, error.response?.data || error.message);
 
       if (error.response?.status === 401) {
         toast.error(t('Session expired, please login again'));
         navigate('/login');
       } else {
-        // Use a more specific error message from the backend if available
         const errorMessage = error.response?.data?.detail || t('submit error please try again');
         toast.error(errorMessage);
       }
 
-      // --- 核心修改 2: 不再抛出错误，而是返回 false ---
       return false;
 
     } finally {
