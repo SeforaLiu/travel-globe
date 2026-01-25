@@ -20,6 +20,7 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createMood = useTravelStore(state => state.createMood);
+  const user = useTravelStore(state => state.user);
   const { uploadPhotos } = useCloudinaryUpload();
 
   if (!isOpen) return null;
@@ -47,6 +48,12 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
       toast.error(t('Content is required'));
       return;
     }
+
+    // 展示账号不可删除或添加心情
+    // if(user.username==='demo01'){
+    //   toast.info(t('demo account has no right'))
+    //   return
+    // }
 
     setIsSubmitting(true);
     try {

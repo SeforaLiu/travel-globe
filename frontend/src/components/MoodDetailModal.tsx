@@ -19,6 +19,7 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const deleteMood = useTravelStore((state) => state.deleteMood);
+  const user = useTravelStore((state) => state.user);
 
   const navigate = useNavigate()
   const { t, i18n } = useTranslation();
@@ -28,6 +29,13 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
   // 处理删除确认的函数
   const handleDeleteConfirm = async () => {
     if (!data) return;
+
+    // 展示账号不可删除或添加心情
+    // if(user.username==='demo01'){
+    //   toast.info(t('demo account has no right'))
+    //   return
+    // }
+
     setIsDeleting(true);
     try {
       await deleteMood(data.id);

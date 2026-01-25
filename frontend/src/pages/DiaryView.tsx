@@ -130,11 +130,14 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
 
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return;
-    if(user.username==='demo01'){
-      toast.info(t('demo account has no right'))
-      setShowDeleteDialog(false);
-      return
-    }
+
+    // 展示账号不可新增/编辑日记
+    // if(user.username==='demo01'){
+    //   toast.info(t('demo account has no right'))
+    //   setShowDeleteDialog(false);
+    //   return
+    // }
+
     try {
       await deleteDiary(Number(id));
       toast.success(t('delete successful'));
