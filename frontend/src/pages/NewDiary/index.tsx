@@ -326,10 +326,8 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('点击提交,',Date.now())
     // 使用 ref 进行同步检查和锁定
     if (submissionLock.current) {
-      console.log('提交已锁定，防止重复操作');
       return;
     }
     submissionLock.current = true;
@@ -350,7 +348,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
         return
       }
 
-      console.log('服务器OK 继续后边的步骤')
       const currentFormData = formDataRef.current;
       // 步骤 1: 前置检查
       if (!validateForm(currentFormData)) return;
