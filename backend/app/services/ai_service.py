@@ -2,18 +2,24 @@
 import os
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from google.api_core import exceptions as google_exceptions
 import logging
-from app.constants.ai_constants import SYSTEM_INSTRUCTION, DEFAULT_MODEL_NAME, DIARY_GENERATION_SYSTEM_INSTRUCTION, MOOD_ANALYSIS_SYSTEM_INSTRUCTION
+from app.constants.ai_constants import (
+  TRAVEL_ADVICE_SYSTEM_INSTRUCTION,
+  AI_MODEL_FALLBACK_LIST,
+  DIARY_GENERATION_SYSTEM_INSTRUCTION,
+  MOOD_ANALYSIS_SYSTEM_INSTRUCTION
+)
 import json
 import re
 from datetime import datetime
 from app.config import settings
+from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 
 # 仅在本地开发时使用代理
 if settings.ENVIRONMENT == "development":
-  # 只有本地需要代理时才开启，或者直接在本地 .env 里设环境变量
   os.environ["http_proxy"] = "http://127.0.0.1:7890"
   pass
 
@@ -25,130 +31,164 @@ else:
   genai.configure(api_key=GOOGLE_API_KEY)
 
 
-async def get_travel_advice(frontend_messages: list):
+async def _execute_genai_request_with_fallback(
+    generation_func: Callable,
+    system_instruction: str = None
+) -> Any:
   """
-  调用 gemini-2.5-flash 模型 (异步版本)
+  执行 GenAI 请求，并在遇到配额错误时自动降级到下一个可用模型。
+
+  Args:
+      generation_func: 一个接受 model_name 作为参数并返回 GenAI 响应的 lambda 函数。
+      system_instruction: 用于初始化模型的系统指令。
+
+  Returns:
+      成功时的 GenAI 响应对象。
+
+  Raises:
+      Exception: 如果所有模型都尝试失败，则抛出最后一个遇到的异常。
   """
   if not GOOGLE_API_KEY:
-    logger.error("API Key missing")
-    return "抱歉，服务器未配置 AI 密钥。"
+    logger.error("API Key missing, cannot execute GenAI request.")
+    raise ValueError("Server is not configured with an AI API Key.")
 
-  logger.info("正在准备调用 Gemini API...") # 添加日志
+  last_exception = None
+  for model_name in AI_MODEL_FALLBACK_LIST:
+    try:
+      logger.info(f"Attempting to use model: {model_name}")
+      model = genai.GenerativeModel(
+        model_name=model_name,
+        system_instruction=system_instruction
+      )
+      response = await generation_func(model)
+      logger.info(f"Successfully received response from model: {model_name}")
+      return response
 
+    except google_exceptions.ResourceExhausted as e:
+      logger.warning(f"Quota exceeded for model {model_name}. Details: {str(e)[:150]}...")
+      logger.warning(f"Falling back to the next available model...")
+      last_exception = e
+      continue
+
+    except Exception as e:
+      logger.error(f"An unexpected error occurred with model {model_name}: {e}", exc_info=True)
+      if "403" in str(e) or "User location is not supported" in str(e):
+        raise RuntimeError("AI service is not available in the current region (Region Error).")
+      if "504" in str(e) or "timeout" in str(e).lower():
+        raise RuntimeError("Connection to AI server timed out, please check network settings.")
+      raise e
+
+  logger.error("All AI models in the fallback list have failed.")
+  if last_exception:
+    raise last_exception
+  else:
+    raise RuntimeError("AI service is currently unavailable after trying all models.")
+
+
+async def get_travel_advice(frontend_messages: list):
+  """
+  调用 Gemini 模型获取旅行建议，并支持自动降级。
+  """
   try:
-    # 1. 初始化模型
-    model = genai.GenerativeModel(
-      model_name=DEFAULT_MODEL_NAME,
-      system_instruction=SYSTEM_INSTRUCTION
-    )
+    logger.info("Preparing to call Gemini API for travel advice...")
 
-    # 2. 转换历史消息格式
     gemini_history = []
     history_messages = frontend_messages[:-1]
     last_message = frontend_messages[-1]['content']
 
     for msg in history_messages:
       role = "user" if msg['role'] == "user" else "model"
-      gemini_history.append({
-        "role": role,
-        "parts": [msg['content']]
-      })
+      gemini_history.append({"role": role, "parts": [msg['content']]})
 
-    # 3. 开启对话会话
-    chat = model.start_chat(history=gemini_history)
+    async def generation_logic(model: genai.GenerativeModel):
+      chat = model.start_chat(history=gemini_history)
+      logger.info(f"Sending message to Gemini ({model.model_name}): {last_message[:30]}...")
+      return await chat.send_message_async(
+        last_message,
+        safety_settings={
+          HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+          HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        }
+      )
 
-    logger.info(f"发送消息给 Gemini: {last_message[:20]}...")
-
-    # 4. 发送消息 - 【关键修改】使用异步方法并 await
-    # 注意：google-generativeai 库提供了 send_message_async 方法
-    response = await chat.send_message_async(
-      last_message,
-      safety_settings={
-        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      }
+    response = await _execute_genai_request_with_fallback(
+      generation_func=generation_logic,
+      system_instruction=TRAVEL_ADVICE_SYSTEM_INSTRUCTION
     )
 
-    logger.info("Gemini API 调用成功")
+    logger.info("Gemini API call successful.")
     return response.text
 
   except Exception as e:
-    logger.error(f"Gemini AI Error: {str(e)}", exc_info=True)
-    # 区分一下是网络错误还是其他错误
-    if "403" in str(e) or "User location is not supported" in str(e):
-      return "抱歉，AI 服务在当前地区不可用 (Region Error)。"
-    if "504" in str(e) or "timeout" in str(e).lower():
-      return "抱歉，连接 AI 服务器超时，请检查网络设置。"
-
-    return f"抱歉，AI 暂时有点累，请稍后再试。(Error: {str(e)[:50]}...)"
+    logger.error(f"Failed to get travel advice: {e}", exc_info=True)
+    return f"抱歉，AI 暂时有点累，请稍后再试。(Error: {e})"
 
 
 async def generate_diary_draft(user_prompt: str):
   """
-  根据用户描述生成日记草稿 JSON
+  根据用户描述生成日记草稿 JSON，并支持自动降级。
   """
-  if not GOOGLE_API_KEY:
-    return None
   try:
-    # 使用专门的 System Instruction 初始化模型
-    model = genai.GenerativeModel(
-      model_name=DEFAULT_MODEL_NAME,
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    full_prompt = (
+      f"Reference Date (Today's Date): {today_str}.\n"
+      f"Please generate a travel diary JSON based on the following description:\n{user_prompt}"
+    )
+
+    async def generation_logic(model: genai.GenerativeModel):
+      logger.info(f"Generating diary draft with model {model.model_name}...")
+      # [日志增强] 记录下发送给模型的完整 prompt，便于调试
+      logger.debug(f"Full prompt for diary generation:\n---\n{full_prompt}\n---")
+      return await model.generate_content_async(full_prompt)
+
+    response = await _execute_genai_request_with_fallback(
+      generation_func=generation_logic,
       system_instruction=DIARY_GENERATION_SYSTEM_INSTRUCTION
     )
-    # [新增] 获取当前日期
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    # [修改] 提示词增强，将当前日期注入到 Prompt 中
-    # 告诉 AI："今天是 {today_str}，如果用户没说日期，就用这个。"
-    full_prompt = (
-      f"参考日期(Today's Date): {today_str}。\n"
-      f"请根据以下描述生成旅行日记 JSON：\n{user_prompt}"
-    )
-
-    logger.info(f"发送给AI的Prompt包含日期: {today_str}") # [建议] 添加日志方便调试
-    response = await model.generate_content_async(full_prompt)
     text = response.text
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not match:
+      logger.error(f"AI response did not contain a valid JSON object. Raw response: {text}")
+      raise ValueError("AI response did not contain a valid JSON object.")
+    json_str = match.group(0)
 
-    # ... (后面的清理和解析代码保持不变) ...
-    text = re.sub(r'^```json\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'^```\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\s*```$', '', text, flags=re.MULTILINE)
-    try:
-      data = json.loads(text)
-      return data
-    except json.JSONDecodeError:
-      logger.error(f"AI 返回了非法的 JSON: {text}")
-      return None
+    data = json.loads(json_str)
+    return data
+
+  except json.JSONDecodeError as e:
+    logger.error(f"Failed to decode extracted JSON string. String was: '{json_str}'. Error: {e}")
+    raise ValueError("AI failed to generate a valid diary draft.")
   except Exception as e:
-    logger.error(f"生成日记失败: {str(e)}", exc_info=True)
+    logger.error(f"Failed to generate diary draft: {e}", exc_info=True)
     raise e
+
 
 async def analyze_mood_text(text: str):
   """
-  分析心情文本，返回情感向量
+  分析心情文本，返回情感向量，并支持自动降级。
   """
-  if not GOOGLE_API_KEY:
-    # 默认中性
-    return {"mood_vector": 0.5, "mood_reason": "AI服务未配置"}
-
   try:
-    model = genai.GenerativeModel(
-      model_name=DEFAULT_MODEL_NAME,
+    async def generation_logic(model: genai.GenerativeModel):
+      logger.info(f"Analyzing mood with model {model.model_name}...")
+      return await model.generate_content_async(text)
+
+    # [确认] 此处实现正确，使用了 MOOD_ANALYSIS_SYSTEM_INSTRUCTION
+    response = await _execute_genai_request_with_fallback(
+      generation_func=generation_logic,
       system_instruction=MOOD_ANALYSIS_SYSTEM_INSTRUCTION
     )
-
-    response = await model.generate_content_async(text)
     result_text = response.text
 
-    # 清理 JSON
-    result_text = re.sub(r'^```json\s*', '', result_text, flags=re.MULTILINE)
-    result_text = re.sub(r'^```\s*', '', result_text, flags=re.MULTILINE)
-    result_text = re.sub(r'\s*```$', '', result_text, flags=re.MULTILINE)
-
-    data = json.loads(result_text)
+    match = re.search(r"\{.*\}", result_text, re.DOTALL)
+    if not match:
+      logger.error(f"Mood analysis response did not contain JSON. Raw: {result_text}")
+      return {"mood_vector": 0.5, "mood_reason": "分析失败(格式错误)"}
+    json_str = match.group(0)
+    data = json.loads(json_str)
     return data
   except Exception as e:
-    logger.error(f"Mood Analysis Failed: {e}")
-    # 降级处理
+    logger.error(f"Mood Analysis Failed: {e}", exc_info=True)
     return {"mood_vector": 0.5, "mood_reason": "分析失败"}

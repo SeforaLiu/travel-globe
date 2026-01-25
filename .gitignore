@@ -47,6 +47,7 @@ Thumbs.db
 temp/
 
 test.py
+check_models.py
 
 # Python
 __pycache__/
