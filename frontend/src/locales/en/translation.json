@@ -41,7 +41,7 @@
   "Logging in...": "Logging in...",
   "Registration successful! Redirecting to login...": "Registration successful!",
   "Login successful!": "Login successful!",
-  "No response from server": "Server not responding, please refresh and try again",
+  "No response from server": "Server not responding, please try again later",
   "Incorrect username or password": "Incorrect username or password",
   "sure to logout?": "sure to logout?",
   "No diaries yet": "No diaries yet",

@@ -8,9 +8,10 @@ type Props = {
   isMobile?: boolean;
   isUploading?: boolean;
   loading?:boolean;
+  isPageLoading?:boolean;
 };
 
-const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, isMobile = false, loading}) => {
+const FooterSection: React.FC<Props> = ({isPageLoading, isUploading, dark, onClose, onSubmit, isMobile = false, loading}) => {
   const {t} = useTranslation();
 
   if (isMobile) {
@@ -25,7 +26,7 @@ const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, i
           {t('common.cancel')}
         </button>
         <button
-          disabled={isUploading || loading}
+          disabled={isUploading || loading || isPageLoading}
           type="submit"
           className="px-6 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
           onClick={onSubmit}
@@ -47,7 +48,7 @@ const FooterSection: React.FC<Props> = ({isUploading, dark, onClose, onSubmit, i
           {t('common.cancel')}
         </button>
         <button
-          disabled={isUploading || loading}
+          disabled={isUploading || loading || isPageLoading}
           type="submit"
           className="px-6 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
         >

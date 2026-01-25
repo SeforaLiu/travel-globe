@@ -44,7 +44,7 @@ app.include_router(user.router, prefix="/api", tags=["users"])
 app.include_router(location.router, prefix="/api", tags=["locations"])
 app.include_router(ai.router, prefix="/api", tags=["ai"])
 app.include_router(mood.router, prefix="/api", tags=["moods"])
-app.include_router(health.router)
+app.include_router(health.router, prefix="/api", tags=["health"])
 
 @app.get("/")
 def read_root():

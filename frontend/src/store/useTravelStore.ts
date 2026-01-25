@@ -65,6 +65,8 @@ interface TravelState {
   clearCurrentDiary: () => void;
   // E. 删除日记
   deleteDiary: (id: number) => Promise<void>;
+  // 测试健康
+  getHealth:()=>void;
 
   searchKeyword: string;
   setSearchKeyword: (keyword: string) => void;
@@ -126,6 +128,16 @@ export const useTravelStore = create<TravelState>((set, get) => ({
   setShowMoodModal:(show:boolean) => set({ showMoodModal: show }),
   activeMoodData: null,
   setActiveMoodData: (data: Mood | null) => set({ activeMoodData: data }),
+
+  getHealth: async ()=>{
+    try {
+      console.log('健康检查 useTravelStore',Date.now())
+      await api.get('/health',{timeout:5000});
+    }catch (err){
+      console.error("Health Error", err);
+      throw err;
+    }
+  },
 
   fetchMoods: async (force=false) => {
     if (get().loading) {

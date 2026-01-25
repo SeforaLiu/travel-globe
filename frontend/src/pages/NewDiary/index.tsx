@@ -39,6 +39,8 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const clearCurrentDiary = useTravelStore(state => state.clearCurrentDiary)
   const fetchDiaryDetail = useTravelStore(state => state.fetchDiaryDetail)
   const user = useTravelStore(state => state.user)
+  const getHealth = useTravelStore(state => state.getHealth)
+
   const {submitDiary, isSubmitting} = useDiarySubmission();
   const {
     formData,
@@ -60,6 +62,14 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   const [userAction, setUserAction] = useState<'retry' | 'skip' | null>(null);
   const [isWaitingForUserAction, setIsWaitingForUserAction] = useState(false);
   const [showAIDialog, setShowAIDialog] = useState(false);
+
+  const submissionLock = useRef(false);
+
+  useEffect(() => {
+    (async () => {
+      await getHealth();
+    })();
+  }, []);
 
   const formDataRef = useRef(formData);
   useEffect(() => {
@@ -315,39 +325,64 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
   // --- 主提交函数 (指挥官) ---
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
 
-    // 展示账号不可新增/编辑日记
-    // if(user.username==='demo01'){
-    //   toast.info(t('demo account has no right'))
-    //   return
-    // }
-
-    const currentFormData = formDataRef.current;
-    // 步骤 1: 前置检查
-    if (!validateForm(currentFormData)) return;
-    if (checkForOngoingProcesses()) return;
-    // 步骤 2: 处理用户交互（重试/跳过）
-    // 如果用户选择了重试，则重新开始整个流程
-    if (handleUserRetryAction(e)) return;
-    // 步骤 3: 检查首次提交时已存在的失败图片
-    // 如果用户还未对失败图片做决定，则弹窗并中断
-    if (userAction === null && handleFailedPhotos(currentFormData.photos)) {
+    console.log('点击提交,',Date.now())
+    // 使用 ref 进行同步检查和锁定
+    if (submissionLock.current) {
+      console.log('提交已锁定，防止重复操作');
       return;
     }
-    // 步骤 4: 上传新图片
-    const uploadOk = await uploadPendingPhotos(currentFormData.photos);
-    if (!uploadOk) return; // 如果上传过程出错，则中断
-    // 步骤 5: 等待状态更新，并进行上传后的最终检查
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const updatedFormData = formDataRef.current;
-    // 检查是否有图片在上传后失败了
-    // 如果用户没有选择“跳过”，则再次弹窗并中断
-    if (userAction !== 'skip' && handleFailedPhotos(updatedFormData.photos)) {
-      return;
+    submissionLock.current = true;
+    setIsPageLoading(true)
+
+    try {
+      // 展示账号不可新增/编辑日记
+      // if(user.username==='demo01'){
+      //   toast.info(t('demo account has no right'))
+      //   return
+      // }
+
+      try {
+        // 尝试进行健康检查
+        await getHealth();
+      } catch (healthCheckError) {
+        toast.error(t('No response from server'));
+        return
+      }
+
+      console.log('服务器OK 继续后边的步骤')
+      const currentFormData = formDataRef.current;
+      // 步骤 1: 前置检查
+      if (!validateForm(currentFormData)) return;
+      if (checkForOngoingProcesses()) return;
+      // 步骤 2: 处理用户交互（重试/跳过）
+      // 如果用户选择了重试，则重新开始整个流程
+      if (handleUserRetryAction(e)) return;
+      // 步骤 3: 检查首次提交时已存在的失败图片
+      // 如果用户还未对失败图片做决定，则弹窗并中断
+      if (userAction === null && handleFailedPhotos(currentFormData.photos)) {
+        return;
+      }
+      // 步骤 4: 上传新图片
+      const uploadOk = await uploadPendingPhotos(currentFormData.photos);
+      if (!uploadOk) return; // 如果上传过程出错，则中断
+      // 步骤 5: 等待状态更新，并进行上传后的最终检查
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const updatedFormData = formDataRef.current;
+      // 检查是否有图片在上传后失败了
+      // 如果用户没有选择“跳过”，则再次弹窗并中断
+      if (userAction !== 'skip' && handleFailedPhotos(updatedFormData.photos)) {
+        return;
+      }
+      // 步骤 6: 所有检查通过，正式提交
+      await finalizeAndSubmit(updatedFormData);
+    }catch (e) {
+
+    }finally {
+      // 无论成功或失败，最后都要解锁
+      submissionLock.current = false;
+      setIsPageLoading(false)
     }
-    // 步骤 6: 所有检查通过，正式提交
-    finalizeAndSubmit(updatedFormData);
   }, [
     validateForm,
     checkForOngoingProcesses,
@@ -434,6 +469,7 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
     handleTouchMove,
     handleTouchEnd,
     isUploading,
+    isPageLoading,
     loading: isSubmitting, // 传递 isSubmitting 状态给 Footer
     isEditMode: !!diaryId, // 新增一个 prop 告诉子组件是编辑模式
     onOpenAI: () => setShowAIDialog(true),

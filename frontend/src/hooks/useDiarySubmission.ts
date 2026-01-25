@@ -1,10 +1,11 @@
 // src/hooks/useDiarySubmission.ts
-import { useCallback, useState } from 'react';
+import {useCallback, useRef, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { SubmitData } from '@/pages/NewDiary/types';
 import { useTravelStore } from "@/store/useTravelStore";
+import { v4 as uuidv4 } from 'uuid';
 
 export const useDiarySubmission = () => {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ export const useDiarySubmission = () => {
   const updateDiaryAction = useTravelStore((state) => state.updateDiary);
 
   const submitDiary = useCallback(async (formData: SubmitData, diaryId?: number) => {
-    if(isSubmitting) return;
     setIsSubmitting(true);
+
     const isEditMode = !!diaryId;
 
     try {
@@ -31,16 +32,24 @@ export const useDiarySubmission = () => {
         photos: formData.photos,
       };
 
+      // 为创建操作生成幂等键
+      const idempotencyKey = isEditMode ? undefined : uuidv4();
+      const options = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : {};
+
       if (isEditMode) {
+        // await updateDiaryAction(diaryId, data, options);
         await updateDiaryAction(diaryId, data);
+
         toast.success(t('submit successful'));
         navigate(`/diary/${diaryId}`);
       } else {
+        // await createDiaryAction(data, options);
         await createDiaryAction(data);
+
         toast.success(t('submit successful'));
         navigate('/');
       }
-      // --- 核心修改 1: 增加一个返回值，表示成功 ---
+      // --- 增加一个返回值，表示成功 ---
       return true;
 
     } catch (error: any) {

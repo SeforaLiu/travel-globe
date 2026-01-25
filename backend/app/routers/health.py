@@ -21,3 +21,6 @@ async def healthz(response: Response):
   # 至于索引检查、JSON 检查，可以作为可选参数，或者放在另一个接口
   return {"status": "healthy"}
 
+@router.get("/health")
+def health():
+  return {"status": "ok"}
