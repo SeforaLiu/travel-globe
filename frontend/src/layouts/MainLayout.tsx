@@ -32,11 +32,6 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
   const sidebarNightBg = '#0f172a'; // 深蓝黑 (Slate-900)
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
 
-  // 加载状态保护
-  if (loading) {
-    return <Loading dark={dark}/>;
-  }
-
   return (
     <div className="h-screen flex relative bg-white dark:bg-slate-900 overflow-x-hidden">
       {location.pathname === '/' ? <AIChatWidget isMobile={isMobile} dark={dark} /> : null}
@@ -85,7 +80,7 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
           showSidebar && !isMobile ? 'ml-72' : 'ml-0'
         }`}
       >
-        <Outlet />
+        {loading?<Loading dark={dark}/>: <Outlet />}
       </div>
 
       {/* 移动端遮罩层 */}
