@@ -81,7 +81,10 @@
   "Click + to add your first journey": "点击 + 开始你的第一次旅程!",
   "submit successful": "提交成功",
   "submit error please try again": "提交失败，请重试",
-  "Preparing your travel experience": "旅行地球正在准备中...",
+  "loading": {
+    "preparing": "旅行地球正在准备中...",
+    "trivia_label": "地理小知识"
+  },
   "sure to leave?": "确定要离开?",
   "input will be clear": "未保存的内容将会丢失",
   "sure to delete?": "确定要删除吗?",
@@ -116,5 +119,29 @@
     "Mood sent successfully": "心情已经发送到心情球上啦",
     "Describe your mood now...": "说说现在有什么想法...",
     "Mood Memory": "心情记忆"
+  },
+  "geo_facts": {
+    "usa_russia_distance": "美国和俄罗斯领土最近的地方还不到4公里，就是位于白令海峡中间的代奥米德群岛",
+    "freshwater_antarctica": "地球上的大部分淡水储存在冰川，世界淡水资源最丰富的是南极洲，储存了世界可用淡水的72%",
+    "india_diversity": "印度是世界上唯一一个原生民族中白种人、黑种人和黄种人都有分布的国家",
+    "shanghai_kashgar": "中国上海到中国喀什的距离相当于喀什到瑞典斯德哥尔摩的距离",
+    "china_finland": "中国和芬兰之间只隔了一个国家（俄罗斯）",
+    "usa_east_west": "美国是世界上最西边的国家，也是世界上最东边的国家（因为阿留申群岛跨越了180度经线）",
+    "largest_desert": "世界上最大的沙漠其实是南极洲沙漠",
+    "poland_north_korea": "波兰和朝鲜之间从技术上讲只隔了一个国家（俄罗斯）",
+    "netherlands_sea_level": "荷兰有60%的人口生活在海平面以下",
+    "british_museum": "在大英博物馆的众多收藏中，只有1%是对外展出的",
+    "bulgaria_oldest": "保加利亚是欧洲最古老的国家，它从公元681年起就没有改过名字",
+    "highest_toilet": "欧洲最高的厕所在勃朗峰（Mont Blanc），海拔4200米",
+    "disneyland_paris": "欧洲游客最多的景点是巴黎的迪士尼乐园",
+    "milan_water_city": "意大利米兰曾是一座繁荣的“水城”，拥有像威尼斯一样的运河网",
+    "monaco_central_park": "摩纳哥的国土面积比美国纽约的中央公园还小",
+    "london_escalators": "英国伦敦的地铁自动扶梯，每周运行的总里程相当于绕地球两圈",
+    "france_timezones": "法国拥有12个时区，是世界上时区最多的国家",
+    "istanbul_continents": "伊斯坦布尔是世界上唯一横跨亚洲和欧洲两大洲的主要城市",
+    "oldest_zoo": "世界上最古老的动物园是维也纳美泉宫动物园（建于1752年）",
+    "austria_neighbors": "奥地利被称为“欧洲心脏”，被八个国家环绕",
+    "deepest_canyon": "最深的峡谷：雅鲁藏布大峡谷（最深6,009米），位于中国西藏",
+    "windiest_place": "风力最大的地区：南极洲（年均风速19.4米/秒）"
   }
 }

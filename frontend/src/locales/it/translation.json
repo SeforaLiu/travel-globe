@@ -81,7 +81,10 @@
   "Click + to add your first journey": "Clicca + per il primo viaggio!",
   "submit successful": "Operazione riuscita",
   "submit error please try again": "Invio fallito. Prova di nuovo!",
-  "Preparing your travel experience": "Preparando la tua esperienza di viaggio...",
+  "loading": {
+    "preparing": "Preparando i tuoi viaggi...",
+    "trivia_label": "curiosità geografiche"
+  },
   "sure to leave?": "Uscire ora?",
   "sure to delete?": "Sicura/o di voler eliminare?",
   "This cannot be undone": "L'azione è irreversibile!",
@@ -116,5 +119,29 @@
     "Mood sent successfully": "Il tuo mood è stato inviato alla Sfera Mood!",
     "Describe your mood now...": "Cosa hai in mente?",
     "Mood Memory": "Memoria di Mood"
+  },
+  "geo_facts": {
+    "usa_russia_distance": "Il punto più vicino tra Stati Uniti e Russia dista meno di 4 km (Isole Diomede).",
+    "freshwater_antarctica": "L'Antartide detiene il 72% dell'acqua dolce disponibile al mondo nei suoi ghiacciai.",
+    "india_diversity": "L'India è l'unico paese con popolazioni indigene di razza caucasica, negroide e mongoloide.",
+    "shanghai_kashgar": "La distanza da Shanghai a Kashgar è all'incirca la stessa che c'è tra Kashgar e Stoccolma.",
+    "china_finland": "C'è un solo paese che separa la Cina dalla Finlandia: la Russia.",
+    "usa_east_west": "Gli Stati Uniti sono tecnicamente sia il paese più occidentale che quello più orientale del mondo.",
+    "largest_desert": "Il deserto più grande del mondo è in realtà l'Antartide.",
+    "poland_north_korea": "Tecnicamente, un solo paese separa la Polonia dalla Corea del Nord: la Russia.",
+    "netherlands_sea_level": "Il 60% della popolazione olandese vive sotto il livello del mare.",
+    "british_museum": "Solo circa l'1% della vasta collezione del British Museum è esposta al pubblico.",
+    "bulgaria_oldest": "La Bulgaria è il paese più antico d'Europa che non ha cambiato nome dal 681 d.C.",
+    "highest_toilet": "La toilette più alta d'Europa si trova sul Monte Bianco a un'altitudine di 4.200 metri.",
+    "disneyland_paris": "L'attrazione turistica più visitata in Europa è Disneyland Paris.",
+    "milan_water_city": "Milano era un tempo una fiorente 'città d'acqua' con una rete di canali come Venezia.",
+    "monaco_central_park": "Il Principato di Monaco è più piccolo di Central Park a New York.",
+    "london_escalators": "Le scale mobili della metropolitana di Londra percorrono l'equivalente di due giri del mondo ogni settimana.",
+    "france_timezones": "La Francia copre 12 fusi orari, più di qualsiasi altro paese al mondo.",
+    "istanbul_continents": "Istanbul è l'unica grande città situata su due continenti: Europa e Asia.",
+    "oldest_zoo": "Lo zoo più antico del mondo è il Tiergarten Schönbrunn di Vienna (fondato nel 1752).",
+    "austria_neighbors": "L'Austria è conosciuta come il 'Cuore dell'Europa', circondata da otto paesi.",
+    "deepest_canyon": "Il canyon più profondo: Il Grand Canyon dello Yarlung Tsangpo in Tibet raggiunge i 6.009 metri.",
+    "windiest_place": "Il luogo più ventoso: Antartide (velocità media del vento 19,4 m/s)."
   }
 }

@@ -83,7 +83,10 @@
   "delete successful": "delete successful",
   "demo account has no right": "The demo account does not have edition or deletion privileges. Please register a new account to access full features.",
   "submit error please try again": "Submit error, please try again",
-  "Preparing your travel experience": "Preparing your travel experience...",
+  "loading": {
+    "preparing": "Preparing your travel globe...",
+    "trivia_label": "geography trivia"
+  },
   "sure to leave?": "Leave now?",
   "sure to delete?": "Are you sure you want to delete?",
   "This cannot be undone": "This cannot be undone!",
@@ -116,5 +119,29 @@
     "Mood sent successfully": "Your mood has been sent to the Mood Sphere!",
     "Describe your mood now...": "What's on your mind?",
     "Mood Memory": "Mood Memory"
+  },
+  "geo_facts": {
+    "usa_russia_distance": "The closest point between the US and Russia is less than 4km apart (Diomede Islands).",
+    "freshwater_antarctica": "Antarctica holds 72% of the world's available fresh water in its glaciers.",
+    "india_diversity": "India is the only country with indigenous populations of Caucasian, Negroid, and Mongoloid races.",
+    "shanghai_kashgar": "The distance from Shanghai to Kashgar is roughly the same as from Kashgar to Stockholm, Sweden.",
+    "china_finland": "There is only one country separating China and Finland: Russia.",
+    "usa_east_west": "The USA is technically both the westernmost and easternmost country in the world (crossing the 180th meridian).",
+    "largest_desert": "The largest desert in the world is actually Antarctica.",
+    "poland_north_korea": "Technically, only one country separates Poland and North Korea: Russia.",
+    "netherlands_sea_level": "60% of the Dutch population lives below sea level.",
+    "british_museum": "Only about 1% of the British Museum's vast collection is on display to the public.",
+    "bulgaria_oldest": "Bulgaria is the oldest country in Europe that hasn't changed its name since 681 AD.",
+    "highest_toilet": "Europe's highest toilet is located on Mont Blanc at an altitude of 4,200 meters.",
+    "disneyland_paris": "The most visited tourist attraction in Europe is Disneyland Paris.",
+    "milan_water_city": "Milan, Italy, was once a thriving 'water city' with a network of canals like Venice.",
+    "monaco_central_park": "Monaco is smaller in size than Central Park in New York City.",
+    "london_escalators": "The escalators in the London Underground travel the equivalent of twice around the world every week.",
+    "france_timezones": "France covers 12 time zones, more than any other country in the world.",
+    "istanbul_continents": "Istanbul is the only major city located across two continents: Europe and Asia.",
+    "oldest_zoo": "The world's oldest zoo is the Tiergarten Schönbrunn in Vienna (founded in 1752).",
+    "austria_neighbors": "Austria is known as the 'Heart of Europe', surrounded by eight different countries.",
+    "deepest_canyon": "Deepest Canyon: The Yarlung Tsangpo Grand Canyon in Tibet reaches a depth of 6,009 meters.",
+    "windiest_place": "Windiest place: Antarctica (average wind speed 19.4 m/s)."
   }
 }
