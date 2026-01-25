@@ -5,6 +5,7 @@ import {useNavigate} from 'react-router-dom';
 import api from '../services/api';
 import {toast, Toaster} from 'sonner';
 import {useTravelStore} from "@/store/useTravelStore";
+import Loading from "@/components/Loading";
 
 type Props = {
   dark: boolean;
@@ -20,6 +21,7 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
   const [loading, setLoading] = useState(false);
   const checkAuth = useTravelStore(state => state.checkAuth);
   const isLoggedIn = useTravelStore(state => state.isLoggedIn);
+  const getHealth = useTravelStore(state => state.getHealth);
 
   useEffect(() => {
     if(isLoggedIn) navigate('/')
@@ -47,6 +49,14 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
     setLoading(true);
 
     try {
+      try {
+        // 尝试进行健康检查
+        await getHealth();
+      } catch (healthCheckError) {
+        toast.error(t('No response from server'));
+        return
+      }
+
       const response = await api.post('/auth/login', {username, password});
       if (response.status === 200) {
         await checkAuth();
@@ -73,6 +83,10 @@ const Login: React.FC<Props> = ({dark, isMobile}) => {
     }
   };
 
+  // 加载状态保护
+  if (loading) {
+    return <Loading dark={dark}/>;
+  }
 
   return (
     // 修改容器类名，适配移动端显示

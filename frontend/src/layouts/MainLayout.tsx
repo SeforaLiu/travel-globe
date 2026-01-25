@@ -7,6 +7,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useTravelStore } from '@/store/useTravelStore';
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { ChevronRight } from 'lucide-react';
+import Loading from "@/components/Loading";
 
 interface Props {
   dark: boolean;
@@ -19,6 +20,7 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
   const setShowLeftRightButtonsMobile = useTravelStore(state => state.setShowLeftRightButtonsMobile)
   const isLoggedIn = useTravelStore(state => state.isLoggedIn)
   const isMobile = useTravelStore(state => state.isMobile)
+  const loading = useTravelStore(state => state.loading)
 
   const {
     showSidebar,
@@ -29,6 +31,11 @@ export const MainLayout: React.FC<Props> = ({ dark, setDark, handleClickLogout }
   const sidebarDayBg = '#eef2f6'; // 更柔和的浅蓝灰
   const sidebarNightBg = '#0f172a'; // 深蓝黑 (Slate-900)
   const sidebarBg = dark ? sidebarNightBg : sidebarDayBg;
+
+  // 加载状态保护
+  if (loading) {
+    return <Loading dark={dark}/>;
+  }
 
   return (
     <div className="h-screen flex relative bg-white dark:bg-slate-900 overflow-x-hidden">

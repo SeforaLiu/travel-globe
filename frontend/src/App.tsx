@@ -4,7 +4,6 @@ import {Routes, Route, useNavigate, useLocation} from 'react-router-dom';
 import {toast, Toaster} from 'sonner';
 import {useTravelStore} from '@/store/useTravelStore';
 import {MainLayout} from '@/layouts/MainLayout';
-import Loading from '@/components/Loading';
 import {NewDiaryCloseDialog} from '@/components/NewDiaryCloseDialog';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
@@ -20,7 +19,6 @@ export default function App() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   const navigate = useNavigate();
-  const loading = useTravelStore(state => state.loading);
   const darkMode = useTravelStore(state => state.darkMode);
   const setDarkMode = useTravelStore(state => state.setDarkMode);
   const setIsMobile = useTravelStore(state => state.setIsMobile);
@@ -61,11 +59,6 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsMobile]);
-
-  // 加载状态保护
-  if (loading) {
-    return <Loading dark={darkMode}/>;
-  }
 
   return (
     <>

@@ -5,6 +5,7 @@ import {useNavigate} from 'react-router-dom';
 import api from '../services/api';
 import {toast, Toaster} from 'sonner';
 import {useTravelStore} from "@/store/useTravelStore";
+import Loading from "@/components/Loading";
 
 type Props = {
   dark: boolean;
@@ -21,6 +22,7 @@ const Register: React.FC<Props> = ({dark, isMobile}) => {
   const [loading, setLoading] = useState(false);
 
   const isLoggedIn = useTravelStore(state => state.isLoggedIn);
+  const getHealth = useTravelStore(state => state.getHealth);
 
   useEffect(() => {
     if(isLoggedIn) navigate('/')
@@ -55,6 +57,14 @@ const Register: React.FC<Props> = ({dark, isMobile}) => {
     setLoading(true);
 
     try {
+      try {
+        // 尝试进行健康检查
+        await getHealth();
+      } catch (healthCheckError) {
+        toast.error(t('No response from server'));
+        return
+      }
+
       // 使用 axios 发送请求
       const response = await api.post('/auth/register', {username, password});
 
@@ -65,16 +75,36 @@ const Register: React.FC<Props> = ({dark, isMobile}) => {
         }, 2000);
       }
     } catch (err: any) {
+      // 默认错误消息
       let errorMessage = t('Registration failed');
-      if (err.request) {
+      // 1. 处理服务器返回的业务错误 (如 400 Bad Request)
+      if (err.response && err.response.data) {
+        // 提取后端返回的 detail 字段
+        const detail = err.response.data.detail;
+
+        if (detail) {
+          // 如果后端返回的是 "Username already registered"
+          errorMessage = t(detail);
+        }
+      }
+      // 2. 处理网络未响应情况
+      else if (err.request) {
         errorMessage = t('No response from server');
       }
       setError(errorMessage);
       toast.error(errorMessage);
+
+      // 打印错误详情方便调试
+      console.error('Registration error:', err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // 加载状态保护
+  if (loading) {
+    return <Loading dark={dark}/>;
+  }
 
   return (
     // 修改容器类名，适配移动端显示

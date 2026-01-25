@@ -11,7 +11,7 @@ const Loading: React.FC<LoadingProps> = ({ dark = false }) => {
 
   // --- 状态管理 ---
   const [progress, setProgress] = useState(10);
-  const [textIndex, setTextIndex] = useState(-1); // -1 代表初始 Loading 文字
+  const [textIndex, setTextIndex] = useState(0);
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   // --- 核心修改：生成随机顺序的数组 ---
@@ -54,8 +54,6 @@ const Loading: React.FC<LoadingProps> = ({ dark = false }) => {
 
       setTimeout(() => {
         setTextIndex((prev) => {
-          // 逻辑：从 -1 开始，变成 0，然后 1, 2... 循环
-          if (prev === -1) return 0;
           return (prev + 1) % randomizedFacts.length;
         });
         setIsTextVisible(true);
@@ -66,11 +64,8 @@ const Loading: React.FC<LoadingProps> = ({ dark = false }) => {
     return () => clearInterval(textTimer);
   }, [randomizedFacts]); // 依赖项加入 randomizedFacts
 
-  // 获取当前文字：如果是 -1 显示固定文案，否则显示随机数组中的内容
-  const isInitial = textIndex === -1;
-  const currentText = isInitial
-    ? t('loading.preparing')
-    : t(randomizedFacts[textIndex]);
+  // 获取当前文字 显示随机数组中的内容
+  const currentText = t(randomizedFacts[textIndex]);
 
   return (
     <div className={`
@@ -128,11 +123,9 @@ const Loading: React.FC<LoadingProps> = ({ dark = false }) => {
 
       {/* 滚动的文字区域 */}
       <div className="mt-8 h-32 w-full max-w-lg flex flex-col items-center justify-start text-center relative z-10">
-        {/* 动态标签：只有在展示小知识时才显示 */}
         <div className={`
           mb-2 px-2 py-0.5 rounded text-[10px] uppercase tracking-widest font-bold
           transition-all duration-500
-          ${isInitial ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
           ${dark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}
         `}>
           {t('loading.trivia_label')}
@@ -140,7 +133,8 @@ const Loading: React.FC<LoadingProps> = ({ dark = false }) => {
         <p className={`
           text-sm sm:text-base font-medium leading-relaxed px-4
           transform transition-all duration-500 ease-in-out
-          ${isTextVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}
+          opacity-0 -translate-y-4
+          ${isTextVisible ? 'opacity-100 translate-y-0' : ''}
           ${dark ? 'text-gray-300' : 'text-gray-600'}
         `}>
           {currentText}

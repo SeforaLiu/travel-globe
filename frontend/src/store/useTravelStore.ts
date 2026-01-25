@@ -131,7 +131,7 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   getHealth: async ()=>{
     try {
-      await api.get('/health',{timeout:5000});
+      await api.get('/health',{timeout:10000});
     }catch (err){
       console.error("Health Error", err);
       throw err;
