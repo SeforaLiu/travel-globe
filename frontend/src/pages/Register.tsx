@@ -65,7 +65,10 @@ const Register: React.FC<Props> = ({dark, isMobile}) => {
         }, 2000);
       }
     } catch (err: any) {
-      const errorMessage = t(err.response?.data?.detail) || t('Registration failed');
+      let errorMessage = t('Registration failed');
+      if (err.request) {
+        errorMessage = t('No response from server');
+      }
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

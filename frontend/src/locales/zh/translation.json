@@ -39,7 +39,7 @@
   "Username already registered": "用户名重复,请使用新的用户名",
   "Logging in...": "登录中...",
   "Incorrect username or password": "用户名或密码错误",
-  "Registration successful! Redirecting to login...": "注册成功!",
+  "Registration successful! Redirecting to login...": "注册成功! 正在跳转至登录页面...",
   "Login successful!": "登录成功",
   "No response from server": "服务器无响应，请稍后重试",
   "sure to logout?": "确定要退出吗?",

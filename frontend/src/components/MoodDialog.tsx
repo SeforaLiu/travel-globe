@@ -20,6 +20,7 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createMood = useTravelStore(state => state.createMood);
+  const getHealth = useTravelStore(state => state.getHealth);
   const user = useTravelStore(state => state.user);
   const { uploadPhotos } = useCloudinaryUpload();
 
@@ -57,6 +58,14 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
 
     setIsSubmitting(true);
     try {
+      try {
+        // 尝试进行健康检查
+        await getHealth();
+      } catch (healthCheckError) {
+        toast.error(t('No response from server'));
+        return
+      }
+
       let photoData = {};
 
       // 1. 如果有图片，先上传

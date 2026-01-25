@@ -39,7 +39,7 @@
   "Passwords do not match": "Passwords do not match",
   "Username already registered": "Username already registered",
   "Logging in...": "Logging in...",
-  "Registration successful! Redirecting to login...": "Registration successful!",
+  "Registration successful! Redirecting to login...": "Registration successful! Redirecting to login...",
   "Login successful!": "Login successful!",
   "No response from server": "Server not responding, please try again later",
   "Incorrect username or password": "Incorrect username or password",

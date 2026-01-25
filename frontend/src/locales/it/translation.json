@@ -38,7 +38,7 @@
   "Password must be at least 6 characters with letters and numbers": "La password deve contenere almeno 6 caratteri con lettere e numeri",
   "Passwords do not match": "Le password non corrispondono",
   "Logging in...": "Caricamento in corso...",
-  "Registration successful! Redirecting to login...": "Registrazione completata!",
+  "Registration successful! Redirecting to login...": "Registrazione completata! Reindirizzamento al login...",
   "Incorrect username or password": "username o password non corretto",
   "Login successful!": "Accesso riuscito!",
   "No response from server": "Server non risponde, si prega di riprovare più tardi",
