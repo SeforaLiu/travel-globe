@@ -332,7 +332,7 @@ export default function Sidebar({
                     </div>
                     {item.date_start && (
                       <div className="text-xs opacity-50 mt-1">
-                        {item.date_start} {item.date_end ? `- ${item.date_end}` : ''}
+                        {item.date_start} {item.date_end && (item.date_end !== item.date_start) ? `- ${item.date_end}` : ''}
                       </div>
                     )}
                   </li>
