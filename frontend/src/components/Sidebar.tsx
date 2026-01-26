@@ -2,12 +2,12 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom';
 import { useTravelStore } from "@/store/useTravelStore";
-// 引入 Lucide 图标，替代 Emoji
 import {
   Moon, Sun, LogOut, Search, MapPin, BookOpen,
   Plus, ChevronLeft, Globe, Languages, X, LogIn
 } from 'lucide-react';
 import {toast} from "sonner";
+import { formatDateRange } from '@/utils/dateFormatter';
 
 type Props = {
   dark: boolean;
@@ -332,7 +332,7 @@ export default function Sidebar({
                     </div>
                     {item.date_start && (
                       <div className="text-xs opacity-50 mt-1">
-                        {item.date_start} {item.date_end && (item.date_end !== item.date_start) ? `- ${item.date_end}` : ''}
+                        {formatDateRange(item.date_start, item.date_end, i18n.language)}
                       </div>
                     )}
                   </li>
