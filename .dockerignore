@@ -1,20 +1,28 @@
-# Git
-.git
-.gitignore
-
 # Docker
 Dockerfile
 .dockerignore
 
-# Python
-__pycache__/
+# Git
+.git
+.gitignore
+
+# Frontend - CRITICAL: Ignore the entire frontend directory for the backend image
+frontend/
+node_modules/
+
+# Backend specific ignores
+backend/venv/
+backend/.venv/
+backend/.env
+backend/.env*
+backend/__pycache__/
+backend/tests/
+
+# Python general
 *.pyc
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-.venv/
 
 # IDE / OS specific
 .idea/
