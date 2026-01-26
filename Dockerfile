@@ -18,7 +18,7 @@ RUN pip install --upgrade pip
 COPY backend/requirements.txt .
 
 # Install dependencies.
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # --- Stage 2: Final Image ---
 # This stage builds the final, lean image for production.
