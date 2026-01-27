@@ -31,10 +31,10 @@ export default function MoodDetailModal({isOpen, onClose, data, dark}: Props) {
     if (!data) return;
 
     // 展示账号不可删除或添加心情
-    // if(user.username==='demo01'){
-    //   toast.info(t('demo account has no right'))
-    //   return
-    // }
+    if(user.username==='demo01'){
+      toast.info(t('demo account has no right'))
+      return
+    }
 
     setIsDeleting(true);
     try {

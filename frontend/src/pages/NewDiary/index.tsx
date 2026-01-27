@@ -335,10 +335,10 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
 
     try {
       // 展示账号不可新增/编辑日记
-      // if(user.username==='demo01'){
-      //   toast.info(t('demo account has no right'))
-      //   return
-      // }
+      if(user.username==='demo01'){
+        toast.info(t('demo account has no right'))
+        return
+      }
 
       try {
         // 尝试进行健康检查

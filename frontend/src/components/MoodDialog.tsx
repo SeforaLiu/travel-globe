@@ -51,10 +51,10 @@ export default function MoodDialog({ isOpen, onClose, dark }: Props) {
     }
 
     // 展示账号不可删除或添加心情
-    // if(user.username==='demo01'){
-    //   toast.info(t('demo account has no right'))
-    //   return
-    // }
+    if(user.username==='demo01'){
+      toast.info(t('demo account has no right'))
+      return
+    }
 
     setIsSubmitting(true);
     try {
