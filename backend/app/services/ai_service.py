@@ -1,7 +1,8 @@
 # backend/app/services/ai_service.py
 import os
 import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+# 导入 generation_types 以便进行类型检查
+from google.generativeai.types import HarmCategory, HarmBlockThreshold, generation_types
 from google.api_core import exceptions as google_exceptions
 import logging
 from app.constants.ai_constants import (
@@ -29,6 +30,23 @@ if not GOOGLE_API_KEY:
   logger.warning("未检测到 GOOGLE_API_KEY")
 else:
   genai.configure(api_key=GOOGLE_API_KEY)
+
+# [最佳实践] 将安全配置定义为常量，方便复用和统一管理
+DEFAULT_SAFETY_SETTINGS = {
+  HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+}
+
+# [核心修复点1] 为需要 JSON 输出的任务定义一个专门的生成配置
+# - temperature=0.2: 降低随机性，让模型输出更稳定、可预测，非常适合生成 JSON。
+# - response_mime_type="application/json": 强制模型直接输出 JSON 格式，避免生成 markdown 包裹或其他无关文本。
+#   这是 Gemini 的一个强大功能，可以极大提升结构化数据输出的可靠性。
+JSON_GENERATION_CONFIG = genai.types.GenerationConfig(
+  temperature=0.2,
+  response_mime_type="application/json",
+)
 
 
 async def _execute_genai_request_with_fallback(
@@ -105,12 +123,7 @@ async def get_travel_advice(frontend_messages: list):
       logger.info(f"Sending message to Gemini ({model.model_name}): {last_message[:30]}...")
       return await chat.send_message_async(
         last_message,
-        safety_settings={
-          HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        }
+        safety_settings=DEFAULT_SAFETY_SETTINGS
       )
 
     response = await _execute_genai_request_with_fallback(
@@ -118,8 +131,20 @@ async def get_travel_advice(frontend_messages: list):
       system_instruction=TRAVEL_ADVICE_SYSTEM_INSTRUCTION
     )
 
-    logger.info("Gemini API call successful.")
-    return response.text
+    try:
+      text = response.text
+      logger.info("Gemini API call successful.")
+      return text
+    except (ValueError, IndexError):
+      logger.error(f"AI response was empty or blocked. Response object: {response}", exc_info=False)
+      if response.prompt_feedback:
+        logger.error(f"Prompt Feedback: {response.prompt_feedback}")
+      if response.candidates and response.candidates[0].finish_reason.name == "SAFETY":
+        logger.error(f"Candidate Finish Reason: SAFETY")
+        logger.error(f"Candidate Safety Ratings: {response.candidates[0].safety_ratings}")
+        return "抱歉，AI 的回答被安全系统拦截了，请尝试换一种问法。"
+      return "抱歉，AI 暂时无法回答，请稍后再试。"
+
 
   except Exception as e:
     logger.error(f"Failed to get travel advice: {e}", exc_info=True)
@@ -132,37 +157,61 @@ async def generate_diary_draft(user_prompt: str):
   """
   try:
     today_str = datetime.now().strftime("%Y-%m-%d")
-
     full_prompt = (
       f"Reference Date (Today's Date): {today_str}.\n"
       f"Please generate a travel diary JSON based on the following description:\n{user_prompt}"
     )
-
     async def generation_logic(model: genai.GenerativeModel):
       logger.info(f"Generating diary draft with model {model.model_name}...")
-      # [日志增强] 记录下发送给模型的完整 prompt，便于调试
       logger.debug(f"Full prompt for diary generation:\n---\n{full_prompt}\n---")
-      return await model.generate_content_async(full_prompt)
-
+      return await model.generate_content_async(
+        full_prompt,
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        generation_config=JSON_GENERATION_CONFIG
+      )
     response = await _execute_genai_request_with_fallback(
       generation_func=generation_logic,
       system_instruction=DIARY_GENERATION_SYSTEM_INSTRUCTION
     )
-    text = response.text
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-      logger.error(f"AI response did not contain a valid JSON object. Raw response: {text}")
-      raise ValueError("AI response did not contain a valid JSON object.")
-    json_str = match.group(0)
+    text = ""
+    try:
+      text = response.text
+    except (ValueError, IndexError):
+      logger.error(f"AI response was empty or blocked. Analyzing response details...")
+      if response.candidates:
+        candidate = response.candidates[0]
+        finish_reason_name = candidate.finish_reason.name
+        logger.error(f"Candidate Finish Reason: {finish_reason_name} ({candidate.finish_reason.value})")
 
-    data = json.loads(json_str)
+        if finish_reason_name == "SAFETY":
+          logger.error(f"Candidate Safety Ratings: {candidate.safety_ratings}")
+          raise ValueError("AI response was blocked due to safety settings.")
+        else:
+          raise ValueError(f"AI failed to generate content. Finish reason: {finish_reason_name}")
+      else:
+        if response.prompt_feedback:
+          logger.error(f"Prompt Feedback: {response.prompt_feedback}")
+        raise ValueError("AI response is empty and contains no candidates.")
+    # [核心修复] 检查 AI 是否返回了我们定义的结构化错误
+    try:
+      data = json.loads(text)
+    except json.JSONDecodeError as e:
+      logger.error(f"Failed to decode JSON from AI response. String was: '{text}'. Error: {e}")
+      raise ValueError("AI returned an invalid or incomplete JSON.")
+    # 检查返回的 JSON 是否是我们的 fallback 错误格式
+    if isinstance(data, dict) and data.get("status") == "error":
+      error_message = data.get("message", "AI indicated the prompt was too vague.")
+      logger.warning(f"AI returned a structured error: {error_message}")
+      # 抛出这个具体的、可被前端利用的错误信息
+      raise ValueError(error_message)
     return data
-
-  except json.JSONDecodeError as e:
-    logger.error(f"Failed to decode extracted JSON string. String was: '{json_str}'. Error: {e}")
-    raise ValueError("AI failed to generate a valid diary draft.")
   except Exception as e:
-    logger.error(f"Failed to generate diary draft: {e}", exc_info=True)
+    # 重新组织一下日志，避免重复记录堆栈信息
+    # 如果异常是 ValueError，它可能是我们自己抛出的，信息已经很明确了
+    if isinstance(e, ValueError):
+      logger.error(f"Failed to generate diary draft: {e}")
+    else:
+      logger.error(f"Failed to generate diary draft: {e}", exc_info=True)
     raise e
 
 
@@ -173,21 +222,30 @@ async def analyze_mood_text(text: str):
   try:
     async def generation_logic(model: genai.GenerativeModel):
       logger.info(f"Analyzing mood with model {model.model_name}...")
-      return await model.generate_content_async(text)
+      # [改进] 同样为情感分析添加 JSON 配置
+      return await model.generate_content_async(
+        text,
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        generation_config=JSON_GENERATION_CONFIG
+      )
 
-    # [确认] 此处实现正确，使用了 MOOD_ANALYSIS_SYSTEM_INSTRUCTION
     response = await _execute_genai_request_with_fallback(
       generation_func=generation_logic,
       system_instruction=MOOD_ANALYSIS_SYSTEM_INSTRUCTION
     )
-    result_text = response.text
 
-    match = re.search(r"\{.*\}", result_text, re.DOTALL)
-    if not match:
-      logger.error(f"Mood analysis response did not contain JSON. Raw: {result_text}")
-      return {"mood_vector": 0.5, "mood_reason": "分析失败(格式错误)"}
-    json_str = match.group(0)
-    data = json.loads(json_str)
+    result_text = ""
+    try:
+      result_text = response.text
+    except (ValueError, IndexError):
+      logger.error(f"Mood analysis response was empty or blocked. Response: {response}")
+      # 同样可以加入更详细的诊断
+      if response.candidates and response.candidates[0].finish_reason.name == "SAFETY":
+        return {"mood_vector": 0.5, "mood_reason": "分析失败(内容被拦截)"}
+      return {"mood_vector": 0.5, "mood_reason": "分析失败(AI未生成内容)"}
+
+    # [代码简化] 直接解析 result_text
+    data = json.loads(result_text)
     return data
   except Exception as e:
     logger.error(f"Mood Analysis Failed: {e}", exc_info=True)
