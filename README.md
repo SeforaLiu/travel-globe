@@ -1,6 +1,6 @@
 # Travel Globe: A Full-Stack WebGL Ecosystem for Narrative Mapping and Sentiment Analysis
 
----
+
 <div align="left" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0;">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python" alt="Python 3.11" />
   <img src="https://img.shields.io/badge/FastAPI-0.124.2-009688.svg?style=flat&logo=fastapi" alt="FastAPI 0.124.2" />
