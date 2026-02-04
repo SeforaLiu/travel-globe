@@ -1,17 +1,16 @@
 # Travel Globe: A Full-Stack WebGL Ecosystem for Narrative Mapping and Sentiment Analysis
 
-
 <div align="left" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0;">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python" alt="Python 3.11" />
   <img src="https://img.shields.io/badge/FastAPI-0.124.2-009688.svg?style=flat&logo=fastapi" alt="FastAPI 0.124.2" />
   <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1.svg?style=flat&logo=postgresql" alt="PostgreSQL 15" />
   <img src="https://img.shields.io/badge/React-18.2-61DAFB.svg?style=flat&logo=react" alt="React 18.2" />
   <img src="https://img.shields.io/badge/Three.js-0.159-000000.svg?style=flat&logo=three.js" alt="Three.js" />
-  <img src="https://img.shields.io/badge/AI-Google%20Gemini-4285F4.svg?style=flat&logo=google" alt="Google Gemini AI" />
+    <img src="https://img.shields.io/badge/AI-Google%20Gemini-4285F4.svg?style=flat&logo=google" alt="Google Gemini AI" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" />
 </div>
 
-
+---
 
 ## 1. Project Overview
 
@@ -31,7 +30,7 @@ To help reviewers explore the application quickly, a demo account is provided:
 - Password: Demo1234!
 
 Note:
-- This account is **read-only** for demonstration purposes.
+- This account is read-only for demonstration purposes.
 
   Please feel free to create your own account for full functionality.
 
@@ -118,12 +117,12 @@ graph LR
 
 ### **5.2 Mathematical Graphics & Data Synthesis**
 
-- **Fibonacci Spiral Distribution**: To ensure perfectly uniform particle distribution on the Mood Sphere, I implemented a **Fibonacci Spiral algorithm (O(n)O(n)O(n) complexity)**, avoiding the visual "clustering" common in random spherical sampling.
+- **Algorithmic Implementation**: Utilized an O(n) Fibonacci Sphere algorithm for uniform point distribution, avoiding the visual "clustering" common in random spherical sampling.
 - **Quantifying Emotion**: Developed a mapping layer that interpolates 1D sentiment scores into a 3D visual system (Linear Interpolation for HSL and Vertex Displacement).
 
 ### **5.3 High-Performance Rendering (O(1)O(1)O(1) Draw Calls)**
 
-- **GPU Instancing**: Utilized `InstancedMesh` to manage 5,000+ interactive particles. By offloading vertex transformations to the GPU via custom **GLSL Shaders** (`onBeforeCompile`), the system maintains a consistent **60 FPS** even on mobile devices.
+- **GPU Instancing**: Utilized `InstancedMesh` to manage thousands of interactive particles. By offloading vertex transformations to the GPU via custom **GLSL Shaders** (`onBeforeCompile`), the system maintains a consistent **60 FPS** even on mobile devices.
 - **State Synchronization**: Optimized the bridge between the 3D WebGL context and React DOM using **Zustand**, reducing re-render overhead during high-frequency data updates.
 
 
@@ -132,7 +131,7 @@ graph LR
 
 #### 1. Interactive 3D Geospatial Globe
 
-![3D Earth Demo](https://res.cloudinary.com/ggg-lll/image/upload/v1769506799/travel_globe_prod/photos/3_eytkru.png)
+![3D Earth Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769506799/travel_globe_prod/photos/3_eytkru.png)
 
 - **Feature:** A high-precision WebGL globe visualizing travel footprints and future plans.
 - Technical Insight:
@@ -151,9 +150,9 @@ graph LR
 
 #### 3. AI-Powered Itinerary Engine
 
-![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/v1769520763/travel_globe_prod/photos/9_rtedrr.png)
+![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769520763/travel_globe_prod/photos/9_rtedrr.png)
 
-![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/v1769520764/travel_globe_prod/photos/10_dmnkle.png)
+![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769520764/travel_globe_prod/photos/10_dmnkle.png)
 
 - **Feature:** Real-time generation of travel plans and sentiment extraction from natural language diaries.
 
