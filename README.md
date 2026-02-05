@@ -18,7 +18,7 @@ An Interactive 3D visualization platform that bridges the gap between **Geospati
 
 **Live Demo**: https://travel.shiyun-liu.com/
 
-**Purpose:**  Technical portfolio for MSc applications in Computer Science and Social Sciences and Digital Data
+**Purpose:**  Technical portfolio for applications of master programmes in Italy
 
 
 
