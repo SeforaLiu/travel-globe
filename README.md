@@ -131,7 +131,7 @@ graph LR
 
 #### 1. Interactive 3D Geospatial Globe
 
-![3D Earth Demo](https://res.cloudinary.com/ggg-lll/image/upload/c_scale,w_583/v1770433999/travel_globe_prod/photos/homepage_diary_1_tn3qoj.gif)
+![3D Earth Demo](https://res.cloudinary.com/ggg-lll/image/upload/c_scale,w_600/v1770433999/travel_globe_prod/photos/homepage_diary_1_tn3qoj.gif)
 
 - **Feature:** A high-precision WebGL globe visualizing travel footprints and future plans.
 - Technical Insight:
@@ -140,7 +140,7 @@ graph LR
 
 #### 2. The Mood Sphere (Sentiment Visualization)
 
-![Mood Sphere Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1770442033/mood7_g7mymc.gif)
+![Mood Sphere Demo](https://res.cloudinary.com/ggg-lll/image/upload/c_scale,w_600/v1770435973/travel_globe_prod/photos/mood6_chodym.gif)
 
 - **Feature:** A mathematical representation of emotional data through thousands of procedural particles.
 - Technical Insight:
