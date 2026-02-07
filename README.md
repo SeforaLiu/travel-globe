@@ -140,7 +140,7 @@ graph LR
 
 #### 2. The Mood Sphere (Sentiment Visualization)
 
-![Mood Sphere Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1770435973/travel_globe_prod/photos/mood6_chodym.gif)
+![Mood Sphere Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1770442033/mood7_g7mymc.gif)
 
 - **Feature:** A mathematical representation of emotional data through thousands of procedural particles.
 - Technical Insight:
