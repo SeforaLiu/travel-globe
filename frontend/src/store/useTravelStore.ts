@@ -158,7 +158,9 @@ export const useTravelStore = create<TravelState>((set, get) => ({
 
   createMood: async (data) => {
     try {
-      await api.post('/moods', data);
+      await api.post('/moods', data,{
+        timeout: 60000
+      });
       // 创建成功后刷新列表
       await get().fetchMoods(true);
     } catch (err) {

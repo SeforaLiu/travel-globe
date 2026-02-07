@@ -3,7 +3,7 @@ from sqlmodel import Field, SQLModel, Relationship
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime
 from pydantic import BaseModel, field_validator, ConfigDict
-from sqlalchemy import Column, DateTime, JSON, Text # [修改] 导入 Text 类型
+from sqlalchemy import Column, DateTime, JSON, Text
 from sqlalchemy.sql import func
 
 # ==================== 用户相关模型 ====================
@@ -16,6 +16,8 @@ class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
     entries: List["Entry"] = Relationship(back_populates="user")
+    # 添加与 Mood 的反向关系
+    moods: List["Mood"] = Relationship(back_populates="user")
 
 class UserCreate(UserBase):
     password: str
@@ -26,7 +28,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: int
-    user_id: int
+    # user_id: int # 重复了，id 就是 user_id，保留一个即可
     model_config = {"from_attributes": True}
 
 # ==================== 位置相关模型 ====================
@@ -58,8 +60,7 @@ class PhotoBase(SQLModel):
     bytes: int = Field(default=0)
     original_filename: Optional[str] = None
     created_at: Optional[datetime] = None
-    # 这个验证器确保在验证数据时，如果 bytes 字段为 None，则自动替换为 0
-    # 这可以防止前端在更新时未提供 bytes 字段而导致的验证失败
+
     @field_validator('bytes', mode='before')
     @classmethod
     def set_bytes_default(cls, v):
@@ -67,13 +68,9 @@ class PhotoBase(SQLModel):
             return 0
         return v
 
-
 class Photo(PhotoBase, table=True):
-    """数据库照片表模型 - 映射到数据库表"""
     id: Optional[int] = Field(default=None, primary_key=True)
     entry_id: int = Field(foreign_key="entry.id")
-
-    # 关系：定义 Photo -> Entry 的反向关系
     entry: "Entry" = Relationship(back_populates="photos")
 
 class PhotoCreate(SQLModel):
@@ -97,14 +94,12 @@ class PhotoCreate(SQLModel):
             return 0
         return v
 
-# [新增] 照片详情响应模型，用于在日记详情中展示
 class PhotoDetail(PhotoBase):
     id: int
 
 # ==================== 日记相关模型 ====================
 class EntryBase(SQLModel):
     title: str
-    # 添加 content 字段用于存储日记正文
     content: Optional[str] = Field(default=None, sa_column=Column(Text))
     location_name: str
     date_start: Optional[date] = None
@@ -112,23 +107,14 @@ class EntryBase(SQLModel):
     entry_type: str = "visited"
     coordinates: dict = Field(sa_column=Column(JSON), description="坐标字典，包含 lat 和 lng 键")
     transportation: Optional[str] = None
-
-    # 以下字段保留在基础模型中，但在API响应时按需剔除
     description: Optional[str] = None
     travel_partner: Optional[str] = None
     cost: Optional[float] = None
     mood: Optional[str] = None
 
 class EntryCreate(EntryBase):
-    """创建日记的请求模型"""
     photos: List[PhotoCreate] = []
-
-    # 移除不需要前端传入的字段，让模型更干净
-    # 如果前端依然会传这些字段，保留它们也无妨，Pydantic会处理
-    model_config = ConfigDict(
-        # 移除了 description, travel_partner, cost, mood
-        # 但为了兼容性，暂时保留它们在 EntryBase 中
-    )
+    model_config = ConfigDict()
 
     @field_validator('date_start', 'date_end', mode='before')
     @classmethod
@@ -146,21 +132,19 @@ class Entry(EntryBase, table=True):
     user_id: int = Field(foreign_key="user.id")
     location_id: Optional[int] = Field(default=None, foreign_key="location.id")
 
-    # 关系
     user: "User" = Relationship(back_populates="entries")
-    # 完善 Entry -> Photo 的关系，并设置级联删除
     photos: List["Photo"] = Relationship(
         back_populates="entry",
         sa_relationship_kwargs={
-            "cascade": "all, delete-orphan", # 级联删除：删除日记时，关联的照片也一并删除
-            "lazy": "selectin" # 优化查询：获取日记时，通过一次 select in 查询加载所有照片
+            "cascade": "all, delete-orphan",
+            "lazy": "selectin"
         }
     )
     location: Optional["Location"] = Relationship(back_populates="entries")
 
 class EntryUpdate(BaseModel):
     title: Optional[str] = None
-    content: Optional[str] = None # [新增] 允许更新 content
+    content: Optional[str] = None
     location_name: Optional[str] = None
     description: Optional[str] = None
     date_start: Optional[date] = None
@@ -174,12 +158,10 @@ class EntryUpdate(BaseModel):
     location_id: Optional[int] = None
     photos: Optional[List[PhotoCreate]] = None
 
-# 新增和详情接口的响应模型
 class EntryDetailResponse(SQLModel):
-    """用于日记详情页的响应模型"""
     id: int
     title: str
-    content: Optional[str] # 包含 content
+    content: Optional[str]
     location_name: str
     date_start: Optional[date]
     date_end: Optional[date]
@@ -189,13 +171,10 @@ class EntryDetailResponse(SQLModel):
     created_time: datetime
     user_id: int
     location_id: Optional[int]
-    photos: List[PhotoDetail] # 包含 photos 列表
-
+    photos: List[PhotoDetail]
     model_config = {"from_attributes": True}
 
-# 日记列表接口的单项模型
 class DiaryListItem(SQLModel):
-    """用于日记列表的响应模型（精简字段）"""
     id: int
     title: str
     location_name: str
@@ -207,10 +186,8 @@ class DiaryListItem(SQLModel):
     user_id: int
     location_id: Optional[int]
     coordinates: Dict[str, Any]
-
     model_config = {"from_attributes": True}
 
-# 需求 2: 日记列表的整体响应模型
 class DiaryListResponse(SQLModel):
     items: List[DiaryListItem]
     total: int
@@ -237,6 +214,7 @@ class MoodBase(SQLModel):
     content: str = Field(max_length=120)
     photo_url: Optional[str] = None
     photo_public_id: Optional[str] = None
+
 class Mood(MoodBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
@@ -245,11 +223,18 @@ class Mood(MoodBase, table=True):
     # AI 分析结果
     mood_vector: float = Field(default=0.5, description="0.0(消极) - 1.0(积极)")
     mood_reason: Optional[str] = None
-    user: "User" = Relationship()
+
+    user: "User" = Relationship(
+        back_populates="moods",
+        sa_relationship_kwargs={"lazy": "joined"}
+    )
+
 class MoodCreate(MoodBase):
     pass
+
 class MoodResponse(MoodBase):
     id: int
+    user_id: int
     created_at: datetime
     mood_vector: float
     mood_reason: Optional[str]
