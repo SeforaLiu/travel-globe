@@ -120,7 +120,7 @@ graph LR
 - **Algorithmic Implementation**: Utilized an O(n) Fibonacci Sphere algorithm for uniform point distribution, avoiding the visual "clustering" common in random spherical sampling.
 - **Quantifying Emotion**: Developed a mapping layer that interpolates 1D sentiment scores into a 3D visual system (Linear Interpolation for HSL and Vertex Displacement).
 
-### **5.3 High-Performance Rendering (O(1)O(1)O(1) Draw Calls)**
+### **5.3 High-Performance Rendering (O(1) Draw Calls)**
 
 - **GPU Instancing**: Utilized `InstancedMesh` to manage thousands of interactive particles. By offloading vertex transformations to the GPU via custom **GLSL Shaders** (`onBeforeCompile`), the system maintains a consistent **60 FPS** even on mobile devices.
 - **State Synchronization**: Optimized the bridge between the 3D WebGL context and React DOM using **Zustand**, reducing re-render overhead during high-frequency data updates.
