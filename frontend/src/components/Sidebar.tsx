@@ -224,7 +224,7 @@ export default function Sidebar({
           )}
         </div>
 
-        {isLoggedIn && (guideTotal || diaryTotal) && (
+        {isLoggedIn && (guideTotal > 0 || diaryTotal > 0) && (
           <div className={`
             flex p-1 rounded-xl border
             ${dark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}
