@@ -131,34 +131,33 @@ graph LR
 
 #### 1. Interactive 3D Geospatial Globe
 
-![3D Earth Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769506799/travel_globe_prod/photos/3_eytkru.png)
+![3D Earth Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1770433999/travel_globe_prod/photos/homepage_diary_1_tn3qoj.gif)
 
 - **Feature:** A high-precision WebGL globe visualizing travel footprints and future plans.
 - Technical Insight:
-    - Implements **Spherical Coordinate Mapping** to convert Latitude/Longitude into 3D vectors.
-    - Optimized rendering for smooth rotation and zooming using a custom `OrbitControls` implementation.
+  - Implements **Spherical Coordinate Mapping** to convert Latitude/Longitude into 3D vectors.
+  - Optimized rendering for smooth rotation and zooming using a custom `OrbitControls` implementation.
 
 #### 2. The Mood Sphere (Sentiment Visualization)
 
-![Mood Sphere Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769586962/travel_globe_prod/photos/7_lasd8l.png)
+![Mood Sphere Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1770435973/travel_globe_prod/photos/mood6_chodym.gif)
 
 - **Feature:** A mathematical representation of emotional data through thousands of procedural particles.
 - Technical Insight:
-    - **Geometry:** Utilizes a **Fibonacci Lattice** algorithm to ensure uniform particle distribution across the sphere.
-    - **Graphics:** Powered by a custom **GLSL Fragment Shader** that dynamically adjusts particle colors based on the sentiment vector (HSL interpolation).
-    - **Animation:** Vertex displacement is calculated on the GPU to create a "breathing" effect without taxing the main thread.
+  - **Geometry:** Utilizes a **Fibonacci Lattice** algorithm to ensure uniform particle distribution across the sphere.
+  - **Graphics:** Powered by a custom **GLSL Fragment Shader** that dynamically adjusts particle colors based on the sentiment vector (HSL interpolation).
+  - **Animation:** Vertex displacement is calculated on the GPU to create a "breathing" effect without taxing the main thread.
 
 #### 3. AI-Powered Itinerary Engine
 
-![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769520763/travel_globe_prod/photos/9_rtedrr.png)
+![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1770437157/travel_globe_prod/photos/ai_diary_qjw1fg.gif)
 
-![AI Demo](https://res.cloudinary.com/ggg-lll/image/upload/q_auto/v1769520764/travel_globe_prod/photos/10_dmnkle.png)
 
 - **Feature:** Real-time generation of travel plans and sentiment extraction from natural language diaries.
 
 - Technical Insight:
 
-    - **Data Pipeline:** Demonstrates the conversion of unstructured natural language into **schema-validated JSON metadata**.
+  - **Data Pipeline:** Demonstrates the conversion of unstructured natural language into **schema-validated JSON metadata**.
 
 
 
@@ -178,8 +177,8 @@ To transition this project from a personal visualizer to a comprehensive travel 
 
   Develop a right-side dynamic sidebar that adapts to the view mode.
 
-    - *Earth Mode:* Real-time travel countdowns, "Next Destination" vision boards, and latest diary snippets.
-    - *Mood Mode:* Sentiment distribution analytics (Pie charts/Radar charts) and temporal heatmaps visualizing emotional trends over time.
+  - *Earth Mode:* Real-time travel countdowns, "Next Destination" vision boards, and latest diary snippets.
+  - *Mood Mode:* Sentiment distribution analytics (Pie charts/Radar charts) and temporal heatmaps visualizing emotional trends over time.
 
 - **Intelligent Recommendations:** Leverage the existing Gemini integration to provide "Next-trip" suggestions based on the user's historical mood patterns and travel preferences.
 
