@@ -417,12 +417,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
     setShowMapPreview(false);
   };
 
-  const handleInputFocus = () => {
-    if (!isMobile) {
-      setShowMapPreview(false);
-    }
-  };
-
   const handleLocationInputFocus = () => {
     setShowMapPreview(true);
   };
@@ -456,7 +450,6 @@ export default function NewDiary({isMobile, dark, onClose,shouldFetchDiaryDetail
     handleLocationSelect,
     handleLocationChange,
     handleMapClick,
-    handleInputFocus,
     handleLocationInputFocus,
     showMapPreview,
     draggedIndex,

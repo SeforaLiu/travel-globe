@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 type Props = {
   transportation: string;
   dark: boolean;
-  onFocus?: () => void;
   onChange: (value: string) => void;
   isMobile?: boolean;
 };
@@ -12,7 +11,6 @@ type Props = {
 const TransportationSection: React.FC<Props> = ({
                                                   transportation,
                                                   dark,
-                                                  onFocus,
                                                   onChange,
                                                   isMobile = false,
                                                 }) => {
@@ -29,7 +27,6 @@ const TransportationSection: React.FC<Props> = ({
           className={`w-full p-3 border rounded-lg ${dark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300'}`}
           value={transportation}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={onFocus}
           placeholder={t('plane / train / self-driving')}
         />
       </div>
@@ -46,7 +43,6 @@ const TransportationSection: React.FC<Props> = ({
         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:ring-blue-500"
         value={transportation}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={onFocus}
         placeholder={t('plane / train / self-driving')}
       />
     </div>

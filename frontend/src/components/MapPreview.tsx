@@ -99,14 +99,14 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
         google.maps.event.clearInstanceListeners(mapInstanceRef.current);
       }
     };
-  }, [lat, lng, dark, onMapClick]); // 4. 确保 onMapClick 也作为依赖项
+  }, [lat, lng, dark]);
 
 
   return (
     <div className="mt-4 w-full h-96 border border-gray-300 rounded-lg dark:border-gray-600 overflow-hidden">
       <div ref={mapRef} className="w-full h-full" />
       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-        坐标: {lat.toFixed(6)}, {lng.toFixed(6)}
+        {lat.toFixed(6)}, {lng.toFixed(6)}
       </div>
     </div>
   );

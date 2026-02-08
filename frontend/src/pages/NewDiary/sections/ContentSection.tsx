@@ -7,7 +7,6 @@ type Props = {
   content: string;
   dark: boolean;
   onChange: (value: string) => void;
-  onFocus?: () => void;
   isMobile?: boolean;
 };
 
@@ -15,7 +14,6 @@ const ContentSection: React.FC<Props> = ({
                                            content,
                                            dark,
                                            onChange,
-                                           onFocus,
                                            isMobile = false,
                                          }) => {
   const { t } = useTranslation();
@@ -36,7 +34,6 @@ const ContentSection: React.FC<Props> = ({
               : 'bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500'
           }`}
           rows={10}
-          onFocus={onFocus}
         />
       </div>
     );
@@ -55,7 +52,6 @@ const ContentSection: React.FC<Props> = ({
             // @ts-ignore
             onChange={onChange}
             height={500}
-            onFocus={onFocus}
             placeholder={t('write something here')}
           />
         </Suspense>
