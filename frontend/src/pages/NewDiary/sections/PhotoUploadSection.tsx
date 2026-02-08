@@ -24,7 +24,6 @@ type Props = {
   onTouchStart: (e: React.TouchEvent, index: number) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
-  onFocus?: () => void;
   isMobile?: boolean;
 };
 
@@ -42,7 +41,6 @@ const PhotoUploadSection: React.FC<Props> = ({
                                                onTouchStart,
                                                onTouchMove,
                                                onTouchEnd,
-                                               onFocus,
                                                isMobile = false,
                                              }) => {
   const { t } = useTranslation();
@@ -137,7 +135,6 @@ const PhotoUploadSection: React.FC<Props> = ({
           className="hidden"
           id="photo-upload-mobile"
           onChange={handleFileInputChange}
-          onFocus={onFocus}
           ref={fileInputRef}
         />
 
@@ -191,7 +188,6 @@ const PhotoUploadSection: React.FC<Props> = ({
         className="hidden"
         id="photo-upload"
         onChange={handleFileInputChange}
-        onFocus={onFocus}
         ref={fileInputRef}
       />
       {photos.length > 0 && (

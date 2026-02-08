@@ -10,7 +10,6 @@ type Props = {
   dateStart: string; // 格式: 'yyyy-MM-dd'
   dateEnd: string;   // 格式: 'yyyy-MM-dd'
   dark: boolean;
-  onFocus?: () => void;
   onDateChange: (dateStart: string, dateEnd: string) => void;
   isMobile?: boolean;
 };
@@ -26,7 +25,6 @@ const DateSection: React.FC<Props> = ({
                                         dateEnd,   // 接收 props
                                         dark,
                                         onDateChange,
-                                        onFocus,
                                         isMobile = false,
                                       }) => {
   const { t, i18n } = useTranslation();
@@ -117,7 +115,6 @@ const DateSection: React.FC<Props> = ({
               : 'bg-white border-gray-300 text-gray-900'
           }`}
           onClick={() => setIsOpen(!isOpen)}
-          onFocus={onFocus}
         >
           <input
             id={inputId}
@@ -162,7 +159,6 @@ const DateSection: React.FC<Props> = ({
             : 'bg-white border-gray-300 text-gray-900'
         }`}
         onClick={() => setIsOpen(!isOpen)}
-        onFocus={onFocus}
       >
         <input
           id={inputId}

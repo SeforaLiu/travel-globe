@@ -23,7 +23,6 @@ type Props = {
   handleLocationSelect: (place: any) => void;
   handleLocationChange: (value: string) => void;
   handleMapClick: (latLng: { lat: number; lng: number }, address: string) => void;
-  handleInputFocus: () => void;
   handleLocationInputFocus: () => void;
   showMapPreview: boolean;
   draggedIndex: number | null;
@@ -50,7 +49,6 @@ const MobileLayout: React.FC<Props> = ({
                                          handleLocationSelect,
                                          handleLocationChange,
                                          handleMapClick,
-                                         handleInputFocus,
                                          handleLocationInputFocus,
                                          draggedIndex,
                                          handleDragStart,
@@ -98,7 +96,6 @@ const MobileLayout: React.FC<Props> = ({
               title={formData.title}
               type={formData.type}
               dark={dark}
-              onFocus={handleInputFocus}
               onTitleChange={(value) => updateField('title', value)}
               onTypeChange={(value) => updateField('type', value)}
               isMobile={true}
@@ -120,7 +117,6 @@ const MobileLayout: React.FC<Props> = ({
               dateStart={formData.dateStart}
               dateEnd={formData.dateEnd}
               dark={dark}
-              onFocus={handleInputFocus}
               onDateChange={(dateStart, dateEnd) => {
                 updateField('dateStart', dateStart);
                 updateField('dateEnd', dateEnd);
@@ -131,7 +127,6 @@ const MobileLayout: React.FC<Props> = ({
             <TransportationSection
               transportation={formData.transportation}
               dark={dark}
-              onFocus={handleInputFocus}
               onChange={(value) => updateField('transportation', value)}
               isMobile={true}
             />
@@ -140,7 +135,6 @@ const MobileLayout: React.FC<Props> = ({
               content={formData.content}
               dark={dark}
               onChange={(value) => updateField('content', value)}
-              onFocus={handleInputFocus}
               isMobile={true}
             />
 
@@ -156,7 +150,6 @@ const MobileLayout: React.FC<Props> = ({
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              onFocus={handleInputFocus}
               isMobile={true}
             />
           </div>
