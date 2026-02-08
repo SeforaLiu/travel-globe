@@ -58,7 +58,6 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
 
     // --- 3. 添加地图点击事件监听器和逆地理编码 ---
     if (onMapClick) {
-      console.log('点击地图')
       // @ts-ignore
       const geocoder = new google.maps.Geocoder();
 
@@ -100,7 +99,7 @@ export default function MapPreview({ lat, lng, dark = false ,onMapClick}: Props)
         google.maps.event.clearInstanceListeners(mapInstanceRef.current);
       }
     };
-  }, [lat, lng, dark]); // 4. 确保 onMapClick 也作为依赖项
+  }, [lat, lng, dark]);
 
 
   return (

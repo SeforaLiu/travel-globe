@@ -126,7 +126,7 @@ const DiaryView: React.FC<{ dark: boolean; isMobile: boolean; }> = ({ dark, isMo
   // --- 事件处理函数也使用 useCallback 封装 ---
   const handleEditClick = useCallback(() => navigate(`/diary/edit?id=${id}`), [id, navigate]);
   const handleDeleteClick = useCallback(() => setShowDeleteDialog(true), []);
-  const handleBackClick = useCallback(() => navigate(-1), [navigate]);
+  const handleBackClick = useCallback(() => navigate('/'), [navigate]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return;

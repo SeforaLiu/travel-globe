@@ -75,9 +75,9 @@ const DateSection: React.FC<Props> = ({
       setSelectedDate(range);
       updateDisplayDate(range); // 使用提取的函数
 
-      if (range.from && range.to) {
-        setIsOpen(false);
-      }
+      // if (range.from && range.to) {
+      //   setIsOpen(false);
+      // }
 
       onDateChange(
         range.from ? format(range.from, 'yyyy-MM-dd') : '',
@@ -100,6 +100,26 @@ const DateSection: React.FC<Props> = ({
         return zhCN;
     }
   };
+
+  const handleResetDate =()=>{
+    setSelectedDate({ from: undefined });
+    setDisplayDate("");
+    onDateChange('', '');
+  }
+
+  let footer = <></>;
+
+  if (displayDate)
+    footer = (
+      <>
+          {t('Days selected')}: {displayDate}
+        <button type="button" onClick={handleResetDate}
+                className={`mb-2 rounded-full px-2  text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`}
+        >
+          {t('common.reset')}
+        </button>
+      </>
+    );
 
   if (isMobile) {
     return (
@@ -132,13 +152,15 @@ const DateSection: React.FC<Props> = ({
               <div className="mb-4">
                 <button className={`mb-4 rounded-xl px-4 py-2 text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> {t('common.close')} </button>
                 <DayPicker
+                  animate
+                  captionLayout="dropdown"
                   mode="range"
                   selected={selectedDate}
                   locale={handleLocale()}
                   onSelect={handleDayPickerSelect}
                   className={`${dark ? 'rdp-dark' : 'rdp-light'} w-full pl-6`}
+                  footer={footer}
                 />
-
               </div>
             </div>
           </div>
@@ -177,11 +199,14 @@ const DateSection: React.FC<Props> = ({
         <div className={`mt-2 p-3 w-1/3 rounded-lg shadow-lg ${dark ? 'bg-gray-800' : 'bg-white'}`}>
           <button className={` rounded-xl mb-4 px-6 py-2  text-white ${dark? "bg-[#6ec1e4]" : "bg-[#007bff] "}`} onClick={() => setIsOpen(!isOpen)}> {t('common.close')} </button>
           <DayPicker
+            animate
+            captionLayout="dropdown"
             mode="range"
             selected={selectedDate}
             locale={handleLocale()}
             onSelect={handleDayPickerSelect}
             className={`${dark ? 'rdp-dark' : 'rdp-light'} w-full`}
+            footer={footer}
           />
         </div>
       )}
