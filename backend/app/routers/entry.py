@@ -451,35 +451,33 @@ async def update_diary(
       status_code=status.HTTP_404_NOT_FOUND,
       detail="日记不存在或无权访问"
     )
-  # [新增] 增加日志，记录更新前的数据状态
-  logger.info(f"[BEFORE UPDATE] 日记ID {entry_id}: location_name='{db_entry.location_name}', coordinates={db_entry.coordinates}")
+  logger.info(f"[BEFORE UPDATE] 日记ID {entry_id}: date_start={db_entry.date_start}, date_end={db_entry.date_end}")
   try:
     # 2. 更新基础字段 (除照片外的所有字段)
-    # [修复] 移除 exclude 中的 "coordinates" 和 "location_name"，让它们可以被正常更新
+    # exclude_unset=True 确保只更新前端发送了的字段
     update_dict = update_data.model_dump(exclude_unset=True, exclude={"photos"})
     logger.debug(f"准备更新的字段: {update_dict}")
+
     for key, value in update_dict.items():
-      # 只有当值不为 None 时才更新，允许前端传 null 来清空某些字段
-      # 如果你的业务逻辑是传了就必须更新（即使是None），可以去掉 if value is not None
-      if value is not None:
-        setattr(db_entry, key, value)
+      # [修复] 删除 if value is not None 判断
+      # 只要 key 存在于 update_dict 中，说明前端显式发送了该字段
+      # 即使 value 是 None，也应该更新数据库（即清空该字段）
+      setattr(db_entry, key, value)
+
     # 3. [重构] 单独处理位置信息更新逻辑
     # 检查前端是否意图更新位置（提供了坐标和名称）
+    # 注意：这里需要判断是否为 None，因为如果前端没传，我们不想覆盖
     if update_data.coordinates is not None and update_data.location_name is not None:
       logger.info(f"日记 {entry_id} 正在更新位置: '{update_data.location_name}'")
-
       # 3.1 获取或创建新的 Location 对象，并更新 location_id
       location_obj = await get_or_create_location(
         update_data.coordinates, update_data.location_name, session
       )
       db_entry.location_id = location_obj.id if location_obj else db_entry.location_id
-
-      # 3.2 [修复] 关键步骤：同步更新 Entry 对象自身的 location_name 和 coordinates
-      # 无论 location_obj 是否是新建的，都用前端传来的最新值为准
+      # 3.2 同步更新 Entry 对象自身的 location_name 和 coordinates
       db_entry.location_name = update_data.location_name
       db_entry.coordinates = update_data.coordinates
     # 4. 同步照片列表 (如果提供了 photos 字段)
-    # `update_data.photos is not None` 允许前端传一个空数组来删除所有照片
     if update_data.photos is not None:
       logger.info(f"日记 {entry_id} 正在同步照片列表...")
       # 4.1 先删除所有旧照片
@@ -495,7 +493,8 @@ async def update_diary(
           new_photo = Photo.model_validate(photo_data, update={"entry_id": db_entry.id})
           session.add(new_photo)
     # [新增] 增加日志，记录提交前的最终数据状态
-    logger.info(f"[AFTER UPDATE] 日记ID {entry_id}: location_name='{db_entry.location_name}', coordinates={db_entry.coordinates}")
+    logger.info(f"[AFTER UPDATE] 日记ID {entry_id}: date_start={db_entry.date_start}, date_end={db_entry.date_end}")
+
     # 5. 提交事务
     session.add(db_entry)
     session.commit()
@@ -506,7 +505,7 @@ async def update_diary(
     return db_entry
   except Exception as e:
     logger.error(f"更新日记 {entry_id} 时发生意外错误: {str(e)}", exc_info=True)
-    session.rollback() # 关键：发生错误时回滚事务
+    session.rollback()
     raise HTTPException(
       status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
       detail="更新日记失败，服务器内部错误"
